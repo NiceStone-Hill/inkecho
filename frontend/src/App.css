@@ -1,0 +1,183 @@
+#root {
+  min-height: 100vh;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 24px 7%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(193, 171, 134, 0.2), transparent 28%),
+    #f4f0e8;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  color: #1d1b18;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  text-decoration: none;
+}
+
+.statusButton {
+  padding: 10px 17px;
+  color: #2b2823;
+  background: transparent;
+  border: 1px solid #aaa296;
+  border-radius: 999px;
+  transition: background 160ms ease;
+}
+
+.statusButton:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.hero {
+  width: min(800px, 100%);
+  margin: 90px auto 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #766e63;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+h1 {
+  margin: 18px 0 28px;
+  color: #1d1b18;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(54px, 9vw, 100px);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -5px;
+}
+
+.introduction {
+  max-width: 560px;
+  margin: 0 0 34px;
+  color: #625c53;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.editor {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid #d4cec3;
+  border-radius: 22px;
+  box-shadow: 0 22px 65px rgba(54, 43, 29, 0.09);
+  backdrop-filter: blur(12px);
+}
+
+textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 4px;
+  resize: vertical;
+  color: #24211d;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+textarea::placeholder {
+  color: #999185;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 12px 20px;
+  border-radius: 999px;
+}
+
+.primaryButton {
+  color: #fff;
+  background: #24211d;
+  border: 1px solid #24211d;
+}
+
+.secondaryButton {
+  color: #2b2823;
+  background: transparent;
+  border: 1px solid #bcb4a8;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 19px 21px;
+  color: #39342d;
+  background: #e5ded1;
+  border: 1px solid #d3c9b9;
+  border-radius: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.backendStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: #716a60;
+  font-size: 14px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  background: #868075;
+  border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 20px;
+  }
+
+  .hero {
+    margin-top: 70px;
+  }
+
+  h1 {
+    letter-spacing: -3px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}

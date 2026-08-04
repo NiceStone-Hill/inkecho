@@ -1,0 +1,16 @@
+# React
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# IDE and system
+.vscode/
+.DS_Store
+Thumbs.db
