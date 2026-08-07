@@ -1,7 +1,23 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+import logging
+import os
 
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv()
+
+from ai_service import analyze_hypothesis
+from content import SOLUTION_STEPS, STAGES, STAGES_BY_ID
+from schemas import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    SolutionResponse,
+    StageContent,
+    StageSummary,
+)
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Inkecho API",
@@ -9,21 +25,26 @@ app = FastAPI(
 )
 
 
-# 允许本地 React 前端访问后端
+# 本地开发前端地址，始终允许；正式前端域名（如 GitHub Pages）通过
+# ALLOWED_ORIGINS 环境变量追加，多个地址用逗号分隔。
+# 对应产品需求文档 AC12：正式Origin可调用，其他Origin被拒绝。
+_DEFAULT_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+_EXTRA_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=_DEFAULT_ORIGINS + _EXTRA_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class EchoRequest(BaseModel):
-    text: str
 
 
 @app.get("/")
@@ -41,15 +62,35 @@ def health():
     }
 
 
-@app.post("/api/echo")
-def create_echo(request: EchoRequest):
-    cleaned_text = request.text.strip()
+@app.get("/api/content/stages", response_model=list[StageSummary])
+def list_stages():
+    return [
+        StageSummary(stage_id=stage.stage_id, title=stage.title, order=stage.order)
+        for stage in STAGES
+    ]
 
+
+@app.get("/api/content/stages/{stage_id}", response_model=StageContent)
+def get_stage(stage_id: int):
+    stage = STAGES_BY_ID.get(stage_id)
+    if stage is None:
+        raise HTTPException(status_code=404, detail="stage not found")
+    return stage
+
+
+@app.post("/api/analyze", response_model=AnalyzeResponse)
+def analyze(request: AnalyzeRequest):
+    cleaned_text = request.hypothesis_text.strip()
     if not cleaned_text:
-        return {
-            "reply": "后端没有收到有效文字。",
-        }
+        raise HTTPException(status_code=422, detail="hypothesis_text is required")
 
-    return {
-        "reply": f"这是后端返回的回声：{cleaned_text}",
-    }
+    if request.stage_id not in STAGES_BY_ID:
+        raise HTTPException(status_code=422, detail="unknown stage_id")
+
+    normalized_request = request.model_copy(update={"hypothesis_text": cleaned_text})
+    return analyze_hypothesis(normalized_request)
+
+
+@app.get("/api/solution", response_model=SolutionResponse)
+def get_solution():
+    return SolutionResponse(steps=SOLUTION_STEPS)

@@ -1,0 +1,149 @@
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createDefaultProgress,
+  loadProgress,
+  saveProgress,
+  clearProgress as clearStoredProgress,
+} from "./progress";
+
+const ProgressContext = createContext(null);
+
+export function ProgressProvider({ children }) {
+  const [progress, setProgress] = useState(() => loadProgress());
+
+  useEffect(() => {
+    saveProgress(progress);
+  }, [progress]);
+
+  const actions = useMemo(
+    () => ({
+      startExperience() {
+        setProgress((prev) => ({
+          ...prev,
+          started: true,
+          startedAt: prev.startedAt || new Date().toISOString(),
+        }));
+      },
+
+      setCurrentStage(stageId) {
+        setProgress((prev) => ({
+          ...prev,
+          reading: { ...prev.reading, currentStageId: stageId },
+        }));
+      },
+
+      answerStatementCard(cardId, answerType) {
+        setProgress((prev) => ({
+          ...prev,
+          reading: {
+            ...prev.reading,
+            cardAnswers: { ...prev.reading.cardAnswers, [cardId]: answerType },
+          },
+        }));
+      },
+
+      completeReading() {
+        setProgress((prev) => ({
+          ...prev,
+          reading: { ...prev.reading, completed: true },
+        }));
+      },
+
+      updateHypothesisDraft(draft) {
+        setProgress((prev) => ({
+          ...prev,
+          hypothesisDraft: { ...prev.hypothesisDraft, ...draft },
+        }));
+      },
+
+      submitHypothesisV1(hypothesis) {
+        setProgress((prev) => ({
+          ...prev,
+          hypothesisV1: {
+            ...hypothesis,
+            submittedAt: new Date().toISOString(),
+          },
+        }));
+      },
+
+      submitStressResult(result) {
+        setProgress((prev) => ({ ...prev, stressResult: result }));
+      },
+
+      updateStressAnswer(text) {
+        setProgress((prev) => ({ ...prev, stressAnswer: text }));
+      },
+
+      updateRevisionDraft(draft) {
+        setProgress((prev) => ({
+          ...prev,
+          revisionDraft: { ...prev.revisionDraft, ...draft },
+        }));
+      },
+
+      addAnnotation(annotation) {
+        setProgress((prev) => ({
+          ...prev,
+          annotations: [
+            ...prev.annotations,
+            {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              createdAt: new Date().toISOString(),
+              ...annotation,
+            },
+          ],
+        }));
+      },
+
+      removeAnnotation(annotationId) {
+        setProgress((prev) => ({
+          ...prev,
+          annotations: prev.annotations.filter((item) => item.id !== annotationId),
+        }));
+      },
+
+      submitHypothesisV2(hypothesis) {
+        setProgress((prev) => ({
+          ...prev,
+          hypothesisV2: {
+            ...hypothesis,
+            submittedAt: new Date().toISOString(),
+          },
+        }));
+      },
+
+      markReplayViewed() {
+        setProgress((prev) => ({
+          ...prev,
+          completion: { ...prev.completion, replayViewed: true },
+        }));
+      },
+
+      submitFeedback(feedback) {
+        setProgress((prev) => ({
+          ...prev,
+          completion: { ...prev.completion, feedback },
+        }));
+      },
+
+      resetProgress() {
+        clearStoredProgress();
+        setProgress(createDefaultProgress());
+      },
+    }),
+    [],
+  );
+
+  const value = useMemo(() => ({ progress, ...actions }), [progress, actions]);
+
+  return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useProgress() {
+  const context = useContext(ProgressContext);
+  if (!context) {
+    throw new Error("useProgress 必须在 ProgressProvider 内部使用");
+  }
+  return context;
+}
