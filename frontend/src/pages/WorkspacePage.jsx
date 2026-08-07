@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getStage } from "../api";
+import { useCallback, useEffect, useState } from "react";
+import { getAiStatus, getStage } from "../api";
 import { useProgress } from "../state/ProgressContext";
 import AnnotationLayer from "../components/AnnotationLayer";
 import AIAgentCard from "../components/AIAgentCard";
@@ -18,6 +18,14 @@ const ANSWER_OPTIONS = [
   { value: "reader_assumption", label: "读者自己的默认前提" },
   { value: "unsure", label: "不确定" },
 ];
+
+const PANEL_META = {
+  hypothesis: { title: "形成方案", subtitle: "CASE FILE · 假说 v1" },
+  stress: { title: "接受审讯", subtitle: "CASE FILE · 压力测试" },
+  revise: { title: "作出修正", subtitle: "CASE FILE · 假说 v2" },
+  reveal: { title: "谜底与回放", subtitle: "CASE FILE · 监狱长记录" },
+  annotations: { title: "我的批注", subtitle: "CASE FILE · 原文标记" },
+};
 
 function getAgentNote(progress) {
   if (!progress.reading.completed) {
@@ -50,6 +58,25 @@ function WorkspacePage() {
   const [retryToken, setRetryToken] = useState(0);
   const [openPanel, setOpenPanel] = useState(null);
   const [aiThinking, setAiThinking] = useState(false);
+  const [modelStatus, setModelStatus] = useState(null);
+
+  const refreshModelStatus = useCallback(() => {
+    getAiStatus()
+      .then(setModelStatus)
+      .catch(() => {
+        setModelStatus({
+          api_key_configured: false,
+          model: "unknown",
+          last_success: false,
+          last_error: "status_unavailable",
+          last_fallback: true,
+        });
+      });
+  }, []);
+
+  useEffect(() => {
+    refreshModelStatus();
+  }, [refreshModelStatus]);
 
   useEffect(() => {
     const idsToLoad = [];
@@ -110,19 +137,6 @@ function WorkspacePage() {
   const reviseUnlocked = Boolean(progress.stressResult);
   const revealUnlocked = Boolean(progress.hypothesisV2);
 
-  function handleRetry() {
-    setRetryToken((prev) => prev + 1);
-  }
-
-  function handleContinue() {
-    if (stageIndex + 1 < TOTAL_STAGES) {
-      setStageIndex((prev) => prev + 1);
-      return;
-    }
-    completeReading();
-    setOpenPanel("hypothesis");
-  }
-
   const agentStatus = aiThinking
     ? "thinking"
     : error
@@ -160,17 +174,23 @@ function WorkspacePage() {
       key: "annotations",
       label: `我的批注（${progress.annotations.length}）`,
       unlocked: true,
-      done: false,
+      done: progress.annotations.length > 0,
     },
   ];
 
-  const PANEL_META = {
-    hypothesis: { title: "形成方案", subtitle: "CASE FILE · 假说 v1" },
-    stress: { title: "接受审讯", subtitle: "CASE FILE · 压力测试" },
-    revise: { title: "作出修正", subtitle: "CASE FILE · 假说 v2" },
-    reveal: { title: "谜底与回放", subtitle: "CASE FILE · 监狱长记录" },
-    annotations: { title: "我的批注", subtitle: "CASE FILE · 原文标记" },
-  };
+  function handleRetry() {
+    setRetryToken((prev) => prev + 1);
+    refreshModelStatus();
+  }
+
+  function handleContinue() {
+    if (stageIndex + 1 < TOTAL_STAGES) {
+      setStageIndex((prev) => prev + 1);
+      return;
+    }
+    completeReading();
+    setOpenPanel("hypothesis");
+  }
 
   function handleToolbarClick(item) {
     if (!item.unlocked) {
@@ -187,7 +207,11 @@ function WorkspacePage() {
         </span>
       </div>
 
-      <AIAgentCard status={agentStatus} note={getAgentNote(progress)} />
+      <AIAgentCard
+        status={agentStatus}
+        note={getAgentNote(progress)}
+        modelStatus={modelStatus}
+      />
 
       <div className="stageProgressBar">
         {Array.from({ length: TOTAL_STAGES }).map((_, index) => (
@@ -214,7 +238,7 @@ function WorkspacePage() {
         ))}
       </div>
 
-      {loading && !stage && <p className="stageIntro">正在调取档案……</p>}
+      {loading && !stage && <p className="stageIntro">正在调取档案...</p>}
 
       {error && (
         <div className="editor">
@@ -284,7 +308,10 @@ function WorkspacePage() {
         onClose={() => setOpenPanel(null)}
       >
         <HypothesisPanel
-          onSubmitted={() => setOpenPanel("stress")}
+          onSubmitted={() => {
+            refreshModelStatus();
+            setOpenPanel("stress");
+          }}
           onThinkingChange={setAiThinking}
         />
       </Panel>
@@ -329,4 +356,3 @@ function WorkspacePage() {
 }
 
 export default WorkspacePage;
-

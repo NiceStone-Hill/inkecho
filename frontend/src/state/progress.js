@@ -1,7 +1,15 @@
 const STORAGE_KEY = "inkecho_progress_v1";
 
+function createSessionId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function createDefaultProgress() {
   return {
+    sessionId: createSessionId(),
     started: false,
     startedAt: null,
     reading: {
@@ -34,15 +42,17 @@ export function loadProgress() {
     }
 
     const parsed = JSON.parse(raw);
+    const defaults = createDefaultProgress();
     return {
-      ...createDefaultProgress(),
+      ...defaults,
       ...parsed,
+      sessionId: parsed.sessionId || defaults.sessionId,
       reading: {
-        ...createDefaultProgress().reading,
+        ...defaults.reading,
         ...(parsed.reading || {}),
       },
       completion: {
-        ...createDefaultProgress().completion,
+        ...defaults.completion,
         ...(parsed.completion || {}),
       },
     };

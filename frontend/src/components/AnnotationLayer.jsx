@@ -26,7 +26,11 @@ function buildHighlightedNodes(text, annotations) {
       return;
     }
     if (match.start > cursor) {
-      nodes.push({ key: `plain-${index}`, text: text.slice(cursor, match.start), annotationId: null });
+      nodes.push({
+        key: `plain-${index}`,
+        text: text.slice(cursor, match.start),
+        annotationId: null,
+      });
     }
     nodes.push({
       key: `mark-${index}`,
@@ -46,14 +50,17 @@ function AnnotationLayer({ stageId, segments, onOpenAnnotations }) {
   const containerRef = useRef(null);
   const [popover, setPopover] = useState(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const stageAnnotations = progress.annotations.filter((item) => item.stageId === stageId);
 
   function handleMouseUp() {
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
+    if (!selection || selection.isCollapsed || saving) {
       return;
     }
+
     const quote = selection.toString().trim();
     if (!quote || quote.length > 200) {
       selection.removeAllRanges();
@@ -84,20 +91,30 @@ function AnnotationLayer({ stageId, segments, onOpenAnnotations }) {
       left: Math.max(0, rect.left - containerRect.left),
     });
     setNoteDraft("");
+    setError("");
   }
 
-  function handleSaveAnnotation() {
+  async function handleSaveAnnotation() {
     if (!popover) {
       return;
     }
-    addAnnotation({
-      stageId,
-      segmentIndex: popover.segmentIndex,
-      quote: popover.quote,
-      note: noteDraft.trim(),
-    });
-    setPopover(null);
-    window.getSelection()?.removeAllRanges();
+
+    setSaving(true);
+    setError("");
+    try {
+      await addAnnotation({
+        stageId,
+        segmentIndex: popover.segmentIndex,
+        quote: popover.quote,
+        note: noteDraft.trim(),
+      });
+      setPopover(null);
+      window.getSelection()?.removeAllRanges();
+    } catch {
+      setError("批注保存失败，请确认后端服务正在运行。");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -138,15 +155,26 @@ function AnnotationLayer({ stageId, segments, onOpenAnnotations }) {
             autoFocus
             value={noteDraft}
             onChange={(event) => setNoteDraft(event.target.value)}
-            placeholder="写下你对这句话的想法（可留空，仅标记）……"
+            placeholder="写下你对这句话的想法（可留空，仅高亮标记）..."
             maxLength={300}
           />
+          {error && <p className="annotationError">{error}</p>}
           <div className="annotationPopoverActions">
-            <button type="button" className="secondaryButton" onClick={() => setPopover(null)}>
+            <button
+              type="button"
+              className="secondaryButton"
+              disabled={saving}
+              onClick={() => setPopover(null)}
+            >
               取消
             </button>
-            <button type="button" className="primaryButton" onClick={handleSaveAnnotation}>
-              保存批注
+            <button
+              type="button"
+              className="primaryButton"
+              disabled={saving}
+              onClick={handleSaveAnnotation}
+            >
+              {saving ? "保存中..." : "保存批注"}
             </button>
           </div>
         </div>

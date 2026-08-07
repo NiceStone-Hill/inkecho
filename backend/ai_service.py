@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Dict, List
 
 import httpx
@@ -28,6 +29,40 @@ AI_MODEL = os.environ.get("AI_MODEL", "gpt-4o-mini")
 AI_TIMEOUT_SECONDS = float(os.environ.get("AI_TIMEOUT_SECONDS", "10"))
 
 MAX_QUESTION_CHARS = 60
+
+_AI_STATUS: dict[str, object] = {
+    "api_key_configured": bool(AI_API_KEY),
+    "base_url": AI_BASE_URL,
+    "model": AI_MODEL,
+    "mode": "model" if AI_API_KEY else "fallback",
+    "last_call_at": None,
+    "last_success": None,
+    "last_error": None,
+    "last_fallback": not bool(AI_API_KEY),
+}
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def get_ai_status() -> dict[str, object]:
+    return dict(_AI_STATUS)
+
+
+def _record_ai_status(*, success: bool | None, fallback: bool, error: str | None = None) -> None:
+    _AI_STATUS.update(
+        {
+            "api_key_configured": bool(AI_API_KEY),
+            "base_url": AI_BASE_URL,
+            "model": AI_MODEL,
+            "mode": "model" if AI_API_KEY else "fallback",
+            "last_call_at": _now_iso(),
+            "last_success": success,
+            "last_error": error,
+            "last_fallback": fallback,
+        }
+    )
 
 _SYSTEM_PROMPT = (
     "你是推理阅读产品中的“默认前提探测”组件，唯一职责是分析用户提交的越狱假说。\n"
@@ -83,7 +118,9 @@ def _call_model(request: AnalyzeRequest, allowed_evidence_text: List[str]) -> di
         body = response.json()
 
     content = body["choices"][0]["message"]["content"]
-    return json.loads(content)
+    parsed = json.loads(content)
+    _record_ai_status(success=True, fallback=False)
+    return parsed
 
 
 def _contains_spoiler(*texts: str) -> bool:
@@ -191,6 +228,7 @@ def analyze_hypothesis(request: AnalyzeRequest) -> AnalyzeResponse:
 
     if not AI_API_KEY:
         logger.info("AI_API_KEY not configured, using fallback classifier")
+        _record_ai_status(success=None, fallback=True, error="OPENAI_API_KEY is not configured")
         return _fallback_response(request, allowed_evidence_ids)
 
     try:
@@ -206,6 +244,7 @@ def analyze_hypothesis(request: AnalyzeRequest) -> AnalyzeResponse:
         ValidationError,
         json.JSONDecodeError,
     ) as exc:
+        _record_ai_status(success=False, fallback=True, error=type(exc).__name__)
         logger.warning(
             "model call failed, falling back. reason=%s hypothesis_length=%d",
             type(exc).__name__,

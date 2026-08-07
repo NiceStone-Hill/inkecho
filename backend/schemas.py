@@ -67,3 +67,21 @@ class AnalyzeResponse(BaseModel):
     category: str
     rationale_evidence_ids: List[str]
     fallback: bool
+
+
+class AnnotationCreate(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    stage_id: int
+    segment_index: int = Field(ge=0)
+    quote: str = Field(min_length=1, max_length=200)
+    note: str = Field(default="", max_length=300)
+
+
+class AnnotationResponse(BaseModel):
+    id: str
+    session_id: str
+    stage_id: int
+    segment_index: int
+    quote: str
+    note: str
+    created_at: str

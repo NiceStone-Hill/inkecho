@@ -25,8 +25,24 @@ async function request(path, options = {}) {
   return response.json();
 }
 
+function toFrontendAnnotation(annotation) {
+  return {
+    id: annotation.id,
+    sessionId: annotation.session_id,
+    stageId: annotation.stage_id,
+    segmentIndex: annotation.segment_index,
+    quote: annotation.quote,
+    note: annotation.note,
+    createdAt: annotation.created_at,
+  };
+}
+
 export function checkHealth() {
   return request("/api/health");
+}
+
+export function getAiStatus() {
+  return request("/api/ai/status");
 }
 
 export function getStages() {
@@ -50,4 +66,30 @@ export function analyzeHypothesis({ stageId, hypothesisText, confidence }) {
 
 export function getSolution() {
   return request("/api/solution");
+}
+
+export async function listAnnotations(sessionId) {
+  const annotations = await request(`/api/annotations?session_id=${encodeURIComponent(sessionId)}`);
+  return annotations.map(toFrontendAnnotation);
+}
+
+export async function createAnnotation({ sessionId, stageId, segmentIndex, quote, note }) {
+  const annotation = await request("/api/annotations", {
+    method: "POST",
+    body: JSON.stringify({
+      session_id: sessionId,
+      stage_id: stageId,
+      segment_index: segmentIndex,
+      quote,
+      note,
+    }),
+  });
+  return toFrontendAnnotation(annotation);
+}
+
+export function deleteAnnotation({ sessionId, annotationId }) {
+  return request(
+    `/api/annotations/${encodeURIComponent(annotationId)}?session_id=${encodeURIComponent(sessionId)}`,
+    { method: "DELETE" },
+  );
 }

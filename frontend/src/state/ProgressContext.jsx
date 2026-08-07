@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
+  createAnnotation,
+  deleteAnnotation,
+  listAnnotations,
+} from "../api";
+import {
   createDefaultProgress,
   loadProgress,
   saveProgress,
@@ -70,6 +75,12 @@ export function ProgressProvider({ children }) {
         setProgress((prev) => ({ ...prev, stressResult: result }));
       },
 
+      async refreshAnnotations() {
+        const annotations = await listAnnotations(progress.sessionId);
+        setProgress((prev) => ({ ...prev, annotations }));
+        return annotations;
+      },
+
       updateStressAnswer(text) {
         setProgress((prev) => ({ ...prev, stressAnswer: text }));
       },
@@ -81,21 +92,23 @@ export function ProgressProvider({ children }) {
         }));
       },
 
-      addAnnotation(annotation) {
+      async addAnnotation(annotation) {
+        const saved = await createAnnotation({
+          sessionId: progress.sessionId,
+          ...annotation,
+        });
         setProgress((prev) => ({
           ...prev,
-          annotations: [
-            ...prev.annotations,
-            {
-              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-              createdAt: new Date().toISOString(),
-              ...annotation,
-            },
-          ],
+          annotations: [...prev.annotations, saved],
         }));
+        return saved;
       },
 
-      removeAnnotation(annotationId) {
+      async removeAnnotation(annotationId) {
+        await deleteAnnotation({
+          sessionId: progress.sessionId,
+          annotationId,
+        });
         setProgress((prev) => ({
           ...prev,
           annotations: prev.annotations.filter((item) => item.id !== annotationId),
@@ -131,7 +144,7 @@ export function ProgressProvider({ children }) {
         setProgress(createDefaultProgress());
       },
     }),
-    [],
+    [progress.sessionId],
   );
 
   const value = useMemo(() => ({ progress, ...actions }), [progress, actions]);
