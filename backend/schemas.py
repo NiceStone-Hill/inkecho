@@ -20,6 +20,13 @@ class Evidence(BaseModel):
     source_stage: int
 
 
+class Checkpoint(BaseModel):
+    checkpoint_id: str
+    kind: Literal["capture", "pressure", "final"]
+    title: str
+    prompt: str
+
+
 class StageContent(BaseModel):
     stage_id: int
     title: str
@@ -31,6 +38,8 @@ class StageContent(BaseModel):
     ] = Field(default_factory=list)
 
     allowed_evidence: List[Evidence]
+
+    checkpoint: Checkpoint | None = None
 
 
 class StageSummary(BaseModel):

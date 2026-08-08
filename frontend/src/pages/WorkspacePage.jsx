@@ -1,116 +1,468 @@
-import { useCallback, useEffect, useState } from "react";
-import { getAiStatus, getStage } from "../api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { analyzeHypothesis, getStage } from "../api";
 import { useProgress } from "../state/ProgressContext";
 import AnnotationLayer from "../components/AnnotationLayer";
-import AIAgentCard from "../components/AIAgentCard";
 import AnnotationsPanel from "../components/AnnotationsPanel";
 import Panel from "../components/Panel";
-import HypothesisPanel from "../panels/HypothesisPanel";
-import StressPanel from "../panels/StressPanel";
-import RevisePanel from "../panels/RevisePanel";
-import RevealPanel from "../panels/RevealPanel";
 
-const TOTAL_STAGES = 3;
+const TOTAL_PAGES = 8;
+const MIN_LENGTH = 30;
+const MAX_LENGTH = 600;
 
-const ANSWER_OPTIONS = [
-  { value: "confirmed_fact", label: "已确认事实" },
-  { value: "physical_constraint", label: "物理或制度约束" },
-  { value: "reader_assumption", label: "读者自己的默认前提" },
-  { value: "unsure", label: "不确定" },
+const CONFIDENCE_OPTIONS = [
+  { value: "low", label: "低" },
+  { value: "medium", label: "中" },
+  { value: "high", label: "高" },
 ];
 
-const PANEL_META = {
-  hypothesis: { title: "形成方案", subtitle: "CASE FILE · 假说 v1" },
-  stress: { title: "接受审讯", subtitle: "CASE FILE · 压力测试" },
-  revise: { title: "作出修正", subtitle: "CASE FILE · 假说 v2" },
-  reveal: { title: "谜底与回放", subtitle: "CASE FILE · 监狱长记录" },
-  annotations: { title: "我的批注", subtitle: "CASE FILE · 原文标记" },
-};
+function checkpointDone(progress, checkpoint) {
+  if (!checkpoint) {
+    return true;
+  }
+  if (checkpoint.kind === "capture") {
+    return Boolean(progress.hypothesisV1);
+  }
+  if (checkpoint.kind === "pressure") {
+    return checkpoint.checkpoint_id === "CP3"
+      ? Boolean(progress.hypothesisV3)
+      : Boolean(progress.hypothesisV2);
+  }
+  return Boolean(progress.completion.feedback);
+}
 
-function getAgentNote(progress) {
-  if (!progress.reading.completed) {
-    return "继续往下读，我会等你读完再和你讨论方案。";
+function FloatingMenu({ open, onToggle, onOpenAnnotations, onOpenCheckpoint, onReset }) {
+  return (
+    <div className="readerMenu">
+      <button
+        type="button"
+        className="readerMenuButton"
+        aria-label="打开阅读菜单"
+        onClick={onToggle}
+      >
+        ···
+      </button>
+      {open && (
+        <div className="readerMenuPanel">
+          <button type="button" onClick={onOpenAnnotations}>
+            我的批注
+          </button>
+          <button type="button" onClick={onOpenCheckpoint}>
+            当前 checkpoint
+          </button>
+          <button type="button" onClick={onReset}>
+            重置体验
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CaptureCheckpoint({ progress, checkpoint, onClose }) {
+  const { updateHypothesisDraft, submitHypothesisV1 } = useProgress();
+  const draft = progress.hypothesisDraft;
+  const length = draft.text.trim().length;
+  const canSubmit = length >= MIN_LENGTH && length <= MAX_LENGTH;
+
+  if (progress.hypothesisV1) {
+    return (
+      <div className="checkpointReadOnly">
+        <p>{progress.hypothesisV1.text}</p>
+        <button className="primaryButton" type="button" onClick={onClose}>
+          继续阅读
+        </button>
+      </div>
+    );
   }
-  if (!progress.hypothesisV1) {
-    return "读完了？点击上面的“形成方案”告诉我你的判断。";
+
+  function handleSubmit() {
+    if (!canSubmit) {
+      return;
+    }
+    submitHypothesisV1({
+      checkpointId: checkpoint.checkpoint_id,
+      text: draft.text.trim(),
+      confidence: draft.confidence,
+    });
+    onClose();
   }
-  if (!progress.hypothesisV2) {
-    return "我已经追问了方案里的一个默认前提，点击“接受审讯”回应它。";
+
+  return (
+    <>
+      <p className="checkpointPrompt">{checkpoint.prompt}</p>
+      <textarea
+        value={draft.text}
+        onChange={(event) => updateHypothesisDraft({ text: event.target.value })}
+        placeholder="写下你此刻的解释..."
+        maxLength={MAX_LENGTH}
+      />
+      <div className="checkpointMeta">
+        <span>{length} / {MAX_LENGTH}</span>
+        <div className="confidenceGroup">
+          {CONFIDENCE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`optionButton ${draft.confidence === option.value ? "selected" : ""}`}
+              onClick={() => updateHypothesisDraft({ confidence: option.value })}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="actions">
+        <button className="primaryButton" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+          保存 V1
+        </button>
+      </div>
+    </>
+  );
+}
+
+function PressureCheckpoint({ stageId, progress, checkpoint, onClose }) {
+  const {
+    submitHypothesisV1,
+    submitStressResult,
+    submitStressResult2,
+    updateStressAnswer,
+    updateStressAnswer2,
+    updateRevisionDraft,
+    updateRevisionDraft2,
+    submitHypothesisV2,
+    submitHypothesisV3,
+  } = useProgress();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [localHypothesis, setLocalHypothesis] = useState({ text: "", confidence: "medium" });
+  const [localSubmitted, setLocalSubmitted] = useState(null);
+  const isSecondRound = checkpoint.checkpoint_id === "CP3";
+  const draft = isSecondRound ? progress.revisionDraft2 : progress.revisionDraft;
+  const stressResult = isSecondRound ? progress.stressResult2 : progress.stressResult;
+  const stressAnswer = isSecondRound ? progress.stressAnswer2 : progress.stressAnswer;
+  const updateAnswer = isSecondRound ? updateStressAnswer2 : updateStressAnswer;
+  const updateDraft = isSecondRound ? updateRevisionDraft2 : updateRevisionDraft;
+  const submitResult = isSecondRound ? submitStressResult2 : submitStressResult;
+  const submitNextHypothesis = isSecondRound ? submitHypothesisV3 : submitHypothesisV2;
+  const completedHypothesis = isSecondRound ? progress.hypothesisV3 : progress.hypothesisV2;
+
+  const savedSourceHypothesis = isSecondRound
+    ? progress.hypothesisV2
+    : progress.hypothesisV1;
+  const sourceHypothesis = savedSourceHypothesis || localSubmitted;
+  const revisionText = draft.mode === "revise" ? draft.text : sourceHypothesis?.text || "";
+  const length = revisionText.trim().length;
+  const canSubmit =
+    Boolean(stressAnswer.trim()) &&
+    (draft.mode === "keep" || (length >= MIN_LENGTH && length <= MAX_LENGTH));
+
+  const runAnalysis = useCallback(async () => {
+    if (!sourceHypothesis || stressResult) {
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const result = await analyzeHypothesis({
+        stageId,
+        hypothesisText: sourceHypothesis.text,
+        confidence: sourceHypothesis.confidence,
+      });
+      submitResult(result);
+    } catch {
+      setError("暂时无法生成压力问题，请确认后端服务正在运行。");
+    } finally {
+      setLoading(false);
+    }
+  }, [stressResult, sourceHypothesis, stageId, submitResult]);
+
+  useEffect(() => {
+    runAnalysis();
+  }, [runAnalysis]);
+
+  if (!sourceHypothesis) {
+    const localLength = localHypothesis.text.trim().length;
+    const canSaveLocal = localLength >= MIN_LENGTH && localLength <= MAX_LENGTH;
+    function handleLocalSubmit() {
+      if (!canSaveLocal) {
+        return;
+      }
+      const hypothesis = {
+        checkpointId: checkpoint.checkpoint_id,
+        text: localHypothesis.text.trim(),
+        confidence: localHypothesis.confidence,
+      };
+      if (isSecondRound) {
+        submitHypothesisV2({ ...hypothesis, generatedAtCheckpoint: true });
+      } else {
+        submitHypothesisV1({ ...hypothesis, generatedAtCheckpoint: true });
+      }
+      setLocalSubmitted(hypothesis);
+    }
+
+    return (
+      <>
+        <p className="checkpointPrompt">
+          前一个 checkpoint 尚未保存。你仍然可以在这里写下当前假设，并继续本节点。
+        </p>
+        <textarea
+          value={localHypothesis.text}
+          onChange={(event) =>
+            setLocalHypothesis((prev) => ({ ...prev, text: event.target.value }))
+          }
+          placeholder="写下你此刻的解释..."
+          maxLength={MAX_LENGTH}
+        />
+        <div className="checkpointMeta">
+          <span>{localLength} / {MAX_LENGTH}</span>
+          <div className="confidenceGroup">
+            {CONFIDENCE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`optionButton ${
+                  localHypothesis.confidence === option.value ? "selected" : ""
+                }`}
+                onClick={() =>
+                  setLocalHypothesis((prev) => ({ ...prev, confidence: option.value }))
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="actions">
+          <button
+            className="primaryButton"
+            type="button"
+            disabled={!canSaveLocal}
+            onClick={handleLocalSubmit}
+          >
+            保存当前假设并生成压力问题
+          </button>
+        </div>
+      </>
+    );
   }
-  return "谜底已解封，点击“谜底与回放”查看完整记录。";
+
+  function handleSubmit() {
+    if (!canSubmit) {
+      return;
+    }
+    const finalText = draft.mode === "keep" ? sourceHypothesis.text : revisionText.trim();
+    const finalConfidence = draft.mode === "keep" ? sourceHypothesis.confidence : draft.confidence;
+    submitNextHypothesis({
+      checkpointId: checkpoint.checkpoint_id,
+      text: finalText,
+      confidence: finalConfidence,
+      pressureAnswer: stressAnswer.trim(),
+      revisionType: draft.mode === "revise" ? "revised" : "kept",
+      textChanged: finalText !== sourceHypothesis.text,
+      confidenceChanged: finalConfidence !== sourceHypothesis.confidence,
+    });
+    onClose();
+  }
+
+  if (completedHypothesis) {
+    return (
+      <div className="checkpointReadOnly">
+        <p>{completedHypothesis.text}</p>
+        <button className="primaryButton" type="button" onClick={onClose}>
+          继续阅读
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <p className="checkpointPrompt">{checkpoint.prompt}</p>
+      <div className="checkpointBlock">
+        <span>V1</span>
+        <p>{sourceHypothesis.text}</p>
+      </div>
+      {loading && <p className="checkpointPrompt">正在生成压力问题...</p>}
+      {error && <p className="checkpointError">{error}</p>}
+      {stressResult && (
+        <>
+          <div className="pressureQuestionBlock">
+            <span>压力问题</span>
+            <p>{stressResult.question}</p>
+          </div>
+          <textarea
+            value={stressAnswer}
+            onChange={(event) => updateAnswer(event.target.value)}
+            placeholder="回应这个问题..."
+            maxLength={MAX_LENGTH}
+          />
+          <div className="checkpointSwitch">
+            <button
+              type="button"
+              className={`optionButton ${draft.mode !== "revise" ? "selected" : ""}`}
+              onClick={() => updateDraft({ mode: "keep" })}
+            >
+              保留当前版本
+            </button>
+            <button
+              type="button"
+              className={`optionButton ${draft.mode === "revise" ? "selected" : ""}`}
+              onClick={() =>
+                updateDraft({
+                  mode: "revise",
+                  text: draft.text || sourceHypothesis.text,
+                  confidence: draft.confidence || sourceHypothesis.confidence,
+                })
+              }
+            >
+              修正为 V2
+            </button>
+          </div>
+          {draft.mode === "revise" && (
+            <>
+              <textarea
+                value={draft.text}
+                onChange={(event) => updateDraft({ text: event.target.value })}
+                placeholder="写下修正后的解释..."
+                maxLength={MAX_LENGTH}
+              />
+              <div className="confidenceGroup">
+                {CONFIDENCE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`optionButton ${draft.confidence === option.value ? "selected" : ""}`}
+                    onClick={() => updateDraft({ confidence: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="actions">
+            <button className="primaryButton" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+              保存 V2
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function FinalCheckpoint({ progress, checkpoint, onClose }) {
+  const { submitFeedback, markReplayViewed } = useProgress();
+  const [text, setText] = useState(progress.completion.feedback || "");
+  const canSubmit = text.trim().length >= MIN_LENGTH;
+
+  function handleSubmit() {
+    if (!canSubmit) {
+      return;
+    }
+    submitFeedback(text.trim());
+    markReplayViewed();
+    onClose();
+  }
+
+  return (
+    <>
+      <p className="checkpointPrompt">{checkpoint.prompt}</p>
+      {progress.hypothesisV1 && (
+        <div className="checkpointBlock">
+          <span>V1</span>
+          <p>{progress.hypothesisV1.text}</p>
+        </div>
+      )}
+      {progress.hypothesisV2 && (
+        <div className="checkpointBlock">
+          <span>V2</span>
+          <p>{progress.hypothesisV2.text}</p>
+        </div>
+      )}
+      {progress.hypothesisV3 && (
+        <div className="checkpointBlock">
+          <span>V3</span>
+          <p>{progress.hypothesisV3.text}</p>
+        </div>
+      )}
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        placeholder="写下当前最完整的解释..."
+        maxLength={MAX_LENGTH}
+      />
+      <div className="actions">
+        <button className="primaryButton" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+          保存阶段性结论
+        </button>
+      </div>
+    </>
+  );
+}
+
+function CheckpointPanel({ stage, progress, onClose }) {
+  const checkpoint = stage?.checkpoint;
+  if (!checkpoint) {
+    return <p className="checkpointPrompt">当前页没有新的 checkpoint。</p>;
+  }
+
+  return (
+    <div className="checkpointContent">
+      {checkpoint.kind === "capture" && (
+        <CaptureCheckpoint progress={progress} checkpoint={checkpoint} onClose={onClose} />
+      )}
+      {checkpoint.kind === "pressure" && (
+        <PressureCheckpoint
+          stageId={stage.stage_id}
+          progress={progress}
+          checkpoint={checkpoint}
+          onClose={onClose}
+        />
+      )}
+      {checkpoint.kind === "final" && (
+        <FinalCheckpoint progress={progress} checkpoint={checkpoint} onClose={onClose} />
+      )}
+    </div>
+  );
 }
 
 function WorkspacePage() {
-  const { progress, answerStatementCard, completeReading, setCurrentStage } =
-    useProgress();
-
-  const savedStageId = progress.reading.currentStageId;
-  const initialStageIndex = progress.reading.completed
-    ? TOTAL_STAGES - 1
-    : savedStageId && savedStageId >= 1 && savedStageId <= TOTAL_STAGES
-      ? savedStageId - 1
-      : 0;
-
-  const [stageIndex, setStageIndex] = useState(initialStageIndex);
+  const { progress, setCurrentStage, completeReading, resetProgress } = useProgress();
+  const initialPage = Math.min(
+    TOTAL_PAGES,
+    Math.max(1, progress.reading.currentStageId || 1),
+  );
+  const [pageId, setPageId] = useState(initialPage);
   const [stagesData, setStagesData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [retryToken, setRetryToken] = useState(0);
   const [openPanel, setOpenPanel] = useState(null);
-  const [aiThinking, setAiThinking] = useState(false);
-  const [modelStatus, setModelStatus] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
 
-  const refreshModelStatus = useCallback(() => {
-    getAiStatus()
-      .then(setModelStatus)
-      .catch(() => {
-        setModelStatus({
-          api_key_configured: false,
-          model: "unknown",
-          last_success: false,
-          last_error: "status_unavailable",
-          last_fallback: true,
-        });
-      });
-  }, []);
+  const stage = stagesData[pageId];
+  const checkpoint = stage?.checkpoint;
 
   useEffect(() => {
-    refreshModelStatus();
-  }, [refreshModelStatus]);
-
-  useEffect(() => {
-    const idsToLoad = [];
-    for (let id = 1; id <= stageIndex + 1; id += 1) {
-      if (!stagesData[id]) {
-        idsToLoad.push(id);
-      }
-    }
-    if (idsToLoad.length === 0) {
-      return undefined;
-    }
-
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError("");
 
-    Promise.all(idsToLoad.map((id) => getStage(id)))
-      .then((results) => {
+    getStage(pageId)
+      .then((data) => {
         if (cancelled) {
           return;
         }
-        setStagesData((prev) => {
-          const next = { ...prev };
-          results.forEach((data, index) => {
-            next[idsToLoad[index]] = data;
-          });
-          return next;
-        });
-        setCurrentStage(stageIndex + 1);
+        setStagesData((prev) => ({ ...prev, [pageId]: data }));
+        setCurrentStage(pageId);
+        if (pageId === TOTAL_PAGES) {
+          completeReading();
+        }
       })
       .catch(() => {
         if (!cancelled) {
-          setError("暂时无法读取这段档案，请检查后端服务是否已启动，然后重试。");
+          setError("暂时无法读取文本，请确认后端服务正在运行。");
         }
       })
       .finally(() => {
@@ -122,230 +474,131 @@ function WorkspacePage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stageIndex, retryToken]);
+  }, [pageId, setCurrentStage, completeReading]);
 
-  const stageId = stageIndex + 1;
-  const stage = stagesData[stageId];
-  const cardAnswers = progress.reading.cardAnswers;
-  const cards = stage?.statement_cards || [];
-  const allCardsAnswered = cards.every((card) => cardAnswers[card.card_id]);
-  const canContinue = !loading && !error && allCardsAnswered;
+  useEffect(() => {
+    if (stage?.checkpoint && !checkpointDone(progress, stage.checkpoint)) {
+      setOpenPanel("checkpoint");
+    }
+  }, [
+    stage,
+    progress.hypothesisV1,
+    progress.hypothesisV2,
+    progress.hypothesisV3,
+    progress.completion.feedback,
+  ]);
 
-  const hypothesisUnlocked = progress.reading.completed;
-  const stressUnlocked = Boolean(progress.hypothesisV1);
-  const reviseUnlocked = Boolean(progress.stressResult);
-  const revealUnlocked = Boolean(progress.hypothesisV2);
+  const canPrev = pageId > 1;
+  const canNext = pageId < TOTAL_PAGES;
 
-  const agentStatus = aiThinking
-    ? "thinking"
-    : error
-      ? "offline"
-      : progress.stressResult?.fallback
-        ? "fallback"
-        : "online";
+  const pageLabel = useMemo(
+    () => `${String(pageId).padStart(2, "0")} / ${String(TOTAL_PAGES).padStart(2, "0")}`,
+    [pageId],
+  );
 
-  const toolbarItems = [
-    {
-      key: "hypothesis",
-      label: "形成方案",
-      unlocked: hypothesisUnlocked,
-      done: Boolean(progress.hypothesisV1),
-    },
-    {
-      key: "stress",
-      label: "接受审讯",
-      unlocked: stressUnlocked,
-      done: Boolean(progress.stressResult) && progress.stressAnswer.trim().length > 0,
-    },
-    {
-      key: "revise",
-      label: "作出修正",
-      unlocked: reviseUnlocked,
-      done: Boolean(progress.hypothesisV2),
-    },
-    {
-      key: "reveal",
-      label: "谜底与回放",
-      unlocked: revealUnlocked,
-      done: progress.completion.replayViewed,
-    },
-    {
-      key: "annotations",
-      label: `我的批注（${progress.annotations.length}）`,
-      unlocked: true,
-      done: progress.annotations.length > 0,
-    },
-  ];
-
-  function handleRetry() {
-    setRetryToken((prev) => prev + 1);
-    refreshModelStatus();
+  function turnPage(direction) {
+    setMenuOpen(false);
+    setPageId((prev) => {
+      const next = prev + direction;
+      return Math.min(TOTAL_PAGES, Math.max(1, next));
+    });
   }
 
-  function handleContinue() {
-    if (stageIndex + 1 < TOTAL_STAGES) {
-      setStageIndex((prev) => prev + 1);
+  function handleTouchEnd(event) {
+    if (touchStartX === null) {
       return;
     }
-    completeReading();
-    setOpenPanel("hypothesis");
+    const delta = event.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(delta) > 55) {
+      turnPage(delta < 0 ? 1 : -1);
+    }
+    setTouchStartX(null);
   }
 
-  function handleToolbarClick(item) {
-    if (!item.unlocked) {
-      return;
-    }
-    setOpenPanel(item.key);
+  function handleOpenCheckpoint() {
+    setMenuOpen(false);
+    setOpenPanel("checkpoint");
   }
 
   return (
-    <section className="stagePage">
-      <div className="caseHeader">
-        <span className="caseNumber">
-          CASE FILE · STAGE {stageId} / {TOTAL_STAGES}
-        </span>
-      </div>
-
-      <AIAgentCard
-        status={agentStatus}
-        note={getAgentNote(progress)}
-        modelStatus={modelStatus}
+    <section
+      className={`readerPage ${openPanel === "checkpoint" ? "checkpointDocked" : ""}`}
+      onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
+      onTouchEnd={handleTouchEnd}
+    >
+      <FloatingMenu
+        open={menuOpen}
+        onToggle={() => setMenuOpen((prev) => !prev)}
+        onOpenAnnotations={() => {
+          setMenuOpen(false);
+          setOpenPanel("annotations");
+        }}
+        onOpenCheckpoint={handleOpenCheckpoint}
+        onReset={() => {
+          setMenuOpen(false);
+          resetProgress();
+          setPageId(1);
+        }}
       />
 
-      <div className="stageProgressBar">
-        {Array.from({ length: TOTAL_STAGES }).map((_, index) => (
-          <div
-            key={index}
-            className={`stageDot ${index <= stageIndex ? "active" : ""}`}
-          />
-        ))}
-      </div>
+      <button
+        type="button"
+        className="pageTurnButton pageTurnPrev"
+        aria-label="上一页"
+        disabled={!canPrev}
+        onClick={() => turnPage(-1)}
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        className="pageTurnButton pageTurnNext"
+        aria-label="下一页"
+        disabled={!canNext}
+        onClick={() => turnPage(1)}
+      >
+        ›
+      </button>
 
-      <div className="workspaceToolbar">
-        {toolbarItems.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className={`toolbarButton ${item.done ? "done" : ""} ${
-              !item.unlocked ? "locked" : ""
-            }`}
-            disabled={!item.unlocked}
-            onClick={() => handleToolbarClick(item)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {loading && !stage && <p className="stageIntro">正在调取档案...</p>}
-
-      {error && (
-        <div className="editor">
-          <p style={{ margin: 0, color: "#8a3b2e" }}>{error}</p>
-          <div className="actions">
-            <button className="primaryButton" type="button" onClick={handleRetry}>
-              重试
-            </button>
-          </div>
+      <main className="ebookSurface">
+        <div className="ebookTopline">
+          <span>第十三号牢房</span>
+          <span>{pageLabel}</span>
         </div>
-      )}
 
-      {stage && !error && (
-        <>
-          <h1 className="stageTitle">{stage.title}</h1>
+        {loading && !stage && <p className="readerMessage">正在翻开这一页...</p>}
+        {error && <p className="readerMessage readerError">{error}</p>}
 
-          <AnnotationLayer
-            stageId={stageId}
-            segments={stage.segments}
-            onOpenAnnotations={() => setOpenPanel("annotations")}
-          />
+        {stage && !error && (
+          <>
+            <h1 className="ebookTitle">{stage.title}</h1>
+            <AnnotationLayer
+              stageId={pageId}
+              segments={stage.segments}
+              onOpenAnnotations={() => setOpenPanel("annotations")}
+            />
+          </>
+        )}
+      </main>
 
-          {cards.length > 0 && (
-            <div className="cardGrid">
-              {cards.map((card) => (
-                <div className="statementCard" key={card.card_id}>
-                  <div className="statementCardId">{card.card_id}</div>
-                  <p className="statementCardText">{card.text}</p>
-                  <div className="optionRow">
-                    {ANSWER_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        className={`optionButton ${
-                          cardAnswers[card.card_id] === option.value ? "selected" : ""
-                        }`}
-                        onClick={() => answerStatementCard(card.card_id, option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {!progress.reading.completed && (
-            <div className="continueBar">
-              <button
-                className="primaryButton"
-                type="button"
-                disabled={!canContinue}
-                onClick={handleContinue}
-              >
-                {stageIndex + 1 < TOTAL_STAGES ? "继续阅读" : "形成我的方案"}
-              </button>
-            </div>
-          )}
-        </>
-      )}
+      <div className="readerFooter">
+        <span>{checkpoint && checkpointDone(progress, checkpoint) ? "checkpoint 已保存" : ""}</span>
+        <span>{pageLabel}</span>
+      </div>
 
       <Panel
-        title={PANEL_META.hypothesis.title}
-        subtitle={PANEL_META.hypothesis.subtitle}
-        open={openPanel === "hypothesis"}
+        title={checkpoint?.title || "当前 checkpoint"}
+        subtitle={checkpoint ? checkpoint.checkpoint_id : "READING"}
+        open={openPanel === "checkpoint"}
         onClose={() => setOpenPanel(null)}
+        variant="side"
       >
-        <HypothesisPanel
-          onSubmitted={() => {
-            refreshModelStatus();
-            setOpenPanel("stress");
-          }}
-          onThinkingChange={setAiThinking}
-        />
+        <CheckpointPanel stage={stage} progress={progress} onClose={() => setOpenPanel(null)} />
       </Panel>
 
       <Panel
-        title={PANEL_META.stress.title}
-        subtitle={PANEL_META.stress.subtitle}
-        open={openPanel === "stress"}
-        onClose={() => setOpenPanel(null)}
-      >
-        <StressPanel onCompleted={() => setOpenPanel("revise")} />
-      </Panel>
-
-      <Panel
-        title={PANEL_META.revise.title}
-        subtitle={PANEL_META.revise.subtitle}
-        open={openPanel === "revise"}
-        onClose={() => setOpenPanel(null)}
-      >
-        <RevisePanel onSubmitted={() => setOpenPanel("reveal")} />
-      </Panel>
-
-      <Panel
-        title={PANEL_META.reveal.title}
-        subtitle={PANEL_META.reveal.subtitle}
-        open={openPanel === "reveal"}
-        onClose={() => setOpenPanel(null)}
-      >
-        <RevealPanel />
-      </Panel>
-
-      <Panel
-        title={PANEL_META.annotations.title}
-        subtitle={PANEL_META.annotations.subtitle}
+        title="我的批注"
+        subtitle="READING NOTES"
         open={openPanel === "annotations"}
         onClose={() => setOpenPanel(null)}
       >

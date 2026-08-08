@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
 import "./pages/pages.css";
 import { useProgress } from "./state/ProgressContext";
@@ -10,6 +10,8 @@ import WorkspacePage from "./pages/WorkspacePage";
 function App() {
   const { progress, resetProgress } = useProgress();
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const location = useLocation();
+  const isWorkspace = location.pathname === "/workspace";
 
   function handleResetClick() {
     if (!confirmingReset) {
@@ -21,23 +23,25 @@ function App() {
   }
 
   return (
-    <main className="page">
-      <nav className="navbar">
-        <Link className="brand" to="/">
-          Inkecho
-        </Link>
+    <main className={`page ${isWorkspace ? "workspaceShell" : ""}`}>
+      {!isWorkspace && (
+        <nav className="navbar">
+          <Link className="brand" to="/">
+            Inkecho
+          </Link>
 
-        {progress.started && (
-          <button
-            className="statusButton"
-            type="button"
-            onClick={handleResetClick}
-            onBlur={() => setConfirmingReset(false)}
-          >
-            {confirmingReset ? "确认重置？再点一次" : "重置体验"}
-          </button>
-        )}
-      </nav>
+          {progress.started && (
+            <button
+              className="statusButton"
+              type="button"
+              onClick={handleResetClick}
+              onBlur={() => setConfirmingReset(false)}
+            >
+              {confirmingReset ? "确认重置？再点一次" : "重置体验"}
+            </button>
+          )}
+        </nav>
+      )}
 
       <Routes>
         <Route path="/" element={<EntryPage />} />

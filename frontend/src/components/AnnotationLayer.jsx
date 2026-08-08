@@ -128,18 +128,26 @@ function AnnotationLayer({
     const containerRect =
       container.getBoundingClientRect();
 
+    const popoverWidth = 320;
+    const popoverHeight = annotationMode === "draw" ? 250 : 210;
+    const rawTop =
+      rect.top -
+      containerRect.top -
+      46;
+    const rawLeft = rect.left - containerRect.left;
+
     setPopover({
       quote,
       segmentIndex: Number(
         segmentEl.dataset.segmentIndex,
       ),
-      top:
-        rect.top -
-        containerRect.top -
-        46,
-      left: Math.max(
-        0,
-        rect.left - containerRect.left,
+      top: Math.min(
+        Math.max(0, rawTop),
+        Math.max(0, containerRect.height - popoverHeight),
+      ),
+      left: Math.min(
+        Math.max(0, rawLeft),
+        Math.max(0, containerRect.width - popoverWidth - 12),
       ),
     });
 
