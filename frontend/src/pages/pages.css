@@ -523,3 +523,19 @@
     flex-direction: column;
   }
 }
+
+.annotationOcrLabel {
+  margin: 10px 0 6px;
+
+  color: #776e62;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.4px;
+}
+
+.annotationOcrLabel span {
+  color: #9b9388;
+  font-weight: 400;
+}

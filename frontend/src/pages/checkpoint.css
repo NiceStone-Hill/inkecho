@@ -1,0 +1,577 @@
+/* ========================================
+   Checkpoint 微信消息式通知
+   ======================================== */
+
+.checkpointNotification {
+  position: fixed;
+  right: 72px;
+  bottom: 50px;
+  z-index: 45;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  width: min(290px, calc(100vw - 32px));
+  padding: 9px 32px 9px 9px;
+
+  color: #222;
+  background: rgba(255, 255, 255, 0.97);
+
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9px;
+
+  text-align: left;
+
+  box-shadow:
+    0 8px 24px
+    rgba(24, 24, 24, 0.15);
+
+  cursor: pointer;
+
+  animation: checkpointMessageIn 260ms ease-out;
+}
+
+.checkpointNotification:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 30px
+    rgba(24, 24, 24, 0.19);
+}
+
+@keyframes checkpointMessageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.checkpointNotificationAvatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  color: #fff;
+  background: #25211c;
+
+  border-radius: 6px;
+
+  font-family:
+    "Noto Serif SC",
+    "Songti SC",
+    serif;
+
+  font-size: 14px;
+}
+
+.checkpointNotificationBody {
+  min-width: 0;
+  flex: 1;
+
+  padding-right: 10px;
+}
+
+.checkpointNotificationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 2px;
+}
+
+.checkpointNotificationHeader strong {
+  color: #24211d;
+  font-size: 12px;
+}
+
+.checkpointNotificationHeader span {
+  color: #aaa39a;
+  font-size: 9px;
+}
+
+.checkpointNotificationBody p {
+  overflow: hidden;
+
+  margin: 0;
+
+  color: #6b655d;
+
+  font-size: 11px;
+  line-height: 1.4;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ========================================
+   Checkpoint 通知关闭按钮
+   ======================================== */
+
+.checkpointNotificationClose {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+
+  display: grid;
+  place-items: center;
+
+  width: 20px;
+  height: 20px;
+
+  padding: 0;
+
+  color: #aaa39a;
+  background: transparent;
+
+  border: 0;
+  border-radius: 50%;
+
+  font-size: 15px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.checkpointNotificationClose:hover {
+  color: #3c3731;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+
+/* ========================================
+   Checkpoint 聊天界面
+   ======================================== */
+
+.checkpointContent {
+  padding-bottom: 28px;
+}
+
+.chatMessage {
+  display: flex;
+
+  width: 100%;
+  margin: 14px 0;
+}
+
+.chatMessageAgent {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.chatMessageUser {
+  justify-content: flex-end;
+}
+
+.chatAvatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+
+  width: 42px;
+  height: 42px;
+
+  color: #fff;
+  background: #25211c;
+
+  border-radius: 8px;
+
+  font-family:
+    "Noto Serif SC",
+    "Songti SC",
+    serif;
+
+  font-size: 18px;
+}
+
+.chatBubble {
+  width: fit-content;
+  max-width: 84%;
+
+  padding: 10px 13px;
+
+  color: #2a2722;
+  background: #fff;
+
+  border: 1px solid #ddd6cc;
+  border-radius: 5px 14px 14px 14px;
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  box-shadow:
+    0 3px 10px
+    rgba(40, 35, 28, 0.06);
+}
+
+.chatMessageUser .chatBubble {
+  color: #243024;
+  background: #dff4c7;
+
+  border-color: #cce5b1;
+  border-radius: 14px 5px 14px 14px;
+}
+
+.chatComposer {
+  margin-top: 18px;
+}
+
+.chatComposer textarea {
+  box-sizing: border-box;
+
+  width: 100%;
+  min-height: 108px;
+
+  padding: 13px 14px;
+
+  color: #29251f;
+  background: #fff;
+
+  border: 1px solid #d5cec4;
+  border-radius: 10px;
+
+  outline: none;
+
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+
+  resize: vertical;
+}
+
+.chatComposer textarea:focus {
+  border-color: #8e806e;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(142, 128, 110, 0.1);
+}
+
+.chatComposerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-top: 8px;
+
+  color: #8b8172;
+  font-size: 12px;
+}
+
+
+/* ========================================
+   V1 / V2 / V3 当前版本
+   ======================================== */
+
+.versionContext {
+  margin-bottom: 22px;
+  padding: 13px 15px;
+
+  background: #f4efe7;
+  border-radius: 10px;
+}
+
+.versionContext > span {
+  color: #857a6a;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.versionContext p {
+  margin: 8px 0 0;
+
+  color: #2d2923;
+
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.revisionChoice {
+  margin-top: 20px;
+}
+
+.revisionChoice > p {
+  margin-bottom: 8px;
+
+  color: #665f55;
+  font-size: 13px;
+}
+
+.revisionComposer {
+  margin-top: 12px;
+}
+
+
+/* ========================================
+   Final 页面版本简史
+   ======================================== */
+
+.versionMiniHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin: 18px 0;
+}
+
+.versionMiniItem {
+  display: grid;
+
+  grid-template-columns: 42px 1fr;
+  gap: 10px;
+
+  padding: 10px 12px;
+
+  background: #f4efe7;
+  border-radius: 8px;
+}
+
+.versionMiniItem strong {
+  color: #8a7355;
+}
+
+.versionMiniItem span {
+  color: #36312a;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.versionMiniItem.unchanged {
+  opacity: 0.65;
+  background: #f7f5f1;
+}
+
+.versionMiniItem.unchanged span {
+  font-style: italic;
+}
+
+
+/* ========================================
+   最后的思路变化
+   ======================================== */
+
+.thinkingJourney {
+  margin: 72px 0 32px;
+  padding-top: 48px;
+
+  border-top: 1px solid #d9d0c2;
+}
+
+.thinkingJourneyHeader {
+  text-align: center;
+}
+
+.thinkingJourneyHeader > span {
+  color: #9b8e7d;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.thinkingJourneyHeader h2 {
+  margin: 10px 0 8px;
+
+  color: #28231d;
+
+  font-family:
+    "Noto Serif SC",
+    "Songti SC",
+    SimSun,
+    Georgia,
+    serif;
+
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.thinkingJourneyHeader p {
+  margin: 0 auto 34px;
+
+  color: #847a6c;
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.journeyFlow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: min(620px, 100%);
+  margin: 0 auto;
+}
+
+.journeyNode,
+.journeyFinalNode {
+  box-sizing: border-box;
+
+  width: 100%;
+
+  padding: 18px 20px;
+
+  background: #fffaf2;
+
+  border: 1px solid #d6cbb9;
+  border-radius: 12px;
+
+  box-shadow:
+    0 8px 24px
+    rgba(48, 40, 29, 0.06);
+}
+
+.journeyFinalNode {
+  background: #f1ebdf;
+  border-color: #a99576;
+}
+
+.journeyNodeUnchanged {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.journeyNodeLabel {
+  display: inline-block;
+
+  margin-bottom: 8px;
+  padding: 3px 8px;
+
+  color: #fff;
+  background: #605342;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.journeyNode strong,
+.journeyFinalNode strong {
+  display: block;
+
+  color: #29251f;
+  font-size: 15px;
+}
+
+.journeyNode p,
+.journeyFinalNode p {
+  margin: 8px 0 0;
+
+  color: #514b42;
+
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.journeyConfidence {
+  display: block;
+
+  margin-top: 10px;
+
+  color: #918676;
+  font-size: 11px;
+}
+
+.journeyArrow {
+  height: 38px;
+
+  color: #998a75;
+
+  font-size: 26px;
+  line-height: 38px;
+
+  text-align: center;
+}
+
+.journeyPressureNode {
+  box-sizing: border-box;
+
+  width: 88%;
+
+  padding: 14px 16px;
+
+  background: #f6f3ee;
+
+  border-left: 3px solid #a98168;
+  border-radius: 4px 10px 10px 4px;
+}
+
+.journeyPressureTop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+
+  margin-bottom: 10px;
+
+  color: #99735d;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.journeyPressureNode strong {
+  color: #6e5547;
+  font-size: 12px;
+}
+
+.journeyPressureNode p {
+  margin: 4px 0 10px;
+
+  color: #4c463d;
+
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.journeyPressureNode p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* ========================================
+   手机
+   ======================================== */
+
+@media (max-width: 720px) {
+  .checkpointNotification {
+    right: 14px;
+    bottom: 68px;
+    left: 14px;
+
+    width: auto;
+  }
+
+  .chatBubble {
+    max-width: 88%;
+  }
+
+  .journeyPressureNode {
+    width: 96%;
+  }
+
+  .thinkingJourney {
+    margin-top: 54px;
+  }
+}
