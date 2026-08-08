@@ -1,370 +1,191 @@
-.stagePage {
-  width: min(760px, 100%);
-  margin: 60px auto 0;
-}
-
-.caseHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.caseNumber {
-  color: #92897b;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-
-.stageTitle {
-  margin: 6px 0 26px;
-  color: #1d1b18;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(30px, 5vw, 42px);
-  font-weight: 500;
-  letter-spacing: -1px;
-}
-
-.stageIntro {
-  max-width: 600px;
-  margin: 0 0 30px;
-  color: #625c53;
-  font-size: 16px;
-  line-height: 1.8;
-}
-
-.stageProgressBar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 26px;
-}
-
-.stageDot {
-  flex: 1;
-  height: 4px;
-  background: #d9d2c4;
-  border-radius: 999px;
-}
-
-.stageDot.active {
-  background: #24211d;
-}
-
-.segmentBlock {
-  padding: 22px 24px;
-  margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid #d4cec3;
-  border-left: 3px solid #a8977a;
-  border-radius: 4px 16px 16px 4px;
-  color: #2c2822;
-  font-size: 16px;
-  line-height: 1.9;
-}
-
-.cardGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  width: 94%;
-  margin: 14px auto 20px;
-}
-
-.statementCard {
-  padding: 10px 14px;
-
-  background: #eee8de;
-  border: 1px solid #d8cec0;
-  border-left: 4px solid #9c8768;
-  border-radius: 8px 10px 10px 8px;
-
-  transition:
-    transform 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.statementCard:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(70, 57, 41, 0.06);
-}
-
-.statementCardId {
-  display: inline-block;
-
-  padding: 1px 6px;
-
-  color: #776750;
-  background: rgba(156, 135, 104, 0.12);
-  border-radius: 4px;
-
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-}
-
-.statementCardText {
-  margin: 6px 0 8px;
-
-  color: #302b24;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.optionRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.optionButton {
-  padding: 4px 9px;
-
-  color: #51493e;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid #c5b9a8;
-  border-radius: 999px;
-
-  font-size: 11px;
-  line-height: 1.3;
-
-  transition: all 140ms ease;
-}
-
-.optionButton:hover {
-  background: #fff;
-  border-color: #9f907d;
-}
-
-.optionButton.selected {
-  color: #fff;
-  background: #514536;
-  border-color: #514536;
-}
-
-.continueBar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 30px;
-}
-
-.confidenceGroup {
-  display: flex;
-  gap: 8px;
-  margin: 14px 0 4px;
-}
-
-.workspaceToolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 26px;
-}
-
-.toolbarButton {
-  padding: 9px 16px;
-  color: #2b2823;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid #bcb4a8;
-  border-radius: 999px;
-  font-size: 13px;
-  transition: all 140ms ease;
-}
-
-.toolbarButton.done {
-  color: #fff;
-  background: #24211d;
-  border-color: #24211d;
-}
-
-.toolbarButton.locked {
-  color: #b0a89c;
-  background: transparent;
-  border-color: #d9d2c4;
-  cursor: not-allowed;
-}
-
-.aiAgentCard {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid #d4cec3;
-  border-radius: 16px;
-}
-
-.aiAgentAvatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  color: #f4f0e8;
-  background: #24211d;
-  border-radius: 50%;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.aiAgentName {
-  color: #1d1b18;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.aiAgentStatusRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.aiAgentDot {
-  width: 7px;
-  height: 7px;
-  background: #868075;
-  border-radius: 50%;
-}
-
-.aiAgentDot.online {
-  background: #4f8a5b;
-}
-
-.aiAgentDot.thinking {
-  background: #c99a3f;
-  animation: aiAgentPulse 1.1s ease-in-out infinite;
-}
-
-.aiAgentDot.fallback {
-  background: #b3763f;
-}
-
-.aiAgentDot.offline {
-  background: #a24a3a;
-}
-
-@keyframes aiAgentPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
-.aiAgentStatusLabel {
-  color: #625c53;
-  font-size: 13px;
-}
-
-.aiAgentModelStatus {
-  margin: 5px 0 0;
-  color: #4d473f;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.aiAgentModelError {
-  margin: 4px 0 0;
-  color: #8a3b2e;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.aiAgentNote {
-  margin: 6px 0 0;
-  color: #766e63;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.panelOverlay {
+.readerPage {
   position: fixed;
   inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(29, 27, 24, 0.45);
-  backdrop-filter: blur(2px);
+  overflow: hidden;
+  background: #eee7da;
+  color: #211f1b;
 }
 
-.panelSheet {
-  width: min(720px, 100%);
-  max-height: 88vh;
+.ebookSurface {
+  width: min(780px, calc(100vw - 112px));
+  height: calc(100vh - 58px);
+  margin: 28px auto 30px;
+  padding: clamp(28px, 5vw, 58px) clamp(24px, 6vw, 72px) 96px;
   overflow-y: auto;
-  padding: 28px 30px 32px;
-  background: #f4f0e8;
-  border: 1px solid #d4cec3;
-  border-radius: 24px 24px 0 0;
-  box-shadow: 0 -20px 60px rgba(54, 43, 29, 0.22);
+  background: #fbf7ef;
+  border: 1px solid #d7cdbc;
+  box-shadow: 0 18px 60px rgba(50, 43, 32, 0.16);
 }
 
-.panelHeader {
+.checkpointDocked .ebookSurface {
+  width: min(760px, calc(100vw - 520px));
+  margin-right: 480px;
+  margin-left: max(32px, calc((100vw - 1240px) / 2));
+}
+
+.ebookTopline,
+.readerFooter {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 18px;
+  color: #8b8172;
+  font-size: 12px;
+  letter-spacing: 1.4px;
 }
 
-.panelTitle {
-  margin: 4px 0 0;
-  color: #1d1b18;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(24px, 4vw, 30px);
+.ebookTopline {
+  margin-bottom: 26px;
+}
+
+.readerFooter {
+  position: fixed;
+  right: 32px;
+  bottom: 16px;
+  left: 32px;
+  pointer-events: none;
+}
+
+.ebookTitle {
+  margin: 0 0 24px;
+  color: #1f1c18;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: clamp(26px, 4vw, 36px);
   font-weight: 500;
-}
-
-.panelCloseButton {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  color: #2b2823;
-  background: transparent;
-  border: 1px solid #bcb4a8;
-  border-radius: 50%;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.panelBody {
-  color: #2c2822;
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .annotationLayer {
   position: relative;
+  padding-bottom: 46px;
+}
+
+.segmentBlock {
+  margin: 0 0 1.05em;
+  padding: 0;
+  color: #26221d;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: clamp(18px, 2.1vw, 22px);
+  line-height: 2.05;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+.readerMessage {
+  margin: 80px 0 0;
+  color: #6d6356;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.readerError {
+  color: #8a3b2e;
+}
+
+.pageTurnButton {
+  position: fixed;
+  top: 50%;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 96px;
+  color: #5f5549;
+  background: rgba(251, 247, 239, 0.78);
+  border: 1px solid #d2c6b5;
+  font-size: 42px;
+  line-height: 1;
+  transform: translateY(-50%);
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    opacity 140ms ease;
+}
+
+.pageTurnButton:hover {
+  color: #201d19;
+  background: #fffaf1;
+}
+
+.pageTurnButton:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+.pageTurnPrev {
+  left: 18px;
+  border-radius: 0 999px 999px 0;
+}
+
+.pageTurnNext {
+  right: 18px;
+  border-radius: 999px 0 0 999px;
+}
+
+.readerMenu {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 30;
+}
+
+.readerMenuButton {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: #f8f2e8;
+  background: #26221d;
+  border: 1px solid #26221d;
+  border-radius: 50%;
+  font-size: 22px;
+  letter-spacing: 1px;
+  box-shadow: 0 12px 28px rgba(42, 35, 26, 0.24);
+}
+
+.readerMenuPanel {
+  position: absolute;
+  top: 54px;
+  right: 0;
+  display: flex;
+  min-width: 166px;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fffaf2;
+  border: 1px solid #d3c7b5;
+  box-shadow: 0 16px 42px rgba(48, 39, 28, 0.18);
+}
+
+.readerMenuPanel button {
+  padding: 13px 16px;
+  color: #26221d;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ebe1d2;
+  text-align: left;
+  font-size: 14px;
+}
+
+.readerMenuPanel button:last-child {
+  border-bottom: 0;
+}
+
+.readerMenuPanel button:hover {
+  background: #f1e8d9;
 }
 
 .annotationMark {
-  background: rgba(200, 158, 82, 0.35);
-  cursor: pointer;
+  background: rgba(197, 159, 85, 0.32);
   border-radius: 2px;
-  transition: background 140ms ease, box-shadow 140ms ease;
-}
-
-.annotationMark:hover {
-  background: rgba(200, 158, 82, 0.52);
-  box-shadow: 0 0 0 2px rgba(200, 158, 82, 0.16);
+  cursor: pointer;
 }
 
 .annotationPopover {
   position: absolute;
   z-index: 20;
-  width: min(320px, 80vw);
+  width: min(320px, calc(100vw - 40px));
   padding: 14px;
-  background: #fff;
+  background: #fffaf2;
   border: 1px solid #d4cec3;
-  border-radius: 14px;
   box-shadow: 0 16px 40px rgba(54, 43, 29, 0.18);
 }
 
@@ -380,68 +201,249 @@
   min-height: 70px;
   padding: 8px;
   color: #24211d;
-  background: #f4f0e8;
+  background: #fbf7ef;
   border: 1px solid #d4cec3;
-  border-radius: 10px;
   font: inherit;
   font-size: 13px;
   line-height: 1.6;
   resize: vertical;
 }
 
-.annotationPopoverActions {
+.annotationPopoverActions,
+.actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
-.annotationPopoverActions .primaryButton,
-.annotationPopoverActions .secondaryButton {
-  padding: 7px 14px;
+.annotationModeSwitch,
+.confidenceGroup,
+.checkpointSwitch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.annotationModeSwitch button,
+.optionButton {
+  padding: 7px 12px;
+  color: #51493e;
+  background: #f7f0e6;
+  border: 1px solid #c5b9a8;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.annotationModeSwitch button.active,
+.optionButton.selected {
+  color: #fff;
+  background: #514536;
+  border-color: #514536;
+}
+
+.handwritingCanvas {
+  display: block;
+  width: 100%;
+  height: 135px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 32px,
+      rgba(156, 135, 104, 0.11) 33px
+    ),
+    #faf8f3;
+  border: 1px solid #d4cec3;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.handwritingCanvasPreview {
+  height: 120px;
+  margin-top: 8px;
+  cursor: default;
+  pointer-events: none;
+}
+
+.handwritingTools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: #92897b;
+  font-size: 11px;
+}
+
+.handwritingClearButton {
+  padding: 3px 8px;
+  color: #766e63;
+  background: transparent;
+  border: 0;
+  font-size: 11px;
+}
+
+.panelOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(31, 27, 21, 0.34);
+}
+
+.panelOverlaySide {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.panelSheet {
+  width: min(660px, 100%);
+  max-height: min(720px, 88vh);
+  overflow-y: auto;
+  padding: 26px 28px 30px;
+  background: #fffaf2;
+  border: 1px solid #d4c7b4;
+  box-shadow: 0 22px 70px rgba(44, 35, 24, 0.28);
+}
+
+.panelSheetSide {
+  width: min(430px, 100vw);
+  max-height: 100vh;
+  min-height: 100vh;
+  padding-top: 28px;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  box-shadow: -18px 0 56px rgba(44, 35, 24, 0.2);
+  pointer-events: auto;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.caseNumber {
+  color: #8b8172;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+
+.panelTitle {
+  margin: 5px 0 0;
+  color: #1f1c18;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.panelCloseButton {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: #2b2823;
+  background: transparent;
+  border: 1px solid #bcb4a8;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.checkpointPrompt {
+  margin: 0 0 16px;
+  color: #625c53;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.checkpointBlock,
+.annotationItem {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: #f5eee3;
+  border-left: 3px solid #9c8768;
+}
+
+.pressureQuestionBlock {
+  margin: 4px 0 18px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.pressureQuestionBlock span {
+  color: #8a3b2e;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.pressureQuestionBlock p {
+  margin: 8px 0 0;
+  color: #211f1b;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.75;
+}
+
+.checkpointBlock span,
+.annotationMeta {
+  color: #8b8172;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.checkpointBlock p,
+.checkpointReadOnly p,
+.annotationQuote,
+.annotationNote {
+  margin: 8px 0 0;
+  color: #2c2822;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.checkpointError,
+.annotationError {
+  color: #8a3b2e;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.checkpointMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: #8b8172;
   font-size: 13px;
 }
 
 .annotationsList {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.annotationItem {
-  padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid #d4cec3;
-  border-left: 3px solid #a8977a;
-  border-radius: 4px 14px 14px 4px;
+  gap: 12px;
 }
 
 .annotationMeta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  color: #92897b;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.annotationQuote {
-  margin: 10px 0;
-  color: #2c2822;
-  font-size: 16px;
-  line-height: 1.75;
-}
-
-.annotationNote {
-  margin: 0;
-  padding: 10px 12px;
-  color: #4d473f;
-  background: rgba(229, 222, 209, 0.72);
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.7;
 }
 
 .annotationNote.muted {
@@ -451,177 +453,73 @@
 .annotationItemActions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
-}
-
-.annotationError {
-  margin: 8px 0 0;
-  color: #8a3b2e;
-  font-size: 13px;
-  line-height: 1.6;
+  margin-top: 10px;
 }
 
 .annotationEmpty {
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.56);
+  padding: 16px;
+  background: #f5eee3;
   border: 1px dashed #c8bfae;
-  border-radius: 12px;
 }
 
-@media (max-width: 600px) {
-  .stagePage {
-    margin-top: 30px;
+@media (max-width: 720px) {
+  .ebookSurface {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 54px 24px 64px;
+    border: 0;
+    box-shadow: none;
   }
 
-  .segmentBlock,
-  .statementCard {
-    padding: 16px 18px;
+  .checkpointDocked .ebookSurface {
+    width: 100vw;
+    margin: 0;
   }
 
-  .continueBar {
-    flex-direction: column;
+  .panelOverlaySide {
+    align-items: flex-end;
+    background: rgba(31, 27, 21, 0.24);
+    pointer-events: auto;
   }
 
-  .continueBar .primaryButton,
-  .continueBar .secondaryButton {
+  .panelSheetSide {
     width: 100%;
+    min-height: auto;
+    max-height: 58vh;
+    border-top: 1px solid #d4c7b4;
+    box-shadow: 0 -18px 54px rgba(44, 35, 24, 0.22);
   }
 
-  .caseHeader {
-    flex-direction: column;
+  .pageTurnButton {
+    top: auto;
+    bottom: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 34px;
+    transform: none;
+  }
+
+  .pageTurnPrev {
+    left: 18px;
+  }
+
+  .pageTurnNext {
+    right: 18px;
+  }
+
+  .readerMenu {
+    top: 14px;
+    right: 14px;
+  }
+
+  .readerFooter {
+    display: none;
+  }
+
+  .checkpointMeta {
     align-items: flex-start;
-    gap: 4px;
+    flex-direction: column;
   }
-}
-
-/* ==============================
-   批注输入模式：键盘 / 手写
-   ============================== */
-
-.annotationModeSwitch {
-  display: inline-flex;
-  gap: 3px;
-
-  padding: 3px;
-  margin-bottom: 10px;
-
-  background: #eee8de;
-  border: 1px solid #ded5c8;
-  border-radius: 9px;
-}
-
-.annotationModeSwitch button {
-  padding: 5px 11px;
-
-  color: #766e63;
-  background: transparent;
-
-  border: 0;
-  border-radius: 7px;
-
-  font-family: inherit;
-  font-size: 12px;
-
-  cursor: pointer;
-
-  transition:
-    color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.annotationModeSwitch button:hover {
-  color: #302b24;
-}
-
-.annotationModeSwitch button.active {
-  color: #302b24;
-
-  background: #fff;
-
-  box-shadow:
-    0 1px 4px
-    rgba(54, 43, 29, 0.1);
-}
-
-
-/* ==============================
-   手写区域
-   ============================== */
-
-.handwritingArea {
-  width: 100%;
-}
-
-.handwritingCanvas {
-  display: block;
-
-  width: 100%;
-  height: 135px;
-
-  box-sizing: border-box;
-
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 32px,
-      rgba(156, 135, 104, 0.11) 33px
-    ),
-    #faf8f3;
-
-  border: 1px solid #d4cec3;
-  border-radius: 10px;
-
-  cursor: crosshair;
-
-  /* 非常重要：
-     防止手机 / 平板书写时页面跟着滑 */
-  touch-action: none;
-}
-
-.handwritingCanvasPreview {
-  height: 120px;
-
-  margin-top: 8px;
-
-  cursor: default;
-
-  pointer-events: none;
-}
-
-.handwritingTools {
-  display: flex;
-
-  align-items: center;
-  justify-content: space-between;
-
-  margin-top: 6px;
-
-  color: #92897b;
-
-  font-size: 11px;
-}
-
-.handwritingClearButton {
-  padding: 3px 8px;
-
-  color: #766e63;
-  background: transparent;
-
-  border: 0;
-
-  font-family: inherit;
-  font-size: 11px;
-
-  cursor: pointer;
-}
-
-.handwritingClearButton:hover {
-  color: #302b24;
-}
-
-.handwritingClearButton:disabled {
-  color: #bbb2a6;
-  cursor: default;
 }

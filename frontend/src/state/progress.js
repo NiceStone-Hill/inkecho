@@ -15,6 +15,7 @@ export function createDefaultProgress() {
     reading: {
       completed: false,
       cardAnswers: {},
+      currentStageId: 1,
     },
     hypothesisDraft: { text: "", confidence: "medium" },
     hypothesisV1: null,
@@ -22,6 +23,10 @@ export function createDefaultProgress() {
     stressAnswer: "",
     revisionDraft: { mode: "keep", text: "", confidence: "medium", reason: "" },
     hypothesisV2: null,
+    stressResult2: null,
+    stressAnswer2: "",
+    revisionDraft2: { mode: "keep", text: "", confidence: "medium", reason: "" },
+    hypothesisV3: null,
     annotations: [],
     completion: {
       replayViewed: false,

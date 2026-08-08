@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-function Panel({ title, subtitle, open, onClose, children }) {
+function Panel({ title, subtitle, open, onClose, children, variant = "modal" }) {
   useEffect(() => {
     if (!open) {
       return undefined;
@@ -19,9 +19,9 @@ function Panel({ title, subtitle, open, onClose, children }) {
   }
 
   return (
-    <div className="panelOverlay" onClick={onClose}>
+    <div className={`panelOverlay ${variant === "side" ? "panelOverlaySide" : ""}`} onClick={onClose}>
       <div
-        className="panelSheet"
+        className={`panelSheet ${variant === "side" ? "panelSheetSide" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
