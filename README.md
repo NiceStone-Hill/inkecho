@@ -326,12 +326,61 @@ http://127.0.0.1:8000/api/health
 
 ---
 
-## 创建文字回声
+## 阅读阶段列表
 
 请求：
 
 ```http
-POST /api/echo
+GET /api/content/stages
+```
+
+返回示例：
+
+```json
+[
+  { "stage_id": 1, "title": "建立边界", "order": 1 },
+  { "stage_id": 2, "title": "异常开始出现", "order": 2 },
+  { "stage_id": 3, "title": "监狱系统失去解释力", "order": 3 }
+]
+```
+
+---
+
+## 单个阅读阶段内容
+
+请求：
+
+```http
+GET /api/content/stages/{stage_id}
+```
+
+返回示例：
+
+```json
+{
+  "stage_id": 1,
+  "title": "建立边界",
+  "order": 1,
+  "segments": ["……精选原文片段……"],
+  "statement_cards": [
+    { "card_id": "SC01", "text": "……", "answer_type": "physical_constraint" }
+  ],
+  "allowed_evidence": [
+    { "evidence_id": "E01", "text": "……", "source_stage": 1 }
+  ]
+}
+```
+
+后端只返回当前阶段允许出现的原文与证据；不接受客户端上传的证据白名单。
+
+---
+
+## 假说分析（默认前提探测）
+
+请求：
+
+```http
+POST /api/analyze
 Content-Type: application/json
 ```
 
@@ -339,69 +388,88 @@ Content-Type: application/json
 
 ```json
 {
-  "text": "Hello Inkecho"
+  "stage_id": 2,
+  "hypothesis_text": "他可能是从那个排水管道爬出去的。",
+  "confidence": "low"
 }
+```
+
+`confidence` 取值：`low` / `medium` / `high`。
+
+返回示例：
+
+```json
+{
+  "normalized_steps": ["……", "……", "……"],
+  "unsupported_assumptions": ["这条通道足以让成年人通行（尚未被文本证明）"],
+  "selected_assumption": "这条通道足以让成年人通行（尚未被文本证明）",
+  "question": "文本只说明这个孔洞的存在，你怎么确认它能容纳一个成年人通过？",
+  "category": "physical_path",
+  "rationale_evidence_ids": ["E05"],
+  "fallback": false
+}
+```
+
+- `fallback` 为 `true` 时表示模型调用失败或未配置密钥，系统改用关键词兜底分类器返回安全问题，不影响用户继续完成体验。
+- `rationale_evidence_ids` 只会包含当前 `stage_id` 允许的证据 ID。
+
+可以通过 FastAPI 自动生成的接口文档测试以上全部接口：
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 谜底解决链
+
+请求：
+
+```http
+GET /api/solution
 ```
 
 返回示例：
 
 ```json
 {
-  "reply": "这是后端返回的回声：Hello Inkecho"
+  "steps": [
+    { "step_id": 1, "text": "……", "evidence_ids": ["E04", "E05"] }
+  ]
 }
 ```
 
-可以通过 FastAPI 自动生成的接口文档测试：
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-测试步骤：
-
-1. 找到 `POST /api/echo`
-2. 点击 `Try it out`
-3. 输入请求内容
-4. 点击 `Execute`
-5. 查看后端返回结果
+谜底内容全部由人工审核维护，不经过模型生成。
 
 ---
 
 # 前后端通信方式
 
-前端通过 HTTP 请求调用后端接口。
+前端通过 HTTP 请求调用后端接口，所有请求封装在 `frontend/src/api.js` 中。
 
-前端请求示例：
+前端请求示例（提交假说并请求分析）：
 
 ```javascript
-const response = await fetch(`${API_URL}/api/echo`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    text: text,
-  }),
+import { analyzeHypothesis } from "./api";
+
+const result = await analyzeHypothesis({
+  stageId: 2,
+  hypothesisText: "他可能是从那个排水管道爬出去的。",
+  confidence: "low",
 });
-
-const data = await response.json();
 ```
 
-前端发送的数据：
+前端实际发送的请求体：
 
 ```json
 {
-  "text": "今天发生了一件有趣的事情"
+  "stage_id": 2,
+  "hypothesis_text": "他可能是从那个排水管道爬出去的。",
+  "confidence": "low"
 }
 ```
 
-后端返回的数据：
-
-```json
-{
-  "reply": "这是后端返回的回声：今天发生了一件有趣的事情"
-}
-```
+后端返回的数据结构参见上文“假说分析（默认前提探测）”一节。
 
 前端主要负责：
 
@@ -455,14 +523,22 @@ VITE_OPENAI_API_KEY=your-secret-key
 backend/.env
 ```
 
-未来可能使用：
+当前使用：
 
 ```env
 OPENAI_API_KEY=your-secret-key
-DATABASE_URL=your-database-url
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+AI_TIMEOUT_SECONDS=10
 ```
 
-后端 `.env` 文件不能上传到 GitHub。
+说明：
+
+- `OPENAI_API_KEY` 未配置或为空时，`/api/analyze` 会自动使用关键词兜底分类器，不会报错，也不会中断体验。
+- `AI_BASE_URL` 和 `AI_MODEL` 可以按需替换为其他兼容 OpenAI Chat Completions 接口格式的模型服务。
+- `AI_TIMEOUT_SECONDS` 控制模型调用的超时时间，超时会自动降级为兜底问题。
+
+后端 `.env` 文件不能上传到 GitHub。可以参考 `backend/.env.example` 创建自己的本地配置。
 
 未来部署到 Render 后，应在 Render 控制台中配置环境变量，而不是将密钥直接写入代码或上传到 GitHub。
 
@@ -479,24 +555,18 @@ DATABASE_URL=your-database-url
 
 浏览器会将它们视为不同来源，因此 FastAPI 后端需要允许本地前端访问。
 
-示例：
+本地开发地址（`http://localhost:5173`、`http://127.0.0.1:5173`）已经在
+`backend/main.py` 中硬编码默认允许，无需额外配置。
 
-```python
-from fastapi.middleware.cors import CORSMiddleware
+正式前端域名（例如部署到 GitHub Pages 后的地址）通过环境变量 `ALLOWED_ORIGINS`
+追加，多个地址用逗号分隔，写在 `backend/.env` 中：
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+```env
+ALLOWED_ORIGINS=https://NiceStone-Hill.github.io
 ```
 
-未来前端部署到 GitHub Pages 后，还需要将正式前端域名加入后端允许的来源列表。
+不在允许列表中的来源发起的请求会被浏览器拦截（对应产品需求文档 AC12：
+正式Origin可调用，其他Origin被拒绝）。
 
 ---
 
@@ -678,11 +748,13 @@ npm run dev
 
 ## 浏览器出现 CORS 错误
 
-检查 FastAPI 的 `CORSMiddleware` 是否允许：
+本地开发地址（`http://localhost:5173`、`http://127.0.0.1:5173`）默认已被允许。
 
-```text
-http://localhost:5173
-http://127.0.0.1:5173
+如果是部署后的正式前端域名报错，检查 `backend/.env` 中的 `ALLOWED_ORIGINS`
+是否包含该域名，例如：
+
+```env
+ALLOWED_ORIGINS=https://NiceStone-Hill.github.io
 ```
 
 修改后重新启动后端。
@@ -756,29 +828,37 @@ VITE_API_URL=https://inkecho-api.onrender.com
 
 在本地功能稳定之前，暂不进行正式部署。
 
+### 子路径部署的两个关键点（对应 AC11）
+
+GitHub Pages 是纯静态托管，仓库地址会把前端部署在子路径下（`/inkecho/`），
+且没有服务端路由回退能力。为了保证刷新和直接访问任意页面都不会出现空白或 404，
+项目做了两处约定，未来改动时需要保持一致：
+
+1. `frontend/vite.config.js` 中 `base` 在生产构建时固定为 `/inkecho/`。
+   如果仓库名变化，需要同步修改这里，否则构建产物引用的 JS/CSS 路径会 404。
+2. `frontend/src/main.jsx` 使用 `HashRouter` 而不是 `BrowserRouter`。
+   路由状态放在 URL hash 里（例如 `/inkecho/#/read`），刷新或直接访问任意子路径
+   都只会请求同一个 `index.html`，不依赖服务器端的路由重写规则。
+
 ---
 
 # 当前开发状态
 
-项目目前已经实现：
+项目目前已经实现《前提之外｜UNPROVEN》P0 主流程（对应产品需求文档第5、7章）：
 
-- React 前端本地运行
-- FastAPI 后端本地运行
-- 前端检查后端状态
-- 前端向后端发送文字
-- 后端返回基础回声结果
-- 使用环境变量配置本地后端地址
+- 六页体验：进入页、精选阅读页（3阶段+事实/前提陈述卡）、假说v1页、压力测试页、修正v2页、谜底与回放页
+- 前端路由与阶段守卫（React Router + localStorage），刷新或直接跳转URL会被带回最近完整检查点
+- 后端 WorkPack 内容（3段精选原文、9条证据、3张陈述卡、5类压力问题模板、5步人工解决链、禁剧透词表）
+- `/api/analyze` 唯一AI调用：假说结构化、默认前提探测、压力问题生成，并对模型输出做证据边界校验、禁词校验
+- 模型不可用或未配置密钥时，自动降级为关键词兜底分类器，保证不同类别假说仍能得到不同问题
+- 谜底 `/api/solution` 由人工数据维护，不经过模型生成
 
 下一步计划：
 
-- 完善 Inkecho 的页面设计与交互体验
-- 明确项目的核心使用流程
-- 接入 AI 文本分析或生成能力
-- 增加数据保存功能
-- 配置数据库
-- 完善输入校验和错误处理
-- 部署后端到 Render
-- 部署前端到 GitHub Pages
+- 用户测试与内容红队（不同假说样本、防剧透用例）
+- 手写签名与分享卡（P1，可选）
+- 部署后端到 Render、前端到 GitHub Pages
+- 补充自动化测试（状态迁移、证据白名单、禁词校验）
 
 ---
 
