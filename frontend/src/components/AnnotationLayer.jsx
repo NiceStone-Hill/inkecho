@@ -1,94 +1,407 @@
-import { useRef, useState } from "react";
-import { useProgress } from "../state/ProgressContext";
-import HandwritingCanvas from "./HandwritingCanvas";
+import {
+  useRef,
+  useState,
+} from "react";
 
-function buildHighlightedNodes(text, annotations) {
-  if (annotations.length === 0) {
-    return [{ key: "plain", text, annotationId: null }];
+import {
+  useProgress,
+} from "../state/ProgressContext";
+
+import {
+  recognizeHandwriting,
+} from "../api";
+
+import HandwritingCanvas
+  from "./HandwritingCanvas";
+
+
+/* ========================================
+   strokes -> PNG
+   ======================================== */
+
+function strokesToImageDataUrl(
+  strokes,
+) {
+  const width = 640;
+  const height = 180;
+
+  const canvas =
+    document.createElement(
+      "canvas",
+    );
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx =
+    canvas.getContext("2d");
+
+
+  // 白底
+  ctx.fillStyle =
+    "#ffffff";
+
+  ctx.fillRect(
+    0,
+    0,
+    width,
+    height,
+  );
+
+
+  // 黑字
+  ctx.strokeStyle =
+    "#111111";
+
+  ctx.lineWidth = 5;
+
+  ctx.lineCap =
+    "round";
+
+  ctx.lineJoin =
+    "round";
+
+
+  for (
+    const stroke
+    of strokes
+  ) {
+
+    if (
+      !stroke ||
+      stroke.length === 0
+    ) {
+      continue;
+    }
+
+    ctx.beginPath();
+
+
+    stroke.forEach(
+      (
+        point,
+        index,
+      ) => {
+
+        const x =
+          point.x *
+          width;
+
+        const y =
+          point.y *
+          height;
+
+
+        if (
+          index === 0
+        ) {
+
+          ctx.moveTo(
+            x,
+            y,
+          );
+
+        } else {
+
+          ctx.lineTo(
+            x,
+            y,
+          );
+
+        }
+      },
+    );
+
+
+    if (
+      stroke.length === 1
+    ) {
+
+      const point =
+        stroke[0];
+
+      ctx.lineTo(
+        point.x *
+          width +
+          1,
+
+        point.y *
+          height +
+          1,
+      );
+    }
+
+
+    ctx.stroke();
   }
+
+
+  return canvas.toDataURL(
+    "image/png",
+  );
+}
+
+
+/* ========================================
+   Highlight text
+   ======================================== */
+
+function buildHighlightedNodes(
+  text,
+  annotations,
+) {
+  if (
+    annotations.length === 0
+  ) {
+    return [
+      {
+        key: "plain",
+        text,
+        annotationId: null,
+      },
+    ];
+  }
+
 
   const matches = [];
 
-  for (const annotation of annotations) {
-    const index = text.indexOf(annotation.quote);
+
+  for (
+    const annotation
+    of annotations
+  ) {
+
+    const index =
+      text.indexOf(
+        annotation.quote,
+      );
+
 
     if (index >= 0) {
+
       matches.push({
         start: index,
-        end: index + annotation.quote.length,
-        annotationId: annotation.id,
+
+        end:
+          index +
+          annotation.quote.length,
+
+        annotationId:
+          annotation.id,
       });
+
     }
   }
 
-  matches.sort((a, b) => a.start - b.start);
+
+  matches.sort(
+    (a, b) =>
+      a.start - b.start,
+  );
+
 
   const nodes = [];
+
   let cursor = 0;
 
-  matches.forEach((match, index) => {
-    if (match.start < cursor) {
-      return;
-    }
 
-    if (match.start > cursor) {
+  matches.forEach(
+    (
+      match,
+      index,
+    ) => {
+
+      if (
+        match.start <
+        cursor
+      ) {
+        return;
+      }
+
+
+      if (
+        match.start >
+        cursor
+      ) {
+
+        nodes.push({
+          key:
+            `plain-${index}`,
+
+          text:
+            text.slice(
+              cursor,
+              match.start,
+            ),
+
+          annotationId:
+            null,
+        });
+
+      }
+
+
       nodes.push({
-        key: `plain-${index}`,
-        text: text.slice(cursor, match.start),
-        annotationId: null,
+        key:
+          `mark-${index}`,
+
+        text:
+          text.slice(
+            match.start,
+            match.end,
+          ),
+
+        annotationId:
+          match.annotationId,
       });
-    }
+
+
+      cursor =
+        match.end;
+    },
+  );
+
+
+  if (
+    cursor <
+    text.length
+  ) {
 
     nodes.push({
-      key: `mark-${index}`,
-      text: text.slice(match.start, match.end),
-      annotationId: match.annotationId,
+      key:
+        "plain-tail",
+
+      text:
+        text.slice(
+          cursor,
+        ),
+
+      annotationId:
+        null,
     });
 
-    cursor = match.end;
-  });
-
-  if (cursor < text.length) {
-    nodes.push({
-      key: "plain-tail",
-      text: text.slice(cursor),
-      annotationId: null,
-    });
   }
+
 
   return nodes;
 }
+
+
+/* ========================================
+   AnnotationLayer
+   ======================================== */
 
 function AnnotationLayer({
   stageId,
   segments,
   onOpenAnnotations,
 }) {
-  const { progress, addAnnotation } = useProgress();
 
-  const containerRef = useRef(null);
+  const {
+    progress,
+    addAnnotation,
+  } = useProgress();
 
-  const [popover, setPopover] = useState(null);
 
-  // 键盘批注内容
-  const [noteDraft, setNoteDraft] = useState("");
+  const containerRef =
+    useRef(null);
 
-  // text = 键盘输入
-  // draw = 手写输入
-  const [annotationMode, setAnnotationMode] = useState("text");
 
-  // 保存手写笔迹
-  const [strokes, setStrokes] = useState([]);
+  const [
+    popover,
+    setPopover,
+  ] = useState(null);
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  const stageAnnotations = progress.annotations.filter(
-    (item) => item.stageId === stageId,
+  const [
+    noteDraft,
+    setNoteDraft,
+  ] = useState("");
+
+
+  const [
+    annotationMode,
+    setAnnotationMode,
+  ] = useState(
+    "text",
   );
 
+
+  const [
+    strokes,
+    setStrokes,
+  ] = useState([]);
+
+
+  const [
+    recognizing,
+    setRecognizing,
+  ] = useState(false);
+
+
+  const [
+    ocrReady,
+    setOcrReady,
+  ] = useState(false);
+
+
+  const [
+    ocrConfidence,
+    setOcrConfidence,
+  ] = useState(null);
+
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
+
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+
+  const stageAnnotations =
+    progress.annotations.filter(
+      (item) =>
+        item.stageId ===
+        stageId,
+    );
+
+
+  function resetDraft() {
+
+    setNoteDraft("");
+
+    setAnnotationMode(
+      "text",
+    );
+
+    setStrokes([]);
+
+    setRecognizing(
+      false,
+    );
+
+    setOcrReady(
+      false,
+    );
+
+    setOcrConfidence(
+      null,
+    );
+
+    setError("");
+  }
+
+
   function handleMouseUp() {
-    const selection = window.getSelection();
+
+    const selection =
+      window.getSelection();
+
 
     if (
       !selection ||
@@ -98,279 +411,806 @@ function AnnotationLayer({
       return;
     }
 
-    const quote = selection.toString().trim();
 
-    if (!quote || quote.length > 200) {
-      selection.removeAllRanges();
+    const quote =
+      selection
+        .toString()
+        .trim();
+
+
+    if (
+      !quote ||
+      quote.length > 200
+    ) {
+
+      selection
+        .removeAllRanges();
+
       return;
     }
 
-    const anchorNode = selection.anchorNode;
-    const container = containerRef.current;
 
-    if (!container || !container.contains(anchorNode)) {
+    const anchorNode =
+      selection.anchorNode;
+
+    const container =
+      containerRef.current;
+
+
+    if (
+      !container ||
+      !container.contains(
+        anchorNode,
+      )
+    ) {
       return;
     }
+
 
     const segmentEl =
       anchorNode.nodeType === 1
-        ? anchorNode.closest("[data-segment-index]")
-        : anchorNode.parentElement?.closest(
+
+        ? anchorNode.closest(
             "[data-segment-index]",
-          );
+          )
+
+        : anchorNode
+            .parentElement
+            ?.closest(
+              "[data-segment-index]",
+            );
+
 
     if (!segmentEl) {
       return;
     }
 
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const containerRect =
-      container.getBoundingClientRect();
 
-    const popoverWidth = 320;
-    const popoverHeight = annotationMode === "draw" ? 250 : 210;
+    const range =
+      selection.getRangeAt(0);
+
+    const rect =
+      range
+        .getBoundingClientRect();
+
+    const containerRect =
+      container
+        .getBoundingClientRect();
+
+
+    const popoverWidth =
+      320;
+
+    // 手写识别增加了一些内容，
+    // 所以统一多留空间。
+    const popoverHeight =
+      390;
+
+
     const rawTop =
       rect.top -
       containerRect.top -
       46;
-    const rawLeft = rect.left - containerRect.left;
+
+
+    const rawLeft =
+      rect.left -
+      containerRect.left;
+
 
     setPopover({
       quote,
-      segmentIndex: Number(
-        segmentEl.dataset.segmentIndex,
-      ),
-      top: Math.min(
-        Math.max(0, rawTop),
-        Math.max(0, containerRect.height - popoverHeight),
-      ),
-      left: Math.min(
-        Math.max(0, rawLeft),
-        Math.max(0, containerRect.width - popoverWidth - 12),
-      ),
+
+      segmentIndex:
+        Number(
+          segmentEl
+            .dataset
+            .segmentIndex,
+        ),
+
+      top:
+        Math.min(
+          Math.max(
+            0,
+            rawTop,
+          ),
+
+          Math.max(
+            0,
+
+            containerRect.height -
+            popoverHeight,
+          ),
+        ),
+
+      left:
+        Math.min(
+          Math.max(
+            0,
+            rawLeft,
+          ),
+
+          Math.max(
+            0,
+
+            containerRect.width -
+            popoverWidth -
+            12,
+          ),
+        ),
     });
 
-    // 每次新建批注时恢复默认状态
-    setNoteDraft("");
-    setAnnotationMode("text");
-    setStrokes([]);
-    setError("");
+
+    resetDraft();
   }
 
+
+  async function handleRecognize() {
+
+    if (
+      strokes.length === 0
+    ) {
+
+      setError(
+        "请先写一些内容。",
+      );
+
+      return;
+    }
+
+
+    setRecognizing(
+      true,
+    );
+
+    setError("");
+
+
+    try {
+
+      const imageDataUrl =
+        strokesToImageDataUrl(
+          strokes,
+        );
+
+
+      const result =
+        await recognizeHandwriting(
+          imageDataUrl,
+        );
+
+
+      setNoteDraft(
+        result.transcript,
+      );
+
+
+      setOcrConfidence(
+        result.confidence,
+      );
+
+
+      setOcrReady(
+        true,
+      );
+
+
+      if (
+        !result.transcript
+      ) {
+
+        setError(
+          "没有识别出文字，你可以在下面直接输入。",
+        );
+
+      }
+
+    } catch (err) {
+
+      console.error(
+        err,
+      );
+
+
+      // 即使 OCR 出错，
+      // 也允许用户手动输入。
+      setOcrReady(
+        true,
+      );
+
+
+      setOcrConfidence(
+        null,
+      );
+
+
+      setError(
+        "识别失败，你可以直接在下面输入文字。",
+      );
+
+    } finally {
+
+      setRecognizing(
+        false,
+      );
+
+    }
+  }
+
+
   async function handleSaveAnnotation() {
+
     if (!popover) {
       return;
     }
 
+
+    if (
+      annotationMode ===
+        "draw" &&
+      strokes.length >
+        0 &&
+      !ocrReady
+    ) {
+
+      setError(
+        "请先点击“识别文字”，这样后面的 Agent 才能理解你的手写批注。",
+      );
+
+      return;
+    }
+
+
     setSaving(true);
+
     setError("");
 
+
     try {
+
       await addAnnotation({
         stageId,
-        segmentIndex: popover.segmentIndex,
-        quote: popover.quote,
 
+        segmentIndex:
+          popover.segmentIndex,
+
+        quote:
+          popover.quote,
+
+
+        /*
+         * 关键：
+         *
+         * 不管键盘还是手写，
+         * 最终文字都保存到 note。
+         *
+         * 所以后面的 Agent
+         * 完全不用修改。
+         */
         note:
-          annotationMode === "text"
-            ? noteDraft.trim()
-            : "",
+          noteDraft.trim(),
 
-        inputMode: annotationMode,
+
+        inputMode:
+          annotationMode,
+
 
         strokes:
-          annotationMode === "draw"
+          annotationMode ===
+          "draw"
+
             ? strokes
+
             : [],
       });
 
+
       setPopover(null);
-      setNoteDraft("");
-      setStrokes([]);
-      setAnnotationMode("text");
+
+      resetDraft();
+
 
       window
         .getSelection()
         ?.removeAllRanges();
-    } catch {
+
+    } catch (err) {
+
+      console.error(
+        err,
+      );
+
+
       setError(
         "批注保存失败，请确认后端服务正在运行。",
       );
+
     } finally {
-      setSaving(false);
+
+      setSaving(
+        false,
+      );
+
     }
   }
 
+
   function handleCancel() {
+
     setPopover(null);
-    setNoteDraft("");
-    setStrokes([]);
-    setAnnotationMode("text");
-    setError("");
+
+    resetDraft();
+
 
     window
       .getSelection()
       ?.removeAllRanges();
   }
 
+
+  function switchMode(
+    mode,
+  ) {
+
+    setAnnotationMode(
+      mode,
+    );
+
+
+    // 输入方式改变，
+    // 清掉上一种输入的内容。
+    setNoteDraft("");
+
+    setOcrReady(
+      false,
+    );
+
+    setOcrConfidence(
+      null,
+    );
+
+    setError("");
+  }
+
+
   return (
     <div
       className="annotationLayer"
-      ref={containerRef}
-      onMouseUp={handleMouseUp}
+
+      ref={
+        containerRef
+      }
+
+      onMouseUp={
+        handleMouseUp
+      }
     >
-      {segments.map((segment, index) => (
-        <p
-          className="segmentBlock"
-          data-segment-index={index}
-          key={index}
-        >
-          {buildHighlightedNodes(
-            segment,
-            stageAnnotations.filter(
-              (item) =>
-                item.segmentIndex === index,
-            ),
-          ).map((node) =>
-            node.annotationId ? (
-              <mark
-                className="annotationMark"
-                key={node.key}
-                title="点击查看批注"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenAnnotations?.();
-                }}
-              >
-                {node.text}
-              </mark>
-            ) : (
-              <span key={node.key}>
-                {node.text}
-              </span>
-            ),
-          )}
-        </p>
-      ))}
+
+      {segments.map(
+        (
+          segment,
+          index,
+        ) => (
+
+          <p
+            className="segmentBlock"
+
+            data-segment-index={
+              index
+            }
+
+            key={
+              index
+            }
+          >
+
+            {buildHighlightedNodes(
+              segment,
+
+              stageAnnotations.filter(
+                (item) =>
+                  item.segmentIndex ===
+                  index,
+              ),
+            ).map(
+              (node) =>
+
+                node.annotationId
+                  ? (
+
+                    <mark
+                      className="annotationMark"
+
+                      key={
+                        node.key
+                      }
+
+                      title="点击查看批注"
+
+                      onClick={(
+                        event,
+                      ) => {
+
+                        event
+                          .stopPropagation();
+
+                        onOpenAnnotations
+                          ?.();
+                      }}
+                    >
+                      {
+                        node.text
+                      }
+                    </mark>
+
+                  )
+
+                  : (
+
+                    <span
+                      key={
+                        node.key
+                      }
+                    >
+                      {
+                        node.text
+                      }
+                    </span>
+
+                  ),
+            )}
+
+          </p>
+
+        ),
+      )}
+
 
       {popover && (
+
         <div
           className="annotationPopover"
+
           style={{
-            top: Math.max(0, popover.top),
-            left: popover.left,
+            top:
+              Math.max(
+                0,
+                popover.top,
+              ),
+
+            left:
+              popover.left,
           }}
-          onMouseUp={(event) =>
-            event.stopPropagation()
+
+          onMouseUp={(
+            event,
+          ) =>
+            event
+              .stopPropagation()
           }
         >
-          <p className="annotationPopoverQuote">
+
+          <p
+            className="annotationPopoverQuote"
+          >
             “{popover.quote}”
           </p>
 
-          <div className="annotationModeSwitch">
+
+          <div
+            className="annotationModeSwitch"
+          >
+
             <button
               type="button"
+
               className={
-                annotationMode === "text"
+                annotationMode ===
+                "text"
                   ? "active"
                   : ""
               }
+
               onClick={() =>
-                setAnnotationMode("text")
+                switchMode(
+                  "text",
+                )
               }
             >
               ⌨ 键盘
             </button>
 
+
             <button
               type="button"
+
               className={
-                annotationMode === "draw"
+                annotationMode ===
+                "draw"
                   ? "active"
                   : ""
               }
+
               onClick={() =>
-                setAnnotationMode("draw")
+                switchMode(
+                  "draw",
+                )
               }
             >
               ✎ 手写
             </button>
+
           </div>
 
-          {annotationMode === "text" ? (
+
+          {annotationMode ===
+          "text" ? (
+
             <textarea
               className="annotationPopoverInput"
+
               autoFocus
-              value={noteDraft}
-              onChange={(event) =>
+
+              value={
+                noteDraft
+              }
+
+              onChange={(
+                event,
+              ) =>
                 setNoteDraft(
-                  event.target.value,
+                  event
+                    .target
+                    .value,
                 )
               }
+
               placeholder="写下你对这句话的想法（可留空，仅高亮标记）..."
-              maxLength={300}
+
+              maxLength={
+                300
+              }
             />
+
           ) : (
-            <div className="handwritingArea">
+
+            <div
+              className="handwritingArea"
+            >
+
               <HandwritingCanvas
-                strokes={strokes}
-                onChange={setStrokes}
+                strokes={
+                  strokes
+                }
+
+                onChange={(
+                  nextStrokes,
+                ) => {
+
+                  setStrokes(
+                    nextStrokes,
+                  );
+
+
+                  /*
+                   * 笔迹发生变化后，
+                   * 原识别结果失效。
+                   */
+
+                  setOcrReady(
+                    false,
+                  );
+
+                  setOcrConfidence(
+                    null,
+                  );
+
+                  setNoteDraft("");
+
+                  setError("");
+                }}
               />
 
-              <div className="handwritingTools">
+
+              <div
+                className="handwritingTools"
+              >
+
                 <span>
-                  用鼠标、触摸或触控笔书写
+                  建议写一行简短批注
                 </span>
+
 
                 <button
                   type="button"
+
                   className="handwritingClearButton"
-                  onClick={() =>
-                    setStrokes([])
-                  }
+
+                  onClick={() => {
+
+                    setStrokes(
+                      [],
+                    );
+
+                    setNoteDraft("");
+
+                    setOcrReady(
+                      false,
+                    );
+
+                    setOcrConfidence(
+                      null,
+                    );
+
+                  }}
+
                   disabled={
-                    strokes.length === 0
+                    strokes.length ===
+                    0
                   }
                 >
                   清空
                 </button>
+
               </div>
+
+
+              <div
+                className="annotationPopoverActions"
+              >
+
+                <button
+                  type="button"
+
+                  className="secondaryButton"
+
+                  disabled={
+                    recognizing ||
+                    strokes.length ===
+                    0
+                  }
+
+                  onClick={
+                    handleRecognize
+                  }
+                >
+
+                  {
+                    recognizing
+                      ? "识别中..."
+                      : ocrReady
+                        ? "重新识别"
+                        : "识别文字"
+                  }
+
+                </button>
+
+              </div>
+
+
+              {ocrReady && (
+
+                <div>
+
+                  <p
+                    className="annotationOcrLabel"
+                  >
+                    识别结果
+
+                    {
+                      ocrConfidence !==
+                        null && (
+                        <span>
+                          {" "}
+                          · 置信度{" "}
+                          {
+                            Math.round(
+                              ocrConfidence *
+                              100,
+                            )
+                          }%
+                        </span>
+                      )
+                    }
+                  </p>
+
+
+                  <textarea
+                    className="annotationPopoverInput"
+
+                    value={
+                      noteDraft
+                    }
+
+                    onChange={(
+                      event,
+                    ) =>
+                      setNoteDraft(
+                        event
+                          .target
+                          .value,
+                      )
+                    }
+
+                    placeholder="如果识别不准确，可以直接修改这里的文字。"
+
+                    maxLength={
+                      300
+                    }
+                  />
+
+                </div>
+
+              )}
+
             </div>
+
           )}
+
 
           {error && (
-            <p className="annotationError">
+
+            <p
+              className="annotationError"
+            >
               {error}
             </p>
+
           )}
 
-          <div className="annotationPopoverActions">
+
+          <div
+            className="annotationPopoverActions"
+          >
+
             <button
               type="button"
+
               className="secondaryButton"
-              disabled={saving}
-              onClick={handleCancel}
+
+              disabled={
+                saving ||
+                recognizing
+              }
+
+              onClick={
+                handleCancel
+              }
             >
               取消
             </button>
 
+
             <button
               type="button"
+
               className="primaryButton"
-              disabled={saving}
-              onClick={handleSaveAnnotation}
+
+              disabled={
+                saving ||
+                recognizing
+              }
+
+              onClick={
+                handleSaveAnnotation
+              }
             >
-              {saving
-                ? "保存中..."
-                : "保存批注"}
+              {
+                saving
+                  ? "保存中..."
+                  : "保存批注"
+              }
             </button>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
+
 
 export default AnnotationLayer;
