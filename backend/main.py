@@ -131,14 +131,16 @@ def create_annotation(request: AnnotationCreate):
         raise HTTPException(status_code=422, detail="quote does not belong to this segment")
 
     annotation = AnnotationResponse(
-        id=uuid4().hex,
-        session_id=request.session_id,
-        stage_id=request.stage_id,
-        segment_index=request.segment_index,
-        quote=request.quote,
-        note=request.note.strip(),
-        created_at=datetime.now(timezone.utc).isoformat(),
-    )
+    id=uuid4().hex,
+    session_id=request.session_id,
+    stage_id=request.stage_id,
+    segment_index=request.segment_index,
+    quote=request.quote,
+    note=request.note.strip(),
+    input_mode=request.input_mode,
+    strokes=request.strokes,
+    created_at=datetime.now(timezone.utc).isoformat(),
+)
     _ANNOTATIONS.setdefault(request.session_id, []).append(annotation)
     return annotation
 
