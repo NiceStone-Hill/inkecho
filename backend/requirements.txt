@@ -3,3 +3,6 @@ uvicorn[standard]
 pydantic
 python-dotenv
 httpx
+paddleocr
+pillow
+numpy
