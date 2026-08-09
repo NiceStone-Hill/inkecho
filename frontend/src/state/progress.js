@@ -1,4 +1,5 @@
 const STORAGE_KEY = "inkecho_progress_v1";
+const CURRENT_SCHEMA_VERSION = 2;
 
 function createSessionId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -9,11 +10,13 @@ function createSessionId() {
 
 export function createDefaultProgress() {
   return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     sessionId: createSessionId(),
     started: false,
     startedAt: null,
     reading: {
       completed: false,
+      trainingCompleted: false,
       cardAnswers: {},
       currentStageId: 1,
     },
@@ -71,19 +74,59 @@ export function loadProgress() {
 
     const parsed = JSON.parse(raw);
     const defaults = createDefaultProgress();
+    const legacy =
+      parsed.schemaVersion !==
+      CURRENT_SCHEMA_VERSION;
+
     return {
       ...defaults,
       ...parsed,
+      schemaVersion:
+        CURRENT_SCHEMA_VERSION,
       sessionId: parsed.sessionId || defaults.sessionId,
-      stressResult: migrateStressResult(parsed.stressResult),
-      stressResult2: migrateStressResult(parsed.stressResult2),
+      hypothesisV1:
+        legacy
+          ? null
+          : parsed.hypothesisV1,
+      stressResult:
+        legacy
+          ? null
+          : migrateStressResult(parsed.stressResult),
+      hypothesisV2:
+        legacy
+          ? null
+          : parsed.hypothesisV2,
+      stressResult2:
+        legacy
+          ? null
+          : migrateStressResult(parsed.stressResult2),
+      hypothesisV3:
+        legacy
+          ? null
+          : parsed.hypothesisV3,
       reading: {
         ...defaults.reading,
         ...(parsed.reading || {}),
+        currentStageId:
+          legacy
+            ? 1
+            : parsed.reading
+                ?.currentStageId || 1,
+        trainingCompleted:
+          legacy
+            ? false
+            : Boolean(
+                parsed.reading
+                  ?.trainingCompleted,
+              ),
       },
       completion: {
         ...defaults.completion,
-        ...(parsed.completion || {}),
+        ...(
+          legacy
+            ? {}
+            : parsed.completion || {}
+        ),
       },
     };
   } catch (error) {

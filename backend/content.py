@@ -13,7 +13,7 @@ EVIDENCE: Dict[str, Evidence] = {
     "E01": Evidence(
         evidence_id="E01",
         text="范·杜森入狱时经过彻底搜身，没有携带普通越狱工具或书写材料；监狱方面不会替他进行常规的信息传递。",
-        source_stage=1,
+        source_stage=2,
     ),
     "E02": Evidence(
         evidence_id="E02",
@@ -23,7 +23,7 @@ EVIDENCE: Dict[str, Evidence] = {
     "E03": Evidence(
         evidence_id="E03",
         text="监狱没有内部电工；照明发生故障时，外部照明公司的维修人员可以因正常工作需要进入监狱。",
-        source_stage=5,
+        source_stage=6,
     ),
 }
 
@@ -42,7 +42,7 @@ STAGES: List[StageContent] = [
             "“奇泽姆监狱里的死囚牢房——十三号。”",
         ],
         statement_cards=[],
-        allowed_evidence=[EVIDENCE["E01"]],
+        allowed_evidence=[],
     ),
     StageContent(
         stage_id=2,
@@ -76,6 +76,12 @@ STAGES: List[StageContent] = [
         ],
         statement_cards=[],
         allowed_evidence=[EVIDENCE["E01"]],
+        checkpoint=Checkpoint(
+            checkpoint_id="CP0",
+            kind="training",
+            title="事实，还是前提？",
+            prompt="先用两句话熟悉 UNPROVEN 的阅读方式。这里不保存答案，也不会调用 AI。",
+        ),
     ),
     StageContent(
         stage_id=4,
@@ -91,12 +97,6 @@ STAGES: List[StageContent] = [
         ],
         statement_cards=[],
         allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"]],
-        checkpoint=Checkpoint(
-            checkpoint_id="CP1",
-            kind="capture",
-            title="第一次假设",
-            prompt="根据你已经读到的内容，写下第一版解释。此处只保存，不给答案。",
-        ),
     ),
     StageContent(
         stage_id=5,
@@ -113,14 +113,17 @@ STAGES: List[StageContent] = [
             "那是一小卷白衬衫布，外面系着一张五美元钞票。",
             "守卫把布卷和钞票交给监狱长。他们发现布料外侧用一种模糊古怪的墨水写着：“拾到者请转交查尔斯·兰塞姆医生。”",
             "他们展开里面那片布，只见上面写着一串毫无意义的字母：“Epa cseot d'net niiy awe htto n'si sih. 'T'”监狱长盯着它，完全摸不着头脑。",
+            "第三天，思考机器公开提出用钱收买狱卒。狱卒拒绝了，并把这次尝试报告给监狱长。",
+            "后来，牢房里传出金属摩擦窗栏的声音。检查之后，监狱方面从他的鞋跟里发现了一块约两英寸长的钢片。",
+            "“这些可锯不开铁栏呢。”监狱长说。思考机器平静地回答：“用六个月时间或许可以。”",
         ],
         statement_cards=[],
-        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"]],
+        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"]],
         checkpoint=Checkpoint(
-            checkpoint_id="CP2",
-            kind="pressure",
-            title="第一次修正",
-            prompt="新的事实已经出现。先回应压力问题，再决定是否修正你的解释。",
+            checkpoint_id="CP1",
+            kind="capture",
+            title="第一次判断",
+            prompt="根据你已经读到的内容，写下第一版解释。此处只保存，不给答案。",
         ),
     ),
     StageContent(
@@ -128,12 +131,6 @@ STAGES: List[StageContent] = [
         title="S05 异常升级",
         order=6,
         segments=[
-            "第三天思考机器试图用贿赂的方式脱身。狱卒给他送来了晚餐正倚着铁栅门休息的时候，思考机器突然开口跟他搭起话来。",
-            "“监狱的排水管通向河里吧？”他问。“对啊。”狱卒回答。",
-            "“是不是特别细小的那种？”“嘿！要是你真想钻过去的话——那还是太细了！”狱卒咧嘴笑道。",
-            "六点整狱卒端着晚餐走向十三号牢房时，又清楚地听到了铁器撞击窗栏的声响——划啦，划啦。",
-            "最终，在一条裤子的腰带里，他巧妙地发现了一块约两英寸长的钢片——一端弯如新月。",
-            "“这些可锯不开铁栏呢。”监狱长说。思考机器坚定地说：“用六个月时间或许可以。”",
             "第四天下午，临近守卫换班时，思考机器问：“这些弧光灯由谁维修？”“照明公司的工人。”“监狱里没有自己的电工吗？”“没有。”",
             "监狱长忽然想起，范·杜森入狱时只有一张五美元和两张十美元，共二十五美元。第一封布信上已经系着那张五美元，而现在他手里竟又出现了一张五美元。",
             "当天深夜三点，监狱长搜查十三号牢房。最后掏出几张纸币。“五张一美元？”他倒吸一口气。“没错。”囚犯说。",
@@ -141,18 +138,25 @@ STAGES: List[StageContent] = [
             "“它说了什么？”监狱长问。“酸——酸——酸！”犯人喘息着说。",
             "“除此之外呢？”“还有别的话，但我只听清几个词。先是三遍‘酸’，然后是一阵很长的呜咽声，接着是‘八号帽’——这句话我听见了两遍。”",
             "第五天到来时，思考机器又从窗口扔下一块亚麻布，上面写着：“只剩两天。”布条旁还落下一枚五角硬币。",
+            "第五天过去，第六天过去。到了第七天，范·杜森仍然在十三号牢房里，挑战期限正在逼近。",
+            "天色逐渐暗下来，院中的弧光灯亮起，把高墙、钢栏和巡逻守卫照得清清楚楚。范·杜森仍然没有逃出来。",
+            "然后——灯灭了。院子突然陷入黑暗，照明设备发生了故障。",
+            "监狱没有自己的电工。他们只能联系照明公司，让外部维修人员进入监狱处理故障。",
         ],
         statement_cards=[],
         allowed_evidence=list(EVIDENCE.values()),
+        checkpoint=Checkpoint(
+            checkpoint_id="CP2",
+            kind="pressure",
+            title="你的解释，还撑得住吗？",
+            prompt="灯光熄灭后，一条被监狱认可的外部入口出现了。先回应压力问题，再决定是否修正你的解释。",
+        ),
     ),
     StageContent(
         stage_id=7,
         title="S06 越狱发生",
         order=7,
         segments=[
-            "第七天下午四点，监狱长经过十三号牢房，看见思考机器躺在铁床上，像是睡得很浅。从表面看，一切毫无变化。",
-            "七点刚过，兰塞姆医生和菲尔丁先生抵达。靠河一侧院落的守卫却走进办公室报告：“我这一侧的弧光灯不亮了。”",
-            "监狱长打电话给照明公司，要求立刻派三四个人来修灯。",
             "将近八点，电工们已经乘车抵达，正在检查故障。监狱长拿起通往外门岗亭的电话：“来了几个人？四个？三个穿工装的工人，还有一个穿礼服、戴丝帽的经理？好。出去时也必须正好四个，一个都不能少。”",
             "监狱长拆开特快信，刚看一眼便僵住了。“这是从十三号牢房寄出的特快信，”监狱长喘着气说，“一封晚餐邀请。”",
             "守卫回来报告：“他还在，先生。我亲眼看见他躺在床上。”",

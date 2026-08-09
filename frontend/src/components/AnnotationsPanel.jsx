@@ -34,6 +34,8 @@ function AnnotationsPanel() {
   useEffect(() => {
     let cancelled = false;
 
+    // 异步读取开始时同步展示 loading，避免先闪出空批注状态。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError("");
 

@@ -82,7 +82,7 @@ logging.basicConfig(
 
 
 app = FastAPI(
-    title="Inkecho API",
+    title="UNPROVEN API",
     version="1.1.0",
 )
 
@@ -144,7 +144,7 @@ def root():
 
     return {
         "name":
-            "Inkecho API",
+            "UNPROVEN API",
 
         "message":
             "The backend is running.",

@@ -16,7 +16,7 @@ function RevisePanel({ onSubmitted }) {
   if (!stressResult) {
     return (
       <p className="stageIntro" style={{ margin: 0 }}>
-        请先完成“接受审讯”，回应压力问题后才能进入修正环节。
+        请先完成“前提审查”，回应压力问题后才能进入修正环节。
       </p>
     );
   }

@@ -106,7 +106,7 @@ function QAPanel({ stageId = null }) {
   return (
     <>
       <div className="chatMessage chatMessageAgent">
-        <div className="chatAvatar">墨</div>
+        <div className="chatAvatar">U</div>
         <div className="chatBubble">
           可以问我换算、名词解释这类问题，比如
           「三百英尺是多少米」「牙粉是什么」。
@@ -124,7 +124,7 @@ function QAPanel({ stageId = null }) {
           key={index}
         >
           {message.role === "agent" && (
-            <div className="chatAvatar">墨</div>
+            <div className="chatAvatar">U</div>
           )}
 
           <div className="chatBubble">

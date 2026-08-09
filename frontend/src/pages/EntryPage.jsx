@@ -22,6 +22,9 @@ function EntryPage() {
 
   return (
     <section className="hero">
+      <div className="dossierTab">ACTIVE CASE</div>
+      <div className="dossierStamp" aria-hidden="true">UNPROVEN</div>
+
       <p className="eyebrow">CASE FILE · NO.13 · UNPROVEN</p>
 
       <h1>
@@ -29,6 +32,21 @@ function EntryPage() {
       </h1>
 
       <p className="entryAuthor">雅克·福翠尔</p>
+
+      <dl className="dossierMeta">
+        <div>
+          <dt>档案编号</dt>
+          <dd>CELL-013</dd>
+        </div>
+        <div>
+          <dt>案件状态</dt>
+          <dd>待审查</dd>
+        </div>
+        <div>
+          <dt>审查对象</dt>
+          <dd>你的默认前提</dd>
+        </div>
+      </dl>
 
       <p className="entryTagline">
         越狱，你要逃出的，不是牢房，是你默认的世界。

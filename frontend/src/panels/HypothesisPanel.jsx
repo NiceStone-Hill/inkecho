@@ -87,7 +87,7 @@ function HypothesisPanel({ onSubmitted, onThinkingChange, analyzeOnSubmit = true
           {progress.hypothesisV1.text}
         </p>
         <p style={{ margin: "14px 0 0", color: "#92897b", fontSize: 13 }}>
-          方案已提交并封存，无法修改。请前往“接受审讯”继续。
+          方案已提交并封存，无法修改。请前往“前提审查”继续。
         </p>
       </div>
     );
