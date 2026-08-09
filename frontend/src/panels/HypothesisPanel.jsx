@@ -11,7 +11,7 @@ const CONFIDENCE_OPTIONS = [
   { value: "high", label: "高" },
 ];
 
-function HypothesisPanel({ onSubmitted, onThinkingChange }) {
+function HypothesisPanel({ onSubmitted, onThinkingChange, analyzeOnSubmit = true }) {
   const { progress, updateHypothesisDraft, submitHypothesisV1, submitStressResult } =
     useProgress();
 
@@ -47,6 +47,12 @@ function HypothesisPanel({ onSubmitted, onThinkingChange }) {
     };
 
     try {
+      if (!analyzeOnSubmit) {
+        submitHypothesisV1(hypothesis);
+        onSubmitted?.();
+        return;
+      }
+
       const currentStageId = progress.reading.currentStageId || 3;
       const result = await analyzeHypothesis({
         stageId: currentStageId,
@@ -92,15 +98,16 @@ function HypothesisPanel({ onSubmitted, onThinkingChange }) {
   return (
     <>
       <p className="stageIntro">
-        根据你已经读到的证据，写下范·杜森教授最可能如何逃脱十三号牢房。
-        50—500字，尽量说清楚你依赖的每一个环节。提交后将进入不可修改的封存状态。
+        现在你已经知道：他没有携带普通工具；监狱禁止替他传递信息；
+        自由世界之外隔着七道门和高墙；牢房里存在一根废弃排水管；
+        一封本不该能够写出的信出现了。不要追求猜中，试着说清楚你的解释。
       </p>
 
       <div className="editor">
         <textarea
           value={draft.text}
           onChange={(event) => updateHypothesisDraft({ text: event.target.value })}
-          placeholder="例如：他可能先做了什么，然后依靠谁完成了什么……"
+          placeholder="输入你的方案……"
           maxLength={MAX_LENGTH}
         />
 
@@ -141,7 +148,7 @@ function HypothesisPanel({ onSubmitted, onThinkingChange }) {
             disabled={!canSubmit}
             onClick={handleSubmit}
           >
-            {submitting ? "正在分析……" : "封存并提交"}
+            {submitting ? "正在保存……" : "锁定我的第一次判断"}
           </button>
         </div>
       </div>

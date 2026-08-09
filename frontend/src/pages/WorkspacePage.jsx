@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getAiStatus, getStage } from "../api";
+import { analyzeHypothesis, getAiStatus, getStage } from "../api";
 import { useProgress } from "../state/ProgressContext";
 import AnnotationLayer from "../components/AnnotationLayer";
 import AIAgentCard from "../components/AIAgentCard";
@@ -13,10 +13,8 @@ import RevealPanel from "../panels/RevealPanel";
 const TOTAL_STAGES = 3;
 
 const ANSWER_OPTIONS = [
-  { value: "confirmed_fact", label: "已确认事实" },
-  { value: "physical_constraint", label: "物理或制度约束" },
-  { value: "reader_assumption", label: "读者自己的默认前提" },
-  { value: "unsure", label: "不确定" },
+  { value: "confirmed_fact", label: "文本已经证明的事实" },
+  { value: "unproven", label: "尚未被证明的判断" },
 ];
 
 const PANEL_META = {
@@ -27,12 +25,15 @@ const PANEL_META = {
   annotations: { title: "我的批注", subtitle: "CASE FILE · 原文标记" },
 };
 
-function getAgentNote(progress) {
-  if (!progress.reading.completed) {
+function getAgentNote(progress, stageIndex) {
+  if (stageIndex < 1) {
     return "继续往下读，我会等你读完再和你讨论方案。";
   }
   if (!progress.hypothesisV1) {
-    return "读完了？点击上面的“形成方案”告诉我你的判断。";
+    return "如果现在必须下注，你认为范·杜森准备怎样逃出十三号牢房？";
+  }
+  if (!progress.reading.completed) {
+    return "第一次判断已封存。带着这个判断，继续读。";
   }
   if (!progress.hypothesisV2) {
     return "我已经追问了方案里的一个默认前提，点击“接受审讯”回应它。";
@@ -41,8 +42,13 @@ function getAgentNote(progress) {
 }
 
 function WorkspacePage() {
-  const { progress, answerStatementCard, completeReading, setCurrentStage } =
-    useProgress();
+  const {
+    progress,
+    answerStatementCard,
+    completeReading,
+    setCurrentStage,
+    submitStressResult,
+  } = useProgress();
 
   const savedStageId = progress.reading.currentStageId;
   const initialStageIndex = progress.reading.completed
@@ -132,8 +138,8 @@ function WorkspacePage() {
   const allCardsAnswered = cards.every((card) => cardAnswers[card.card_id]);
   const canContinue = !loading && !error && allCardsAnswered;
 
-  const hypothesisUnlocked = progress.reading.completed;
-  const stressUnlocked = Boolean(progress.hypothesisV1);
+  const hypothesisUnlocked = stageIndex >= 1;
+  const stressUnlocked = Boolean(progress.stressResult);
   const reviseUnlocked = Boolean(progress.stressResult);
   const revealUnlocked = Boolean(progress.hypothesisV2);
 
@@ -183,13 +189,43 @@ function WorkspacePage() {
     refreshModelStatus();
   }
 
-  function handleContinue() {
-    if (stageIndex + 1 < TOTAL_STAGES) {
+  async function handleContinue() {
+    if (stageIndex === 0) {
       setStageIndex((prev) => prev + 1);
       return;
     }
-    completeReading();
-    setOpenPanel("hypothesis");
+
+    if (stageIndex === 1) {
+      if (!progress.hypothesisV1) {
+        setOpenPanel("hypothesis");
+        return;
+      }
+      setStageIndex(2);
+      return;
+    }
+
+    if (!progress.hypothesisV1) {
+      setOpenPanel("hypothesis");
+      return;
+    }
+
+    setAiThinking(true);
+    setError("");
+    try {
+      const result = await analyzeHypothesis({
+        stageId: 3,
+        hypothesisText: progress.hypothesisV1.text,
+        confidence: progress.hypothesisV1.confidence,
+      });
+      submitStressResult(result);
+      completeReading();
+      refreshModelStatus();
+      setOpenPanel("stress");
+    } catch {
+      setError("UNPROVEN 暂时无法检查你的方案，请确认后端服务正在运行，然后重试。");
+    } finally {
+      setAiThinking(false);
+    }
   }
 
   function handleToolbarClick(item) {
@@ -209,7 +245,7 @@ function WorkspacePage() {
 
       <AIAgentCard
         status={agentStatus}
-        note={getAgentNote(progress)}
+        note={getAgentNote(progress, stageIndex)}
         modelStatus={modelStatus}
       />
 
@@ -262,7 +298,9 @@ function WorkspacePage() {
           />
 
           {cards.length > 0 && (
-            <div className="cardGrid">
+            <div className="checkpointBlock">
+              <p className="checkpointLabel">CHECKPOINT 0｜你确定这是“事实”吗？</p>
+              <div className="cardGrid">
               {cards.map((card) => (
                 <div className="statementCard" key={card.card_id}>
                   <div className="statementCardId">{card.card_id}</div>
@@ -283,6 +321,32 @@ function WorkspacePage() {
                   </div>
                 </div>
               ))}
+              </div>
+              {allCardsAnswered && (
+                <div className="checkpointFeedback">
+                  <strong>尚未被证明。</strong>
+                  <span>文本证明的是：他进入牢房时没有携带工具。</span>
+                  <span>但“之后也不可能获得工具”，已经比文本多走了一步。</span>
+                  <span>记住这种差别。继续读。</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {stageId === 2 && (
+            <div className="checkpointPrompt">
+              <p className="checkpointLabel">CHECKPOINT 1｜第一次判断</p>
+              <p>如果现在必须下注——你认为范·杜森准备怎样逃出十三号牢房？</p>
+              <p>不要追求猜中。试着说清楚：他准备利用什么？是否需要别人帮助？最后，他本人怎样离开监狱？</p>
+            </div>
+          )}
+
+          {stageId === 3 && progress.hypothesisV1 && (
+            <div className="checkpointPrompt">
+              <p className="checkpointLabel">CHECKPOINT 2｜你的解释，还撑得住吗？</p>
+              <span className="statementCardId">你之前认为</span>
+              <blockquote>“{progress.hypothesisV1.text}”</blockquote>
+              <p>从那以后，你又知道了四件事：现金面额发生变化；监狱中出现了“酸”和“八号帽”；监狱没有自己的电工；最后一晚弧光灯真的熄灭了。</p>
             </div>
           )}
 
@@ -294,7 +358,15 @@ function WorkspacePage() {
                 disabled={!canContinue}
                 onClick={handleContinue}
               >
-                {stageIndex + 1 < TOTAL_STAGES ? "继续阅读" : "形成我的方案"}
+                {stageIndex === 0
+                  ? "继续阅读"
+                  : stageIndex === 1
+                    ? progress.hypothesisV1
+                      ? "带着判断，继续读"
+                      : "锁定我的第一次判断"
+                    : aiThinking
+                      ? "UNPROVEN 正在检查你的方案……"
+                      : "检查我的方案"}
               </button>
             </div>
           )}
@@ -308,9 +380,10 @@ function WorkspacePage() {
         onClose={() => setOpenPanel(null)}
       >
         <HypothesisPanel
+          analyzeOnSubmit={false}
           onSubmitted={() => {
-            refreshModelStatus();
-            setOpenPanel("stress");
+            setOpenPanel(null);
+            setStageIndex(2);
           }}
           onThinkingChange={setAiThinking}
         />

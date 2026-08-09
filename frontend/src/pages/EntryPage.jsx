@@ -25,21 +25,24 @@ function EntryPage() {
       <p className="eyebrow">CASE FILE · NO.13 · UNPROVEN</p>
 
       <h1>
-        你要逃出的
-        <br />
-        不是牢房
+        《第十三号牢房》
       </h1>
 
+      <p className="entryAuthor">雅克·福翠尔</p>
+
+      <p className="entryTagline">
+        越狱，你要逃出的，不是牢房，是你默认的世界。
+      </p>
+
       <p className="introduction">
-        《第十三号牢房》越狱悬案。阅读中你会提出自己的逃脱方案，
-        AI 只会依据你已读过的证据，追问方案里一个尚未被证明的前提——
-        不会剧透任何你还没读到的内容。全程约 10 分钟。
+        奥古斯都·S·F·X·范·杜森教授，人称“思考机器”。过去三十五年里，
+        他始终相信：万事皆有来由，也必有归宿；只要事实齐全，任何问题都能被推理还原。
       </p>
 
       <div className="editor">
         <p style={{ margin: 0, color: "#625c53", fontSize: 15, lineHeight: 1.8 }}>
-          无剧透承诺：在你抵达谜底页之前，系统不会展示监狱长最终掌握的完整解释，
-          也不会让 AI 提前告诉你答案。
+          一次争论最终变成了真正的挑战：把他关进任何一座监狱的任何一间牢房，
+          只让他穿着最必要的衣物，他也能在一周之内脱身。
         </p>
 
         <div className="actions">

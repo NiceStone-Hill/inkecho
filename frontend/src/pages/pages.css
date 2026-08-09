@@ -61,6 +61,50 @@
   color: #2c2822;
   font-size: 16px;
   line-height: 1.9;
+  white-space: pre-line;
+}
+
+.checkpointBlock,
+.checkpointPrompt {
+  margin: 28px 0 8px;
+  padding: 22px;
+  background: rgba(229, 222, 209, 0.56);
+  border: 1px solid #d4cec3;
+  border-radius: 16px;
+}
+
+.checkpointLabel {
+  margin: 0 0 16px;
+  color: #1d1b18;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.checkpointFeedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 15px 17px;
+  color: #4d473f;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.checkpointPrompt p {
+  color: #4d473f;
+  line-height: 1.75;
+}
+
+.checkpointPrompt blockquote {
+  margin: 12px 0;
+  padding: 14px 16px;
+  color: #2c2822;
+  background: rgba(255, 255, 255, 0.72);
+  border-left: 3px solid #a8977a;
+  line-height: 1.75;
 }
 
 .cardGrid {

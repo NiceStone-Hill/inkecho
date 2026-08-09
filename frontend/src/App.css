@@ -70,6 +70,22 @@ h1 {
   line-height: 1.8;
 }
 
+.entryAuthor {
+  margin: -14px 0 18px;
+  color: #766e63;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+}
+
+.entryTagline {
+  max-width: 680px;
+  margin: 0 0 22px;
+  color: #2c2822;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.45;
+}
+
 .editor {
   padding: 20px;
   background: rgba(255, 255, 255, 0.66);
