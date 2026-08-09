@@ -92,7 +92,7 @@ AI_TIMEOUT_SECONDS = float(
 )
 
 
-MAX_QUESTION_CHARS = 80
+MAX_QUESTION_CHARS = 60
 
 MAX_ANNOTATIONS_IN_PROMPT = 30
 
@@ -191,7 +191,6 @@ def _record_ai_status(
                 fallback,
         }
     )
-
 
 # =========================
 # System Prompt
@@ -305,7 +304,7 @@ normalized_steps
 
 5.
 
-找出 1—3 个：
+只找出 1 个最关键的：
 
 unsupported_assumptions
 
@@ -325,7 +324,7 @@ selected_assumption
 
 7.
 
-生成一个不超过 80 个汉字的：
+生成一个不超过 60 个汉字的：
 
 question
 
@@ -412,11 +411,12 @@ Evidence 也没有提供足以判断尺寸是否合适的信息。”
 
 category 只能是：
 
-external_help
-hidden_tool
-physical_path
-deception
-unknown
+TOOL_SOURCE
+COMMUNICATION
+HUMAN_PASSAGE
+SPACE_PATH
+INSIDER_HELP
+UNKNOWN
 
 
 9.
@@ -462,7 +462,7 @@ rationale_annotation_ids
     "压力问题",
 
   "category":
-    "unknown",
+    "UNKNOWN",
 
   "rationale_evidence_ids": [
     "E01"
@@ -824,13 +824,7 @@ def _validate_model_output(
             "must be list"
         )
 
-    if not (
-        1
-        <= len(
-            unsupported_assumptions
-        )
-        <= 3
-    ):
+    if len(unsupported_assumptions) != 1:
         raise ValueError(
             "unsupported_assumptions "
             "length error"
@@ -1002,7 +996,7 @@ def _classify_fallback(
     )
 
     if not text:
-        return "unknown"
+        return "UNKNOWN"
 
     scores: Dict[
         str,
@@ -1010,8 +1004,7 @@ def _classify_fallback(
     ] = {}
 
     for category in STRESS_CATEGORIES:
-
-        if category == "unknown":
+        if category == "UNKNOWN":
             continue
 
         template = (
@@ -1054,7 +1047,7 @@ def _classify_fallback(
             ] = len(matches)
 
     if not scores:
-        return "unknown"
+        return "UNKNOWN"
 
     best_category = max(
         scores,
@@ -1263,7 +1256,6 @@ def _fallback_response(
 # =========================
 # Public Agent API
 # =========================
-
 
 def analyze_hypothesis(
     request: AnalyzeRequest,

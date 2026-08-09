@@ -310,7 +310,6 @@ def analyze(
 
         raise HTTPException(
             status_code=422,
-
             detail=(
                 "hypothesis_text "
                 "is required"

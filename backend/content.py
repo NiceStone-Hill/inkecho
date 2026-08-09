@@ -1,8 +1,7 @@
 """WorkPack content for the reader demo.
 
-The demo follows 02故事切片.docx:
-S00 wager, S01 inventory, S02 cell scan, S03 rats disappear, S04 secret channel,
-S05 anomalies escalate, S06 escape happens, S07 reasoning reveal.
+内容来源：02故事切片 + Evidence Master MVP v1.0。
+Reading 保留八个故事阶段；Agent 只能使用 E01—E03 这三条已审定事实。
 """
 
 from typing import Dict, List
@@ -11,21 +10,21 @@ from schemas import Checkpoint, Evidence, SolutionStep, StageContent, StatementC
 
 
 EVIDENCE: Dict[str, Evidence] = {
-    "E01": Evidence(evidence_id="E01", text="教授承诺只穿必要衣物进入十三号牢房，并在一周内自行离开。", source_stage=1),
-    "E02": Evidence(evidence_id="E02", text="入狱清点时，教授要求牙粉、擦亮的鞋、两张十美元、一张五美元，并戴八号帽。", source_stage=2),
-    "E03": Evidence(evidence_id="E03", text="物品经过检查，未发现工具；牢房内几乎没有可拆卸物。", source_stage=2),
-    "E04": Evidence(evidence_id="E04", text="从十三号牢房到自由世界要穿过七道门，窗栏、墙体、外墙和院子都有强约束。", source_stage=3),
-    "E05": Evidence(evidence_id="E05", text="教授从窗口观察到河流方向、公共球场、弧光灯和供电线。", source_stage=3),
-    "E06": Evidence(evidence_id="E06", text="牢房里的老鼠没有从门缝离开，却全部消失。", source_stage=4),
-    "E07": Evidence(evidence_id="E07", text="墙角有圆孔，通向废弃已久、干燥且积灰的排水管。", source_stage=5),
-    "E08": Evidence(evidence_id="E08", text="一卷衬衫布从窗中落下，外面系着五美元，布上写有密码和转交字样。", source_stage=5),
-    "E09": Evidence(evidence_id="E09", text="教授询问排水管是否通向河里；狱卒确认通向河流但认为太细。", source_stage=6),
-    "E10": Evidence(evidence_id="E10", text="监狱长发现教授手中钞票面额发生变化。", source_stage=6),
-    "E11": Evidence(evidence_id="E11", text="附近囚犯听见破碎声音，内容包括“酸”和“八号帽”。", source_stage=6),
-    "E12": Evidence(evidence_id="E12", text="教授连续从窗口抛出倒计时布条，狱方仍找不到笔墨和布料来源。", source_stage=6),
-    "E13": Evidence(evidence_id="E13", text="约定夜晚，院中弧光灯熄灭，照明公司电工被叫进监狱。", source_stage=7),
-    "E14": Evidence(evidence_id="E14", text="牢房里留下假人、假发、绳索、匕首、锉刀、电线、钢钳、小锤和短枪。", source_stage=7),
-    "E15": Evidence(evidence_id="E15", text="牢门下部钢条和窗栏已经能被轻易拆落。", source_stage=7),
+    "E01": Evidence(
+        evidence_id="E01",
+        text="范·杜森入狱时经过彻底搜身，没有携带普通越狱工具或书写材料；监狱方面不会替他进行常规的信息传递。",
+        source_stage=1,
+    ),
+    "E02": Evidence(
+        evidence_id="E02",
+        text="十三号牢房地面存在一根废弃排水管；牢房中的老鼠能够通过与牢门不同的路径离开当前空间。",
+        source_stage=4,
+    ),
+    "E03": Evidence(
+        evidence_id="E03",
+        text="监狱没有内部电工；弧光灯发生故障时，外部照明公司的维修人员可以因正常工作需要进入监狱。",
+        source_stage=5,
+    ),
 }
 
 
@@ -60,7 +59,7 @@ STAGES: List[StageContent] = [
             "沉重的铁门大开，思考机器走进昏暗的牢房。随后，监狱长把牢门关上并锁上了两道门。",
         ],
         statement_cards=[],
-        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"]],
+        allowed_evidence=[EVIDENCE["E01"]],
     ),
     StageContent(
         stage_id=3,
@@ -76,7 +75,7 @@ STAGES: List[StageContent] = [
             "他的牢房里什么都没有——绝对没有任何东西！连床都是用特制的铁件组装而成，拆开它需要重锤或锉刀之类的工具才能办到。",
         ],
         statement_cards=[],
-        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"], EVIDENCE["E04"], EVIDENCE["E05"]],
+        allowed_evidence=[EVIDENCE["E01"]],
     ),
     StageContent(
         stage_id=4,
@@ -91,9 +90,7 @@ STAGES: List[StageContent] = [
             "这只能说明，还有另一条通路——无论它多么狭小。",
         ],
         statement_cards=[],
-        allowed_evidence=[
-            EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"], EVIDENCE["E04"], EVIDENCE["E05"], EVIDENCE["E06"]
-        ],
+        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"]],
         checkpoint=Checkpoint(
             checkpoint_id="CP1",
             kind="capture",
@@ -118,10 +115,7 @@ STAGES: List[StageContent] = [
             "他们展开里面那片布，只见上面写着一串毫无意义的字母：“Epa cseot d'net niiy awe htto n'si sih. 'T'”监狱长盯着它，完全摸不着头脑。",
         ],
         statement_cards=[],
-        allowed_evidence=[
-            EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"], EVIDENCE["E04"], EVIDENCE["E05"],
-            EVIDENCE["E06"], EVIDENCE["E07"], EVIDENCE["E08"],
-        ],
+        allowed_evidence=[EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"]],
         checkpoint=Checkpoint(
             checkpoint_id="CP2",
             kind="pressure",
@@ -149,17 +143,7 @@ STAGES: List[StageContent] = [
             "第五天到来时，思考机器又从窗口扔下一块亚麻布，上面写着：“只剩两天。”布条旁还落下一枚五角硬币。",
         ],
         statement_cards=[],
-        allowed_evidence=[
-            EVIDENCE["E01"], EVIDENCE["E02"], EVIDENCE["E03"], EVIDENCE["E04"], EVIDENCE["E05"],
-            EVIDENCE["E06"], EVIDENCE["E07"], EVIDENCE["E08"], EVIDENCE["E09"], EVIDENCE["E10"],
-            EVIDENCE["E11"], EVIDENCE["E12"],
-        ],
-        checkpoint=Checkpoint(
-            checkpoint_id="CP3",
-            kind="pressure",
-            title="第二次修正",
-            prompt="异常正在增多。用当前版本解释这些新增事实，必要时进行第二次修正。",
-        ),
+        allowed_evidence=list(EVIDENCE.values()),
     ),
     StageContent(
         stage_id=7,
@@ -214,118 +198,98 @@ STAGES: List[StageContent] = [
 STAGES_BY_ID: Dict[int, StageContent] = {stage.stage_id: stage for stage in STAGES}
 
 
-STRESS_CATEGORIES: List[str] = ["external_help", "hidden_tool", "physical_path", "deception", "unknown"]
+# ---------------------------------------------------------------------------
+# 压力测试模板（Evidence Master MVP v1.0 taxonomy），用于模型降级兜底
+# ---------------------------------------------------------------------------
+
+STRESS_CATEGORIES: List[str] = [
+    "TOOL_SOURCE",
+    "COMMUNICATION",
+    "HUMAN_PASSAGE",
+    "SPACE_PATH",
+    "INSIDER_HELP",
+    "UNKNOWN",
+]
 
 STRESS_TEMPLATES: Dict[str, Dict[str, object]] = {
-    "external_help": {
-        "keywords": (
-            "外面的人|外部的人|外界的人|"
-            "朋友接应|同伙接应|有人接应|"
-            "传给朋友|传给同伙|传给外面|"
-            "哈奇|兰塞姆|记者|电工"
-        ),
-        "assumption": (
-            "方案似乎依赖牢房外有人能够接收信息或配合行动。"
-        ),
-        "question": (
-            "如果暂时没有外部人员配合，这个方案还能从哪里继续推进？"
-        ),
-        "preferred_evidence_ids": [
-            "E05",
-            "E08",
-        ],
+    "TOOL_SOURCE": {
+        "keywords": "工具|钥匙|锉刀|藏|偷偷带|暗藏|制造工具",
+        "assumption": "入狱时没有携带普通工具，因此之后也无法获得或制造任何工具。",
+        "question": "入狱时没有携带普通工具，是否足以证明他之后无法获得或制造工具？",
+        "preferred_evidence_ids": ["E01"],
     },
-
-    "hidden_tool": {
-        "keywords": (
-            "用锉刀|用钢片|用鞋跟|用牙粉|"
-            "用墨水|用笔|用钞票|"
-            "用酸|用硝酸|用钢钳|用电线|"
-            "藏着工具|准备了工具|制造工具"
-        ),
-        "assumption": (
-            "方案似乎依赖教授已经获得某种工具或材料。"
-        ),
-        "question": (
-            "这个工具或材料是如何进入计划中的？目前读到的内容支持这一点吗？"
-        ),
-        "preferred_evidence_ids": [
-            "E02",
-            "E03",
-            "E10",
-        ],
+    "COMMUNICATION": {
+        "keywords": "传信|联系|通信|消息|外界|朋友|同伙|外援|接应",
+        "assumption": "常规书写和人工传信受限，因此所有信息交换路径都已被排除。",
+        "question": "常规书写和人工传信受限，是否等于所有信息交换路径都已被排除？",
+        "preferred_evidence_ids": ["E01"],
     },
-
-    "physical_path": {
-        "keywords": (
-            "从排水管逃|从管道逃|"
-            "通过排水管逃|通过管道逃|"
-            "钻出排水管|钻出管道|"
-            "爬出排水管|爬出管道|"
-            "钻出去|爬出去|"
-            "逃生通道|逃跑通道|"
-            "从洞里逃|通过洞逃"
-        ),
-        "assumption": (
-            "方案似乎依赖某条物理路径能够直接让人离开牢房。"
-        ),
-        "question": (
-            "如果这条路径不能直接让人通过，你的解释还成立吗？"
-        ),
-        "preferred_evidence_ids": [
-            "E06",
-            "E07",
-            "E09",
-        ],
+    "HUMAN_PASSAGE": {
+        "keywords": "排水管|通道|爬|洞|钻|地道|管道|墙缝|翻墙",
+        "assumption": "能够供老鼠或其他物体通过的通道，也一定是范·杜森本人最终的逃生路径。",
+        "question": "你的方案把发现边界通道理解成了人必须从这里离开，文本证明了这一步吗？",
+        "preferred_evidence_ids": ["E02"],
     },
-
-    "deception": {
-        "keywords": (
-            "假装|伪装|误导|声东击西|"
-            "欺骗狱方|骗过狱方|"
-            "假人|伪装成人|"
-            "故意让他们看到|"
-            "贿赂"
-        ),
-        "assumption": (
-            "方案似乎依赖某些行为是在刻意制造错误判断。"
-        ),
-        "question": (
-            "你认为哪些行为真正推进了计划，哪些只是为了让别人产生某种判断？"
-        ),
-        "preferred_evidence_ids": [
-            "E08",
-            "E12",
-            "E14",
-        ],
+    "SPACE_PATH": {
+        "keywords": "七道门|牢门|窗户|窗栏|高墙|秘密|偷偷出去|绕过",
+        "assumption": "离开监狱必须秘密绕过或破解现有的物理防线。",
+        "question": "你的方案默认离开监狱必须秘密绕过正常通道，文本证明这是唯一可能吗？",
+        "preferred_evidence_ids": ["E02", "E03"],
     },
-
-    "unknown": {
+    "INSIDER_HELP": {
+        "keywords": "狱卒|守卫|监狱内部|内应|收买",
+        "assumption": "外部帮助必须依赖监狱内部人员秘密配合。",
+        "question": "你的方案依赖内部人员秘密配合，这一步来自文本还是你的推定？",
+        "preferred_evidence_ids": ["E01", "E03"],
+    },
+    "UNKNOWN": {
         "keywords": "",
-        "assumption": (
-            "方案中至少有一个关键环节目前还没有被已读文本直接支持。"
-        ),
-        "question": (
-            "你的解释里，哪一步是原文已经支持的，哪一步还是你目前的推测？"
-        ),
-        "preferred_evidence_ids": [],
+        "assumption": "方案中至少一个关键环节尚未被已读文本支持",
+        "question": "这个方案里，哪一步能在已读文本中找到依据，哪一步只是你的推定？",
+        "preferred_evidence_ids": ["E01", "E02", "E03"],
     },
 }
 
 
 SOLUTION_STEPS: List[SolutionStep] = [
-    SolutionStep(step_id=1, text="老鼠消失确认了第二通道，圆孔与废弃排水管给出通信入口。", evidence_ids=["E06", "E07"]),
-    SolutionStep(step_id=2, text="布信、钞票和球场环境使信息越过围墙，到达外部协作者。", evidence_ids=["E05", "E08"]),
-    SolutionStep(step_id=3, text="袜线、丝线、麻绳、金属线逐级升级，建立双向运输通道。", evidence_ids=["E08", "E09"]),
-    SolutionStep(step_id=4, text="钞票面额变化、声音碎片和倒计时布条都来自这条通道及其误导效果。", evidence_ids=["E10", "E11", "E12"]),
-    SolutionStep(step_id=5, text="硝酸处理钢条和供电线，停电引入电工，教授换装后随电工离开。", evidence_ids=["E13", "E14", "E15"]),
+    SolutionStep(
+        step_id=1,
+        text="老鼠没有从门缝离开却全部消失，证明牢房存在第二个未被注意的出口——那个通向围墙外的废弃排水管。",
+        evidence_ids=["E02"],
+    ),
+    SolutionStep(
+        step_id=2,
+        text="教授通过排水管把布信与五美元送出，球场男孩捡到后交给记者哈奇，双方由此建立起一条外部通信线。",
+        evidence_ids=["E02"],
+    ),
+    SolutionStep(
+        step_id=3,
+        text="通信线逐步升级为可以双向传递零钱、工具与化学品的运输通道，纸币面额的变化正是这次交换留下的痕迹。",
+        evidence_ids=["E01", "E02"],
+    ),
+    SolutionStep(
+        step_id=4,
+        text="教授用运进来的硝酸腐蚀牢门下部钢条与窗栏，也用同样的方式处理了院外的供电线；巴拉德听到的破碎声音正是这一过程的痕迹。",
+        evidence_ids=["E02", "E03"],
+    ),
+    SolutionStep(
+        step_id=5,
+        text="约定夜晚，供电线被切断造成全监狱停电；教授拆下已被腐蚀的窗栏进入院子，与提前混入的哈奇换上电工服，两人以电工身份从正门离开。",
+        evidence_ids=["E03"],
+    ),
 ]
 
 
 SPOILER_TERMS: List[str] = [
     "硝酸",
     "腐蚀",
-    "电工",
+    "钢条",
+    "停电",
+    "供电线",
+    "假扮成维修工",
+    "伪装成电工",
+    "借维修身份",
+    "身份替换",
     "换装",
     "停电",
     "正确答案",
