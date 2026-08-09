@@ -10,24 +10,27 @@
 
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
 
-  width: min(290px, calc(100vw - 32px));
-  padding: 9px 32px 9px 9px;
+  width: min(324px, calc(100vw - 32px));
+  padding: 11px 34px 11px 11px;
 
-  color: #222;
-  background: rgba(255, 255, 255, 0.97);
+  color: #1f2831;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 250, 242, 0.98)),
+    #fffaf2;
 
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 9px;
+  border: 1px solid rgba(39, 48, 57, 0.13);
+  border-radius: 14px;
 
   text-align: left;
 
   box-shadow:
-    0 8px 24px
-    rgba(24, 24, 24, 0.15);
+    0 18px 48px rgba(15, 24, 33, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
   cursor: pointer;
+  backdrop-filter: blur(16px);
 
   animation: checkpointMessageIn 260ms ease-out;
 }
@@ -36,8 +39,8 @@
   transform: translateY(-2px);
 
   box-shadow:
-    0 12px 30px
-    rgba(24, 24, 24, 0.19);
+    0 22px 56px rgba(15, 24, 33, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
 @keyframes checkpointMessageIn {
@@ -69,7 +72,9 @@
   background-repeat: no-repeat;
   background-size: 172%;
 
-  border-radius: 6px;
+  border: 1px solid rgba(255, 250, 242, 0.55);
+  border-radius: 9px;
+  box-shadow: 0 8px 18px rgba(17, 27, 38, 0.2);
 
   font-family:
     "Noto Serif SC",
@@ -95,13 +100,15 @@
 }
 
 .checkpointNotificationHeader strong {
-  color: #24211d;
+  color: #151b22;
   font-size: 12px;
+  font-weight: 800;
 }
 
 .checkpointNotificationHeader span {
-  color: #aaa39a;
+  color: #7e8790;
   font-size: 9px;
+  font-weight: 700;
 }
 
 .checkpointNotificationBody p {
@@ -109,9 +116,9 @@
 
   margin: 0;
 
-  color: #6b655d;
+  color: #56616b;
 
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 
   text-overflow: ellipsis;
@@ -136,7 +143,7 @@
 
   padding: 0;
 
-  color: #aaa39a;
+  color: #7e8790;
   background: transparent;
 
   border: 0;
@@ -153,8 +160,8 @@
 }
 
 .checkpointNotificationClose:hover {
-  color: #3c3731;
-  background: rgba(0, 0, 0, 0.06);
+  color: #151b22;
+  background: rgba(17, 27, 38, 0.07);
 }
 
 
@@ -166,17 +173,31 @@
   padding-bottom: 28px;
 }
 
+.checkpointPanelNotice {
+  margin: -4px 0 18px;
+  padding: 0;
+}
+
+.checkpointPanelNotice p {
+  margin: 0;
+
+  color: #69727a;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .chatMessage {
   display: flex;
 
   width: 100%;
-  margin: 14px 0;
+  margin: 16px 0;
 }
 
 .chatMessageAgent {
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .chatMessageUser {
@@ -200,7 +221,9 @@
   background-repeat: no-repeat;
   background-size: 172%;
 
-  border-radius: 8px;
+  border: 1px solid rgba(255, 250, 242, 0.55);
+  border-radius: 12px;
+  box-shadow: 0 10px 22px rgba(17, 27, 38, 0.18);
 
   font-family:
     "Noto Serif SC",
@@ -214,28 +237,28 @@
   width: fit-content;
   max-width: 84%;
 
-  padding: 10px 13px;
+  padding: 12px 14px;
 
-  color: #2a2722;
-  background: #fff;
+  color: #222930;
+  background: rgba(255, 255, 255, 0.82);
 
-  border: 1px solid #ddd6cc;
-  border-radius: 5px 14px 14px 14px;
+  border: 1px solid rgba(39, 48, 57, 0.11);
+  border-radius: 6px 16px 16px 16px;
 
   font-size: 15px;
   line-height: 1.7;
 
   box-shadow:
-    0 3px 10px
-    rgba(40, 35, 28, 0.06);
+    0 10px 26px rgba(31, 39, 45, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .chatMessageUser .chatBubble {
-  color: #243024;
-  background: #dff4c7;
+  color: #15241b;
+  background: #d8ead2;
 
-  border-color: #cce5b1;
-  border-radius: 14px 5px 14px 14px;
+  border-color: rgba(60, 99, 69, 0.18);
+  border-radius: 16px 6px 16px 16px;
 }
 
 .chatComposer {
@@ -248,13 +271,13 @@
   width: 100%;
   min-height: 108px;
 
-  padding: 13px 14px;
+  padding: 14px 15px;
 
-  color: #29251f;
-  background: #fff;
+  color: #1f2831;
+  background: rgba(255, 255, 255, 0.74);
 
-  border: 1px solid #d5cec4;
-  border-radius: 10px;
+  border: 1px solid rgba(39, 48, 57, 0.14);
+  border-radius: 12px;
 
   outline: none;
 
@@ -266,11 +289,11 @@
 }
 
 .chatComposer textarea:focus {
-  border-color: #8e806e;
+  border-color: rgba(22, 33, 44, 0.44);
 
   box-shadow:
-    0 0 0 3px
-    rgba(142, 128, 110, 0.1);
+    0 0 0 4px rgba(22, 33, 44, 0.08),
+    0 10px 24px rgba(31, 39, 45, 0.06);
 }
 
 .chatComposerFooter {
@@ -292,10 +315,12 @@
 
 .versionContext {
   margin-bottom: 22px;
-  padding: 13px 15px;
+  padding: 14px 16px;
 
-  background: #f4efe7;
-  border-radius: 10px;
+  background: rgba(17, 27, 38, 0.045);
+  border: 1px solid rgba(39, 48, 57, 0.1);
+  border-left: 3px solid #b88d58;
+  border-radius: 12px;
 }
 
 .versionContext > span {
@@ -349,10 +374,11 @@
   grid-template-columns: 42px 1fr;
   gap: 10px;
 
-  padding: 10px 12px;
+  padding: 11px 13px;
 
-  background: #f4efe7;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(39, 48, 57, 0.1);
+  border-radius: 12px;
 }
 
 .versionMiniItem strong {
@@ -384,7 +410,7 @@
   margin: 72px 0 32px;
   padding-top: 48px;
 
-  border-top: 1px solid #d9d0c2;
+  border-top: 1px solid rgba(39, 48, 57, 0.12);
 }
 
 .thinkingJourneyHeader {
@@ -392,7 +418,7 @@
 }
 
 .thinkingJourneyHeader > span {
-  color: #9b8e7d;
+  color: #69727a;
 
   font-size: 10px;
   font-weight: 700;
@@ -402,7 +428,7 @@
 .thinkingJourneyHeader h2 {
   margin: 10px 0 8px;
 
-  color: #28231d;
+  color: #151b22;
 
   font-family:
     "Noto Serif SC",
@@ -441,19 +467,18 @@
 
   padding: 18px 20px;
 
-  background: #fffaf2;
+  background: rgba(255, 255, 255, 0.66);
 
-  border: 1px solid #d6cbb9;
+  border: 1px solid rgba(39, 48, 57, 0.12);
   border-radius: 12px;
 
   box-shadow:
-    0 8px 24px
-    rgba(48, 40, 29, 0.06);
+    0 12px 30px rgba(31, 39, 45, 0.07);
 }
 
 .journeyFinalNode {
-  background: #f1ebdf;
-  border-color: #a99576;
+  background: rgba(17, 27, 38, 0.06);
+  border-color: rgba(184, 141, 88, 0.4);
 }
 
 .journeyNodeUnchanged {
@@ -468,7 +493,7 @@
   padding: 3px 8px;
 
   color: #fff;
-  background: #605342;
+  background: #16212c;
 
   border-radius: 999px;
 
@@ -522,10 +547,11 @@
 
   padding: 14px 16px;
 
-  background: #f6f3ee;
+  background: rgba(255, 255, 255, 0.5);
 
-  border-left: 3px solid #a98168;
-  border-radius: 4px 10px 10px 4px;
+  border: 1px solid rgba(39, 48, 57, 0.1);
+  border-left: 3px solid #b88d58;
+  border-radius: 6px 12px 12px 6px;
 }
 
 .journeyPressureTop {
