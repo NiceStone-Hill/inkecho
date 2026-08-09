@@ -1320,18 +1320,6 @@ function CheckpointPanel({
     <div
       className="checkpointContent"
     >
-      <div
-        className="checkpointPanelNotice"
-      >
-        <p>
-          {
-            getCheckpointNoticeText(
-              checkpoint,
-            )
-          }
-        </p>
-      </div>
-
       {
         checkpoint.kind ===
           "capture" && (
