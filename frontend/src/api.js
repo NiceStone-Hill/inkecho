@@ -9,7 +9,6 @@ const PROGRESS_STORAGE_KEY =
 
 const PRESSURE_CHECKPOINT_BY_STAGE = {
   5: "CP2",
-  6: "CP3",
 };
 
 
