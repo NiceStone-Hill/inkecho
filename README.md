@@ -827,14 +827,13 @@ Content-Type: application/json
   ],
   "selected_assumption": "老鼠的行为能够被教授稳定控制",
   "question": "如果老鼠的行动并不受教授稳定控制，你的解释还成立吗？",
-  "category": "unknown",
+  "category": "HUMAN_PASSAGE",
   "rationale_evidence_ids": [
-    "E07"
+    "E02"
   ],
   "rationale_annotation_ids": [],
   "new_evidence_ids": [
-    "E07",
-    "E08"
+    "E03"
   ],
   "fallback": false
 }
