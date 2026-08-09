@@ -8,6 +8,7 @@ from ai_service import (
     FALLBACK_QUESTION,
     analyze_hypothesis,
     build_agent_prompt,
+    build_model_payload,
     build_pressure_test_input,
     fallback_response,
     parse_model_output,
@@ -57,6 +58,14 @@ class PressureTestTests(unittest.TestCase):
         self.assertNotIn("哈奇", prompt)
         self.assertNotIn("Solution", prompt)
         self.assertNotIn("Annotation", prompt)
+
+    def test_qwen_payload_uses_json_mode_and_low_temperature(self):
+        payload = build_model_payload(self.input_data)
+        self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertEqual(payload["temperature"], 0.1)
+        self.assertFalse(payload["enable_thinking"])
+        self.assertIn("JSON", payload["messages"][0]["content"])
+        self.assertIn("JSON", payload["messages"][1]["content"])
 
     def test_valid_human_passage_output(self):
         result = parse_model_output(valid_output(), self.input_data)

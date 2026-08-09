@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useProgress } from "../state/ProgressContext";
-import { askQuestion } from "../api";
+import { askQuestionStream } from "../api";
 
 function QAPanel({ stageId = null }) {
   const { progress } = useProgress();
@@ -12,6 +12,45 @@ function QAPanel({ stageId = null }) {
 
   const canSubmit = draft.trim().length > 0 && !loading;
 
+  // 同一时刻只会有一条消息处于 streaming 状态
+  // （发送按钮在 loading 期间是禁用的），
+  // 所以直接按 streaming 标记定位，不需要额外的 ref。
+
+  function appendDelta(delta) {
+    setMessages((prev) => {
+      const index = prev.findIndex((m) => m.streaming);
+
+      if (index < 0) {
+        return prev;
+      }
+
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        text: next[index].text + delta,
+      };
+      return next;
+    });
+  }
+
+  function finishStreamingMessage(text) {
+    setMessages((prev) => {
+      const index = prev.findIndex((m) => m.streaming);
+
+      if (index < 0) {
+        return prev;
+      }
+
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        ...(text !== undefined ? { text } : {}),
+        streaming: false,
+      };
+      return next;
+    });
+  }
+
   async function handleSend() {
     const question = draft.trim();
 
@@ -22,6 +61,7 @@ function QAPanel({ stageId = null }) {
     setMessages((prev) => [
       ...prev,
       { role: "user", text: question },
+      { role: "agent", text: "", streaming: true },
     ]);
 
     setDraft("");
@@ -29,17 +69,27 @@ function QAPanel({ stageId = null }) {
     setError("");
 
     try {
-      const result = await askQuestion({
-        sessionId: progress.sessionId,
-        stageId,
-        question,
-      });
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "agent", text: result.answer },
-      ]);
+      await askQuestionStream(
+        {
+          sessionId: progress.sessionId,
+          stageId,
+          question,
+        },
+        {
+          onDelta: (delta) => {
+            appendDelta(delta);
+          },
+          onDone: ({ replace, answer }) => {
+            finishStreamingMessage(
+              replace ? answer : undefined,
+            );
+          },
+        },
+      );
     } catch {
+      finishStreamingMessage(
+        "暂时没能问到答案，请稍后再试。",
+      );
       setError("暂时没能问到答案，请稍后再试。");
     } finally {
       setLoading(false);
@@ -77,16 +127,13 @@ function QAPanel({ stageId = null }) {
             <div className="chatAvatar">墨</div>
           )}
 
-          <div className="chatBubble">{message.text}</div>
+          <div className="chatBubble">
+            {message.streaming && !message.text
+              ? "我在想…"
+              : message.text}
+          </div>
         </div>
       ))}
-
-      {loading && (
-        <div className="chatMessage chatMessageAgent">
-          <div className="chatAvatar">墨</div>
-          <div className="chatBubble">我在想…</div>
-        </div>
-      )}
 
       {error && (
         <p className="annotationError">{error}</p>

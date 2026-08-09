@@ -241,7 +241,10 @@ function FloatingMenu({
         aria-label="打开阅读菜单"
         onClick={onToggle}
       >
-        ···
+        <span
+          className="readerMenuIcon"
+          aria-hidden="true"
+        />
       </button>
 
       {open && (
@@ -624,6 +627,11 @@ function PressureCheckpoint({
                 sourceHypothesis
                   .confidence,
             });
+
+          console.log(
+            "Pressure Test result:",
+            result,
+          );
 
           submitResult(result);
         } catch (
@@ -1681,11 +1689,14 @@ function WorkspacePage() {
   ] = useState(false);
 
   const {
-    progress,
-    setCurrentStage,
-    completeReading,
-    resetProgress,
-  } = useProgress();
+  progress,
+  setCurrentStage,
+  completeReading,
+  resetProgress,
+
+  submitStressResult,
+  submitStressResult2,
+} = useProgress();
 
 
   const initialPage =
@@ -1749,6 +1760,9 @@ function WorkspacePage() {
   const ebookSurfaceRef =
     useRef(null);
 
+  const pressurePrefetchRef =
+    useRef(new Set());
+
 
   const stage =
     stagesData[pageId];
@@ -1756,6 +1770,104 @@ function WorkspacePage() {
 
   const checkpoint =
     stage?.checkpoint;
+
+  useEffect(() => {
+  if (
+    !stage ||
+    !checkpoint ||
+    checkpoint.kind !== "pressure"
+  ) {
+    return;
+  }
+
+  const isSecondRound =
+    checkpoint.checkpoint_id === "CP3";
+
+  const sourceHypothesis =
+    isSecondRound
+      ? progress.hypothesisV2
+      : progress.hypothesisV1;
+
+  const existingResult =
+    isSecondRound
+      ? progress.stressResult2
+      : progress.stressResult;
+
+  if (
+    !sourceHypothesis ||
+    existingResult
+  ) {
+    return;
+  }
+
+  const prefetchKey =
+    `${checkpoint.checkpoint_id}:${sourceHypothesis.text}`;
+
+  if (
+    pressurePrefetchRef.current.has(
+      prefetchKey,
+    )
+  ) {
+    return;
+  }
+
+  pressurePrefetchRef.current.add(
+    prefetchKey,
+  );
+
+  console.log(
+    "Prefetch Pressure Test:",
+    checkpoint.checkpoint_id,
+  );
+
+  analyzeHypothesis({
+    stageId: stage.stage_id,
+
+    hypothesisText:
+      sourceHypothesis.text,
+
+    confidence:
+      sourceHypothesis.confidence,
+  })
+    .then((result) => {
+      console.log(
+        "Pressure Test prefetched:",
+        result,
+      );
+
+      if (isSecondRound) {
+        submitStressResult2(
+          result,
+        );
+      } else {
+        submitStressResult(
+          result,
+        );
+      }
+    })
+    .catch((error) => {
+      console.error(
+        "Pressure Test prefetch failed:",
+        error,
+      );
+
+      pressurePrefetchRef.current.delete(
+        prefetchKey,
+      );
+    });
+}, [
+  stage,
+  checkpoint,
+
+  progress.hypothesisV1,
+  progress.hypothesisV2,
+
+  progress.stressResult,
+  progress.stressResult2,
+
+  submitStressResult,
+  submitStressResult2,
+]);
 
 
   const showCheckpointNotice =
