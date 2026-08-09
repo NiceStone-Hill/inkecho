@@ -628,6 +628,11 @@ function PressureCheckpoint({
                   .confidence,
             });
 
+          console.log(
+            "Pressure Test result:",
+            result,
+          );
+
           submitResult(result);
         } catch (
           requestError
