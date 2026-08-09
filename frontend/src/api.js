@@ -50,7 +50,12 @@ async function request(
         body.detail
       ) {
         detail =
-          body.detail;
+          typeof body.detail ===
+          "string"
+            ? body.detail
+            : JSON.stringify(
+                body.detail,
+              );
       }
 
     } catch {
@@ -109,6 +114,20 @@ function toFrontendAnnotation(
 
     createdAt:
       annotation.created_at,
+  };
+}
+
+
+function toBackendAnnotationSpan(
+  span,
+) {
+  return {
+    segment_index:
+      span.segment_index ??
+      span.segmentIndex,
+
+    quote:
+      span.quote,
   };
 }
 
@@ -398,7 +417,10 @@ export async function createAnnotation({
 
               quote,
 
-              spans,
+              spans:
+                (spans || []).map(
+                  toBackendAnnotationSpan,
+                ),
 
               note,
 
