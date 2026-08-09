@@ -86,8 +86,16 @@ function toFrontendAnnotation(
     segmentIndex:
       annotation.segment_index,
 
+    segmentEndIndex:
+      annotation.segment_end_index ??
+      annotation.segment_index,
+
     quote:
       annotation.quote,
+
+    spans:
+      annotation.spans ||
+      [],
 
     note:
       annotation.note,
@@ -293,6 +301,48 @@ export function getSolution() {
 }
 
 
+export function askQuestion({
+  sessionId,
+  stageId = null,
+  question,
+}) {
+
+  const resolvedSessionId =
+    sessionId ||
+    getCurrentSessionId();
+
+
+  if (!resolvedSessionId) {
+
+    throw new Error(
+      "missing sessionId"
+    );
+  }
+
+
+  return request(
+    "/api/qa/ask",
+
+    {
+      method: "POST",
+
+      body:
+        JSON.stringify(
+          {
+            session_id:
+              resolvedSessionId,
+
+            stage_id:
+              stageId,
+
+            question,
+          },
+        ),
+    },
+  );
+}
+
+
 export async function listAnnotations(
   sessionId,
 ) {
@@ -315,7 +365,9 @@ export async function createAnnotation({
   sessionId,
   stageId,
   segmentIndex,
+  segmentEndIndex,
   quote,
+  spans,
   note,
   inputMode = "text",
   strokes = [],
@@ -341,7 +393,13 @@ export async function createAnnotation({
               segment_index:
                 segmentIndex,
 
+              segment_end_index:
+                segmentEndIndex ??
+                segmentIndex,
+
               quote,
+
+              spans,
 
               note,
 

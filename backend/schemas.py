@@ -122,6 +122,33 @@ class AnalyzeResponse(BaseModel):
 
 
 # =========================
+# General QA Agent
+# =========================
+
+
+class QARequest(BaseModel):
+    session_id: str = Field(
+        min_length=1,
+        max_length=120,
+    )
+
+    # 用户当前所在的 stage，用于给出上下文
+    # 到"思路历程"页时可以不传
+    stage_id: int | None = None
+
+    question: str = Field(
+        min_length=1,
+        max_length=200,
+    )
+
+
+class QAResponse(BaseModel):
+    answer: str
+
+    fallback: bool
+
+
+# =========================
 # Annotation
 # =========================
 
@@ -132,6 +159,22 @@ class DrawingPoint(BaseModel):
     y: float = Field(ge=0, le=1)
 
 
+class AnnotationSegmentSpan(BaseModel):
+    """跨段批注中，单个段落内被选中的具体文字。
+
+    用于精确高亮：不能靠在整段批注的 quote 里
+    做 indexOf，因为跨段的 quote 是多段文字拼接的，
+    没有分隔符，无法唯一还原到某一段。
+    """
+
+    segment_index: int = Field(ge=0)
+
+    quote: str = Field(
+        min_length=1,
+        max_length=600,
+    )
+
+
 class AnnotationCreate(BaseModel):
     session_id: str = Field(
         min_length=1,
@@ -140,13 +183,29 @@ class AnnotationCreate(BaseModel):
 
     stage_id: int
 
+    # 选区起始段落
     segment_index: int = Field(
         ge=0,
     )
 
+    # 选区结束段落
+    # 单段批注时两者相同
+    segment_end_index: int = Field(
+        ge=0,
+    )
+
+    # 完整批注文字（可跨段拼接）
     quote: str = Field(
         min_length=1,
-        max_length=200,
+        max_length=600,
+    )
+
+    # segment_index ~ segment_end_index
+    # 之间，每一段各自被选中的文字
+    spans: List[
+        AnnotationSegmentSpan
+    ] = Field(
+        min_length=1,
     )
 
     note: str = Field(
@@ -177,7 +236,13 @@ class AnnotationResponse(BaseModel):
 
     segment_index: int
 
+    segment_end_index: int
+
     quote: str
+
+    spans: List[
+        AnnotationSegmentSpan
+    ]
 
     note: str
 
