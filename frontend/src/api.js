@@ -94,8 +94,18 @@ function toFrontendAnnotation(
       annotation.quote,
 
     spans:
-      annotation.spans ||
-      [],
+      (
+        annotation.spans ||
+        []
+      ).map(
+        (span) => ({
+          segmentIndex:
+            span.segment_index,
+
+          quote:
+            span.quote,
+        }),
+      ),
 
     note:
       annotation.note,
@@ -399,7 +409,16 @@ export async function createAnnotation({
 
               quote,
 
-              spans,
+              spans:
+                (spans || []).map(
+                  (span) => ({
+                    segment_index:
+                      span.segmentIndex,
+
+                    quote:
+                      span.quote,
+                  }),
+                ),
 
               note,
 
