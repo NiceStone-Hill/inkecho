@@ -241,7 +241,10 @@ function FloatingMenu({
         aria-label="打开阅读菜单"
         onClick={onToggle}
       >
-        ···
+        <span
+          className="readerMenuIcon"
+          aria-hidden="true"
+        />
       </button>
 
       {open && (

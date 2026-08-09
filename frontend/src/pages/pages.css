@@ -139,13 +139,27 @@
   place-items: center;
   width: 46px;
   height: 46px;
-  color: #f8f2e8;
-  background: #26221d;
-  border: 1px solid #26221d;
+  padding: 0;
+  overflow: hidden;
+  background: #071322;
+  border: 1px solid rgba(255, 250, 242, 0.72);
   border-radius: 50%;
-  font-size: 22px;
-  letter-spacing: 1px;
   box-shadow: 0 12px 28px rgba(42, 35, 26, 0.24);
+}
+
+.readerMenuButton:focus-visible {
+  outline: 2px solid #c79b52;
+  outline-offset: 3px;
+}
+
+.readerMenuIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-image: url("/ip.png");
+  background-position: 50% 54%;
+  background-repeat: no-repeat;
+  background-size: 172%;
 }
 
 .readerMenuPanel {
