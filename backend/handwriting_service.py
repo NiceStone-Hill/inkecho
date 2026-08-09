@@ -15,18 +15,6 @@ import json
 import os
 import threading
 
-import numpy as np
-
-from PIL import (
-    Image,
-    ImageChops,
-)
-
-from paddleocr import (
-    TextRecognition,
-)
-
-
 # ========================================
 # Config
 # ========================================
@@ -81,6 +69,10 @@ def _get_model():
                 f"Loading {MODEL_NAME}..."
             )
 
+            from paddleocr import (
+                TextRecognition,
+            )
+
             _model = (
                 TextRecognition(
                     model_name=MODEL_NAME,
@@ -103,7 +95,7 @@ def _get_model():
 
 def _decode_data_url(
     image_data_url: str,
-) -> Image.Image:
+):
 
     if not image_data_url:
         raise ValueError(
@@ -132,6 +124,10 @@ def _decode_data_url(
 
     try:
 
+        from PIL import (
+            Image,
+        )
+
         raw = (
             base64.b64decode(
                 encoded
@@ -159,9 +155,14 @@ def _decode_data_url(
 # ========================================
 
 def _crop_handwriting(
-    image: Image.Image,
-) -> Image.Image:
+    image,
+):
     """自动裁掉手写框四周的大量空白。"""
+
+    from PIL import (
+        Image,
+        ImageChops,
+    )
 
     white = Image.new(
         "RGB",
@@ -302,6 +303,8 @@ def recognize_handwriting(
             image
         )
     )
+
+    import numpy as np
 
     image_array = np.array(
         image
