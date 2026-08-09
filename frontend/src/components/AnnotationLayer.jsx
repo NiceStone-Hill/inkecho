@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -13,6 +14,21 @@ import {
 
 import HandwritingCanvas
   from "./HandwritingCanvas";
+
+
+/*
+ * 选中文字后先展示一个小图标，
+ * 点击图标才真正打开批注表单，
+ * 避免表单直接遮挡阅读视线。
+ */
+const HOVER_ICON_SIZE = 28;
+const HOVER_ICON_GAP = 6;
+const HOVER_DISMISS_MARGIN = 14;
+
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 
 /* ========================================
@@ -336,6 +352,12 @@ function AnnotationLayer({
 
 
   const [
+    pendingSelection,
+    setPendingSelection,
+  ] = useState(null);
+
+
+  const [
     noteDraft,
     setNoteDraft,
   ] = useState("");
@@ -427,9 +449,61 @@ function AnnotationLayer({
 
     if (
       !selection ||
-      selection.isCollapsed ||
-      saving
+      saving ||
+      popover
     ) {
+
+      /*
+       * 关键修复：
+       *
+       * 点击钢笔图标是"mousedown 在按钮上，
+       * 然后 mouseup"，而 mousedown 里
+       * openAnnotationForm() 已经把 popover 设好、
+       * 同步提交渲染，按钮当场从 DOM 里消失。
+       *
+       * 所以紧跟着来的这次 mouseup，
+       * 浏览器会按当前鼠标位置重新找目标元素——
+       * 如果这个位置刚好落在新打开的批注表单外面
+       * （比如选区较宽、图标被 clamp 到边缘等情况），
+       * 这次 mouseup 就会一路冒泡到这里，
+       * 让 handleMouseUp 用旧的选区重新算一遍，
+       * 把 pendingSelection 又设成非空。
+       *
+       * 表单还开着的时候图标不会显示，
+       * 但表单一关（取消/保存成功），
+       * 这个"僵尸" pendingSelection 就会
+       * 让钢笔图标莫名其妙地重新弹出来，
+       * 位置还是旧的，点它也没用——
+       * 表现出来就是"批注不了"。
+       *
+       * 所以只要表单已经打开，
+       * 这里直接整段跳过，
+       * 不再重新计算 pendingSelection。
+       */
+
+      return;
+    }
+
+
+    if (
+      selection.isCollapsed
+    ) {
+
+      /*
+       * 选区被取消（比如
+       * 只是点了一下普通文字），
+       * 待定的钢笔图标也要一起消失。
+       */
+
+      if (
+        pendingSelection &&
+        !popover
+      ) {
+        setPendingSelection(
+          null,
+        );
+      }
+
       return;
     }
 
@@ -641,27 +715,90 @@ function AnnotationLayer({
         .getBoundingClientRect();
 
 
-    const popoverWidth =
-      320;
+    /*
+     * 先只展示一个钢笔小图标，
+     * 而不是直接弹出批注表单，
+     * 避免表单遮挡阅读视线。
+     *
+     * 图标默认放在选区右上方，
+     * 如果上方空间不够就放到选区下方。
+     */
 
-    // 手写识别增加了一些内容，
-    // 所以统一多留空间。
-    const popoverHeight =
-      390;
-
-
-    const rawTop =
+    let iconViewportTop =
       rect.top -
-      containerRect.top -
-      46;
+      HOVER_ICON_SIZE -
+      HOVER_ICON_GAP;
+
+    if (iconViewportTop < 0) {
+
+      iconViewportTop =
+        rect.bottom +
+        HOVER_ICON_GAP;
+    }
+
+    const iconViewportLeft =
+      rect.right -
+      HOVER_ICON_SIZE;
 
 
-    const rawLeft =
-      rect.left -
-      containerRect.left;
+    const iconTop =
+      clamp(
+        iconViewportTop -
+          containerRect.top,
+        0,
+        Math.max(
+          0,
+          containerRect.height -
+            HOVER_ICON_SIZE,
+        ),
+      );
+
+    const iconLeft =
+      clamp(
+        iconViewportLeft -
+          containerRect.left,
+        0,
+        Math.max(
+          0,
+          containerRect.width -
+            HOVER_ICON_SIZE,
+        ),
+      );
 
 
-    setPopover({
+    // 图标和选区的并集范围，
+    // 加一点余量，
+    // 鼠标离开这个范围时图标才消失。
+    const dismissRect = {
+      top:
+        Math.min(
+          rect.top,
+          iconViewportTop,
+        ) - HOVER_DISMISS_MARGIN,
+
+      bottom:
+        Math.max(
+          rect.bottom,
+          iconViewportTop +
+            HOVER_ICON_SIZE,
+        ) + HOVER_DISMISS_MARGIN,
+
+      left:
+        Math.min(
+          rect.left,
+          iconViewportLeft,
+        ) - HOVER_DISMISS_MARGIN,
+
+      right:
+        Math.max(
+          rect.right,
+          iconViewportLeft +
+            HOVER_ICON_SIZE,
+        ) + HOVER_DISMISS_MARGIN,
+    };
+
+
+    setPendingSelection({
       quote,
 
       segmentIndex:
@@ -672,38 +809,90 @@ function AnnotationLayer({
 
       spans,
 
+      rect: {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+      },
+
+      containerRect: {
+        top: containerRect.top,
+        left: containerRect.left,
+        width: containerRect.width,
+        height: containerRect.height,
+      },
+
+      iconTop,
+      iconLeft,
+      dismissRect,
+    });
+  }
+
+
+  function openAnnotationForm() {
+
+    if (!pendingSelection) {
+      return;
+    }
+
+    const {
+      quote,
+      segmentIndex,
+      segmentEndIndex,
+      spans,
+      rect,
+      containerRect,
+    } = pendingSelection;
+
+    const popoverWidth =
+      320;
+
+    // 手写识别增加了一些内容，
+    // 所以统一多留空间。
+    const popoverHeight =
+      390;
+
+    const rawTop =
+      rect.top -
+      containerRect.top -
+      46;
+
+    const rawLeft =
+      rect.left -
+      containerRect.left;
+
+    setPopover({
+      quote,
+      segmentIndex,
+      segmentEndIndex,
+      spans,
+
       top:
-        Math.min(
+        clamp(
+          rawTop,
+          0,
           Math.max(
             0,
-            rawTop,
-          ),
-
-          Math.max(
-            0,
-
             containerRect.height -
-            popoverHeight,
+              popoverHeight,
           ),
         ),
 
       left:
-        Math.min(
+        clamp(
+          rawLeft,
+          0,
           Math.max(
             0,
-            rawLeft,
-          ),
-
-          Math.max(
-            0,
-
             containerRect.width -
-            popoverWidth -
-            12,
+              popoverWidth -
+              12,
           ),
         ),
     });
 
+    setPendingSelection(null);
 
     resetDraft();
   }
@@ -919,6 +1108,61 @@ function AnnotationLayer({
   }
 
 
+  /*
+   * 光标（鼠标）离开选区 + 图标
+   * 所在的范围时，
+   * 待定的钢笔图标自动消失。
+   *
+   * 一旦批注表单打开（popover 存在），
+   * 就不用再监听了。
+   */
+  useEffect(() => {
+
+    if (!pendingSelection || popover) {
+      return undefined;
+    }
+
+    function handlePointerMove(
+      event,
+    ) {
+
+      const {
+        dismissRect,
+      } = pendingSelection;
+
+      const inside =
+        event.clientX >=
+          dismissRect.left &&
+        event.clientX <=
+          dismissRect.right &&
+        event.clientY >=
+          dismissRect.top &&
+        event.clientY <=
+          dismissRect.bottom;
+
+      if (!inside) {
+
+        setPendingSelection(
+          null,
+        );
+      }
+    }
+
+    document.addEventListener(
+      "mousemove",
+      handlePointerMove,
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousemove",
+        handlePointerMove,
+      );
+    };
+  }, [pendingSelection, popover]);
+
+
   function switchMode(
     mode,
   ) {
@@ -1049,6 +1293,71 @@ function AnnotationLayer({
         >
           {error}
         </p>
+
+      )}
+
+
+      {pendingSelection &&
+        !popover && (
+
+        <button
+          type="button"
+
+          className="annotationHoverIcon"
+
+          title="添加批注"
+
+          style={{
+            top:
+              pendingSelection.iconTop,
+
+            left:
+              pendingSelection.iconLeft,
+          }}
+
+          onMouseDown={(
+            event,
+          ) => {
+
+            /*
+             * 用 mousedown 而不是 click，
+             * 防止点击图标时浏览器
+             * 先清空文字选区。
+             */
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            openAnnotationForm();
+          }}
+
+          onMouseUp={(
+            event,
+          ) => {
+
+            /*
+             * 关键修复：
+             *
+             * 点击图标本身也会在
+             * mousedown 之后触发一次 mouseup，
+             * 这个 mouseup 会往上冒泡到
+             * annotationLayer 的 onMouseUp（handleMouseUp）。
+             *
+             * 如果不拦住，
+             * handleMouseUp 会拿着（此时仍然存在的）
+             * 原选区重新算一遍，
+             * 把 pendingSelection 又设回非空，
+             * 导致保存/取消批注后钢笔图标莫名其妙地
+             * 重新弹出来，或者盖住刚打开的表单，
+             * 表现出来就像"点了图标却批注不了"。
+             */
+
+            event.stopPropagation();
+          }}
+        >
+          ✎
+        </button>
 
       )}
 

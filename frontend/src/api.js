@@ -98,8 +98,18 @@ function toFrontendAnnotation(
       annotation.quote,
 
     spans:
-      annotation.spans ||
-      [],
+      (
+        annotation.spans ||
+        []
+      ).map(
+        (span) => ({
+          segmentIndex:
+            span.segment_index,
+
+          quote:
+            span.quote,
+        }),
+      ),
 
     note:
       annotation.note,
