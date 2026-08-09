@@ -35,6 +35,29 @@ export function createDefaultProgress() {
   };
 }
 
+function migrateStressResult(result) {
+  if (!result) {
+    return null;
+  }
+
+  return {
+    selected_assumption:
+      result.selected_assumption ??
+      null,
+    category:
+      result.category === "UNKNOWN"
+        ? "UNCLEAR"
+        : result.category,
+    pressure_question:
+      result.pressure_question ||
+      result.question ||
+      "",
+    rationale_evidence_ids:
+      result.rationale_evidence_ids ||
+      [],
+  };
+}
+
 export function loadProgress() {
   if (typeof window === "undefined") {
     return createDefaultProgress();
@@ -52,6 +75,8 @@ export function loadProgress() {
       ...defaults,
       ...parsed,
       sessionId: parsed.sessionId || defaults.sessionId,
+      stressResult: migrateStressResult(parsed.stressResult),
+      stressResult2: migrateStressResult(parsed.stressResult2),
       reading: {
         ...defaults.reading,
         ...(parsed.reading || {}),

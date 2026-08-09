@@ -53,9 +53,7 @@ function HypothesisPanel({ onSubmitted, onThinkingChange, analyzeOnSubmit = true
         return;
       }
 
-      const currentStageId = progress.reading.currentStageId || 3;
       const result = await analyzeHypothesis({
-        stageId: currentStageId,
         hypothesisText: hypothesis.text,
         confidence: hypothesis.confidence,
       });

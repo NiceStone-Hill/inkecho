@@ -141,7 +141,7 @@ function RevealPanel() {
                 {stressResult?.selected_assumption}
               </p>
               <p style={{ margin: "0 0 8px", color: "#625c53", fontSize: 14, lineHeight: 1.7 }}>
-                压力问题：{stressResult?.question}
+                压力问题：{stressResult?.pressure_question}
               </p>
               {stressResult?.rationale_evidence_ids?.length > 0 && (
                 <p style={{ margin: 0, color: "#92897b", fontSize: 13, lineHeight: 1.7 }}>

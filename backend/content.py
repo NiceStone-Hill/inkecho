@@ -17,12 +17,12 @@ EVIDENCE: Dict[str, Evidence] = {
     ),
     "E02": Evidence(
         evidence_id="E02",
-        text="十三号牢房地面存在一根废弃排水管；牢房中的老鼠能够通过与牢门不同的路径离开当前空间。",
+        text="十三号牢房存在一个非标准边界通道，老鼠能够通过与牢门不同的路径离开当前空间。",
         source_stage=4,
     ),
     "E03": Evidence(
         evidence_id="E03",
-        text="监狱没有内部电工；弧光灯发生故障时，外部照明公司的维修人员可以因正常工作需要进入监狱。",
+        text="监狱没有内部电工；照明发生故障时，外部照明公司的维修人员可以因正常工作需要进入监狱。",
         source_stage=5,
     ),
 }
@@ -196,59 +196,6 @@ STAGES: List[StageContent] = [
 ]
 
 STAGES_BY_ID: Dict[int, StageContent] = {stage.stage_id: stage for stage in STAGES}
-
-
-# ---------------------------------------------------------------------------
-# 压力测试模板（Evidence Master MVP v1.0 taxonomy），用于模型降级兜底
-# ---------------------------------------------------------------------------
-
-STRESS_CATEGORIES: List[str] = [
-    "TOOL_SOURCE",
-    "COMMUNICATION",
-    "HUMAN_PASSAGE",
-    "SPACE_PATH",
-    "INSIDER_HELP",
-    "UNKNOWN",
-]
-
-STRESS_TEMPLATES: Dict[str, Dict[str, object]] = {
-    "TOOL_SOURCE": {
-        "keywords": "工具|钥匙|锉刀|藏|偷偷带|暗藏|制造工具",
-        "assumption": "入狱时没有携带普通工具，因此之后也无法获得或制造任何工具。",
-        "question": "入狱时没有携带普通工具，是否足以证明他之后无法获得或制造工具？",
-        "preferred_evidence_ids": ["E01"],
-    },
-    "COMMUNICATION": {
-        "keywords": "传信|联系|通信|消息|外界|朋友|同伙|外援|接应",
-        "assumption": "常规书写和人工传信受限，因此所有信息交换路径都已被排除。",
-        "question": "常规书写和人工传信受限，是否等于所有信息交换路径都已被排除？",
-        "preferred_evidence_ids": ["E01"],
-    },
-    "HUMAN_PASSAGE": {
-        "keywords": "排水管|通道|爬|洞|钻|地道|管道|墙缝|翻墙",
-        "assumption": "能够供老鼠或其他物体通过的通道，也一定是范·杜森本人最终的逃生路径。",
-        "question": "你的方案把发现边界通道理解成了人必须从这里离开，文本证明了这一步吗？",
-        "preferred_evidence_ids": ["E02"],
-    },
-    "SPACE_PATH": {
-        "keywords": "七道门|牢门|窗户|窗栏|高墙|秘密|偷偷出去|绕过",
-        "assumption": "离开监狱必须秘密绕过或破解现有的物理防线。",
-        "question": "你的方案默认离开监狱必须秘密绕过正常通道，文本证明这是唯一可能吗？",
-        "preferred_evidence_ids": ["E02", "E03"],
-    },
-    "INSIDER_HELP": {
-        "keywords": "狱卒|守卫|监狱内部|内应|收买",
-        "assumption": "外部帮助必须依赖监狱内部人员秘密配合。",
-        "question": "你的方案依赖内部人员秘密配合，这一步来自文本还是你的推定？",
-        "preferred_evidence_ids": ["E01", "E03"],
-    },
-    "UNKNOWN": {
-        "keywords": "",
-        "assumption": "方案中至少一个关键环节尚未被已读文本支持",
-        "question": "这个方案里，哪一步能在已读文本中找到依据，哪一步只是你的推定？",
-        "preferred_evidence_ids": ["E01", "E02", "E03"],
-    },
-}
 
 
 SOLUTION_STEPS: List[SolutionStep] = [
