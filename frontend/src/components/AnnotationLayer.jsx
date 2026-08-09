@@ -1081,6 +1081,7 @@ function AnnotationLayer({
 
 
       setError(
+        err.message ||
         "批注保存失败，请确认后端服务正在运行。",
       );
 
