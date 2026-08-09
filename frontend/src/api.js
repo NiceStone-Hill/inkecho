@@ -353,6 +353,182 @@ export function askQuestion({
 }
 
 
+// 流式版本：edge 事件通过 onDelta 逐段推送，
+// 结束时调用 onDone({ fallback, replace, answer })。
+//
+// - replace === true 时，说明前面推过的 delta
+//   都作废了（比如中途命中剧透词），
+//   调用方应该整体替换成 answer。
+export async function askQuestionStream(
+  {
+    sessionId,
+    stageId = null,
+    question,
+  },
+  {
+    onDelta,
+    onDone,
+  } = {},
+) {
+
+  const resolvedSessionId =
+    sessionId ||
+    getCurrentSessionId();
+
+
+  if (!resolvedSessionId) {
+
+    throw new Error(
+      "missing sessionId"
+    );
+  }
+
+
+  const response =
+    await fetch(
+      `${API_URL}/api/qa/ask/stream`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify({
+            session_id:
+              resolvedSessionId,
+
+            stage_id:
+              stageId,
+
+            question,
+          }),
+      },
+    );
+
+
+  if (!response.ok) {
+
+    let detail =
+      `HTTP ${response.status}`;
+
+    try {
+
+      const body =
+        await response.json();
+
+      if (body && body.detail) {
+        detail = body.detail;
+      }
+
+    } catch {
+      // 不是 JSON
+    }
+
+    throw new Error(detail);
+  }
+
+
+  if (!response.body) {
+
+    // 环境不支持流式读取，
+    // 退回一次性请求。
+    const result =
+      await askQuestion({
+        sessionId:
+          resolvedSessionId,
+        stageId,
+        question,
+      });
+
+    onDelta?.(result.answer);
+
+    onDone?.({
+      fallback: result.fallback,
+      replace: false,
+      answer: result.answer,
+    });
+
+    return;
+  }
+
+
+  const reader =
+    response.body.getReader();
+
+  const decoder =
+    new TextDecoder("utf-8");
+
+  let buffer = "";
+
+
+  while (true) {
+
+    const { done, value } =
+      await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    buffer +=
+      decoder.decode(value, {
+        stream: true,
+      });
+
+    const chunks =
+      buffer.split("\n\n");
+
+    buffer =
+      chunks.pop() ?? "";
+
+    for (const chunk of chunks) {
+
+      const line =
+        chunk
+          .split("\n")
+          .find((row) =>
+            row.startsWith("data:"),
+          );
+
+      if (!line) {
+        continue;
+      }
+
+      const raw =
+        line.slice(5).trim();
+
+      if (!raw) {
+        continue;
+      }
+
+      let event;
+
+      try {
+        event = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+
+      if (event.type === "delta") {
+        onDelta?.(event.text);
+      } else if (event.type === "done") {
+        onDone?.({
+          fallback:
+            Boolean(event.fallback),
+          replace:
+            Boolean(event.replace),
+          answer:
+            event.answer ?? "",
+        });
+      }
+    }
+  }
+}
+
+
 export async function listAnnotations(
   sessionId,
 ) {

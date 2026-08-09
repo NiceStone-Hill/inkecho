@@ -23,6 +23,12 @@ from fastapi.middleware.cors import (
     CORSMiddleware,
 )
 
+from fastapi.responses import (
+    StreamingResponse,
+)
+
+import json
+
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
@@ -38,6 +44,7 @@ from handwriting_service import (
 
 from qa_service import (
     answer_question,
+    stream_answer,
 )
 
 from content import (
@@ -411,6 +418,23 @@ def ask_question(
     request: QARequest,
 ):
 
+    normalized_request = (
+        _validate_qa_request(
+            request
+        )
+    )
+
+    return (
+        answer_question(
+            normalized_request
+        )
+    )
+
+
+def _validate_qa_request(
+    request: QARequest,
+) -> QARequest:
+
     cleaned_question = (
         request
         .question
@@ -444,19 +468,51 @@ def ask_question(
             ),
         )
 
+    return request.model_copy(
+        update={
+            "question":
+                cleaned_question
+        }
+    )
+
+
+@app.post(
+    "/api/qa/ask/stream"
+)
+def ask_question_stream(
+    request: QARequest,
+):
+
     normalized_request = (
-        request.model_copy(
-            update={
-                "question":
-                    cleaned_question
-            }
+        _validate_qa_request(
+            request
         )
     )
 
-    return (
-        answer_question(
+    def _event_source():
+
+        for event in stream_answer(
             normalized_request
-        )
+        ):
+
+            yield (
+                f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            )
+
+    return StreamingResponse(
+        _event_source(),
+
+        media_type=(
+            "text/event-stream"
+        ),
+
+        headers={
+            "Cache-Control":
+                "no-cache",
+
+            "X-Accel-Buffering":
+                "no",
+        },
     )
 
 
