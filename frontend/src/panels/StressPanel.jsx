@@ -6,7 +6,7 @@ const CATEGORY_LABEL = {
   HUMAN_PASSAGE: "人体通行",
   SPACE_PATH: "空间路径",
   INSIDER_HELP: "内部协助",
-  UNKNOWN: "待证实环节",
+  UNCLEAR: "待证实环节",
 };
 
 function StressPanel({ onCompleted }) {
@@ -26,7 +26,6 @@ function StressPanel({ onCompleted }) {
     <>
       <p className="stageIntro">
         UNPROVEN 只依据当前解锁的三条 Evidence，检查了你第一次判断中的一个默认前提。
-        {stressResult.fallback && "（当前使用安全兜底问题，AI 服务暂不可用。）"}
       </p>
 
       <div className="editor" style={{ marginBottom: 18 }}>
@@ -41,10 +40,10 @@ function StressPanel({ onCompleted }) {
       <div className="cardGrid">
         <div className="statementCard" style={{ borderLeft: "3px solid #a8977a" }}>
           <div className="statementCardId">
-            压力问题 · {CATEGORY_LABEL[stressResult.category] || CATEGORY_LABEL.UNKNOWN}
+            压力问题 · {CATEGORY_LABEL[stressResult.category] || CATEGORY_LABEL.UNCLEAR}
           </div>
           <p className="statementCardText" style={{ marginBottom: 0, fontWeight: 600 }}>
-            {stressResult.question}
+            {stressResult.pressure_question}
           </p>
         </div>
 

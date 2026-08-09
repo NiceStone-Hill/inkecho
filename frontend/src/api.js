@@ -7,11 +7,6 @@ const PROGRESS_STORAGE_KEY =
   "inkecho_progress_v1";
 
 
-const PRESSURE_CHECKPOINT_BY_STAGE = {
-  5: "CP2",
-};
-
-
 async function request(
   path,
   options = {},
@@ -69,6 +64,23 @@ async function request(
 }
 
 
+function getCurrentSessionId() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PROGRESS_STORAGE_KEY);
+    if (!raw) {
+      return "";
+    }
+    return JSON.parse(raw).sessionId || "";
+  } catch {
+    return "";
+  }
+}
+
+
 function toFrontendAnnotation(
   annotation,
 ) {
@@ -110,49 +122,6 @@ function toFrontendAnnotation(
     createdAt:
       annotation.created_at,
   };
-}
-
-
-function getCurrentSessionId() {
-
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return "";
-  }
-
-
-  try {
-
-    const raw =
-      window.localStorage
-        .getItem(
-          PROGRESS_STORAGE_KEY,
-        );
-
-
-    if (!raw) {
-      return "";
-    }
-
-
-    const progress =
-      JSON.parse(
-        raw
-      );
-
-
-    return (
-      progress.sessionId ||
-      ""
-    );
-
-  } catch {
-
-    return "";
-
-  }
 }
 
 
@@ -219,49 +188,10 @@ export function getStage(
 
 
 export function analyzeHypothesis({
-  sessionId,
-  stageId,
-  checkpointId,
+  checkpointId = "CP2",
   hypothesisText,
   confidence,
 }) {
-
-  /*
-   * WorkspacePage 现在还没有显式传
-   * sessionId / checkpointId。
-   *
-   * 所以这里自动补上，
-   * 这样不用修改 WorkspacePage。
-   */
-
-  const resolvedSessionId =
-    sessionId ||
-    getCurrentSessionId();
-
-
-  const resolvedCheckpointId =
-    checkpointId ||
-    PRESSURE_CHECKPOINT_BY_STAGE[
-      stageId
-    ];
-
-
-  if (!resolvedSessionId) {
-
-    throw new Error(
-      "missing sessionId"
-    );
-  }
-
-
-  if (!resolvedCheckpointId) {
-
-    throw new Error(
-      `no pressure checkpoint for stage ${stageId}`,
-    );
-  }
-
-
   return request(
     "/api/analyze",
 
@@ -272,19 +202,15 @@ export function analyzeHypothesis({
       body:
         JSON.stringify(
           {
-            session_id:
-              resolvedSessionId,
-
-            stage_id:
-              stageId,
-
             checkpoint_id:
-              resolvedCheckpointId,
+              checkpointId,
 
-            hypothesis_text:
-              hypothesisText,
+            hypothesis_v1: {
+              text:
+                hypothesisText,
 
-            confidence,
+              confidence,
+            },
           },
         ),
     },

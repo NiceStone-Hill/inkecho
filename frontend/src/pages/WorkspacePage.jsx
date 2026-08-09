@@ -460,7 +460,6 @@ function CaptureCheckpoint({
 
 
 function PressureCheckpoint({
-  stageId,
   progress,
   checkpoint,
   onClose,
@@ -617,8 +616,6 @@ function PressureCheckpoint({
         try {
           const result =
             await analyzeHypothesis({
-              stageId,
-
               hypothesisText:
                 sourceHypothesis
                   .text,
@@ -647,7 +644,6 @@ function PressureCheckpoint({
       [
         stressResult,
         sourceHypothesis,
-        stageId,
         submitResult,
       ],
     );
@@ -953,7 +949,7 @@ function PressureCheckpoint({
               className="chatBubble"
             >
               {
-                stressResult.question
+                stressResult.pressure_question
               }
             </div>
           </div>
@@ -1330,10 +1326,6 @@ function CheckpointPanel({
         checkpoint.kind ===
           "pressure" && (
           <PressureCheckpoint
-            stageId={
-              stage.stage_id
-            }
-
             progress={progress}
 
             checkpoint={
@@ -1453,9 +1445,9 @@ function JourneyPressureNode({
   }
 
 
-  const newEvidence =
+  const rationaleEvidence =
     stressResult
-      .new_evidence_ids ||
+      .rationale_evidence_ids ||
     [];
 
 
@@ -1470,12 +1462,12 @@ function JourneyPressureNode({
           {label}
         </span>
 
-        {newEvidence.length >
+        {rationaleEvidence.length >
           0 && (
           <span>
-            新线索：
+            依据：
             {
-              newEvidence.join(
+              rationaleEvidence.join(
                 " · ",
               )
             }
@@ -1489,7 +1481,7 @@ function JourneyPressureNode({
 
       <p>
         {
-          stressResult.question
+          stressResult.pressure_question
         }
       </p>
 

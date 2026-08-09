@@ -172,24 +172,16 @@ Hypothesis 同样不是事实。
 
 ---
 
-# Context Builder
+# Pressure Test 输入边界
 
-在调用 LLM 前，后端先通过确定性的 Context Builder 决定：
+Pressure Test 只在 CP2 运行一次。后端固定装入 E01—E03，不接受客户端上传或扩大 Evidence 白名单。
 
-- 当前用户已经读到哪里
-- 当前允许使用哪些 Evidence
-- 上一个 Checkpoint 之后新增了哪些 Evidence
-- 当前有哪些 Annotation
-- 上一个 Checkpoint 之后新增了哪些 Annotation
+模型只会收到：
 
-LLM 不负责决定自己“可以看到什么”。
+- Hypothesis V1 文本与确信度
+- E01、E02、E03
 
-这样可以避免：
-
-- 提前看到未解锁剧情
-- 将用户 Annotation 误当作事实
-- 让模型自行扩大上下文范围
-- 在不同 Checkpoint 中错误使用未来 Evidence
+小说全文、Solution 和 Annotation 都不会进入 Pressure Test 上下文。
 
 ---
 
@@ -200,26 +192,20 @@ LLM 不负责决定自己“可以看到什么”。
 正常情况下，反馈问题由 LLM 动态生成。
 
 ```text
-Hypothesis
-+
-Evidence
-+
-Annotation
+Hypothesis V1 + E01—E03
     ↓
 LLM 分析
     ↓
-unsupported_assumptions
-    ↓
 selected_assumption
-    ↓
-动态生成 question
+↓
+动态生成 pressure_question
 ```
 
 因此，系统正常运行时并不是从一组固定问题中选择一个问题。
 
 ## Fallback 模式
 
-`STRESS_TEMPLATES` 只用于模型异常时的保底逻辑，例如：
+以下任一情况都直接返回固定 `UNCLEAR` 问题：
 
 - 没有配置 AI API Key
 - 模型调用超时
@@ -227,24 +213,18 @@ selected_assumption
 - 返回内容不是合法 JSON
 - 模型输出字段不符合要求
 - 引用了未解锁 Evidence
-- 引用了不存在的 Annotation
 - 输出触发剧透安全检查
+- 用户输入过短或无法可靠识别前提
 
 此时系统才会进入：
 
 ```text
-fallback classifier
-        ↓
-STRESS_TEMPLATES
-        ↓
-安全的备用问题
+selected_assumption = null
+category = UNCLEAR
+pressure_question = 固定问题
 ```
 
-所以：
-
-> `STRESS_TEMPLATES` 不是正常问题生成机制，只是 fallback。
-
-如果开发测试中连续出现完全相同的问题，应优先检查 Agent 是否频繁进入 fallback，而不是先修改 Prompt。
+不再通过关键词硬猜类别或解法。
 
 ---
 
@@ -410,7 +390,7 @@ inkecho/
 ├── backend/
 │   ├── ai_service.py
 │   ├── content.py
-│   ├── context_builder.py
+│   ├── tests/
 │   ├── handwriting_service.py
 │   ├── main.py
 │   ├── schemas.py
@@ -807,11 +787,11 @@ Content-Type: application/json
 
 ```json
 {
-  "session_id": "session-example",
-  "stage_id": 5,
   "checkpoint_id": "CP2",
-  "hypothesis_text": "老鼠可能在帮助教授传递某些东西。",
-  "confidence": "medium"
+  "hypothesis_v1": {
+    "text": "他发现边界通道后，会把洞扩大，然后从那里爬出去。",
+    "confidence": "medium"
+  }
 }
 ```
 
@@ -819,32 +799,17 @@ Content-Type: application/json
 
 ```json
 {
-  "normalized_steps": [
-    "老鼠可能参与了某种传递行为"
-  ],
-  "unsupported_assumptions": [
-    "老鼠的行为能够被教授稳定控制"
-  ],
-  "selected_assumption": "老鼠的行为能够被教授稳定控制",
-  "question": "如果老鼠的行动并不受教授稳定控制，你的解释还成立吗？",
+  "selected_assumption": "用户默认供老鼠通过的边界通道也足以让范·杜森本人通行。",
   "category": "HUMAN_PASSAGE",
-  "rationale_evidence_ids": [
-    "E02"
-  ],
-  "rationale_annotation_ids": [],
-  "new_evidence_ids": [
-    "E03"
-  ],
-  "fallback": false
+  "pressure_question": "你的方案把老鼠能够通过进一步理解成了人也能通过，目前文本真的证明了这一步吗？",
+  "rationale_evidence_ids": ["E02"]
 }
 ```
 
 说明：
 
-- `fallback = false`：问题由 LLM 动态生成
-- `fallback = true`：模型调用或输出校验失败，使用备用问题
-- `rationale_evidence_ids` 只能引用已经解锁的 Evidence
-- `rationale_annotation_ids` 只能引用当前用户已经产生的 Annotation
+- `rationale_evidence_ids` 只能引用 E01—E03
+- 无法可靠判断或模型失败时，返回固定 `UNCLEAR` 结果
 
 ---
 
@@ -1172,8 +1137,7 @@ http://127.0.0.1:8000/api/ai/status
 - 模型请求是否超时
 - 返回 JSON 格式
 - Evidence ID 校验
-- Annotation ID 校验
-- `question` 长度
+- `pressure_question` 长度与单问句校验
 - spoiler 检查
 
 而不是优先增加更多固定问题模板。
@@ -1328,7 +1292,7 @@ GitHub Pages 使用子路径：
 - 手写 OCR 主要面向短句、单行中文批注
 - OCR 准确率受笔迹质量影响
 - Annotation 后端存储目前仍偏原型化
-- fallback 是规则系统，质量低于正常 LLM 动态生成
+- fallback 为固定 `UNCLEAR` 问题，不会根据关键词继续猜测
 - 当前内容和 Prompt 针对受控推理阅读场景设计
 - 尚未完成完整生产环境的持久化、并发与监控
 - 正式部署前仍需要进行更多防剧透测试与用户测试

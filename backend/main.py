@@ -302,7 +302,8 @@ def analyze(
 
     cleaned_text = (
         request
-        .hypothesis_text
+        .hypothesis_v1
+        .text
         .strip()
     )
 
@@ -311,81 +312,23 @@ def analyze(
         raise HTTPException(
             status_code=422,
             detail=(
-                "hypothesis_text "
+                "hypothesis_v1.text "
                 "is required"
-            ),
-        )
-
-    stage = (
-        STAGES_BY_ID.get(
-            request.stage_id
-        )
-    )
-
-    if stage is None:
-
-        raise HTTPException(
-            status_code=422,
-
-            detail=(
-                "unknown stage_id"
-            ),
-        )
-
-    if (
-        stage.checkpoint
-        is None
-    ):
-
-        raise HTTPException(
-            status_code=422,
-
-            detail=(
-                "current stage "
-                "has no checkpoint"
-            ),
-        )
-
-    if (
-        stage
-        .checkpoint
-        .checkpoint_id
-        !=
-        request
-        .checkpoint_id
-    ):
-
-        raise HTTPException(
-            status_code=422,
-
-            detail=(
-                "checkpoint_id "
-                "does not match stage"
-            ),
-        )
-
-    if (
-        stage
-        .checkpoint
-        .kind
-        != "pressure"
-    ):
-
-        raise HTTPException(
-            status_code=422,
-
-            detail=(
-                "analyze is only "
-                "available for "
-                "pressure checkpoints"
             ),
         )
 
     normalized_request = (
         request.model_copy(
             update={
-                "hypothesis_text":
-                    cleaned_text
+                "hypothesis_v1": (
+                    request
+                    .hypothesis_v1
+                    .model_copy(
+                        update={
+                            "text": cleaned_text
+                        }
+                    )
+                )
             }
         )
     )
