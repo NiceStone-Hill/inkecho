@@ -18,10 +18,11 @@ General QA Agent
 = 只回答现实世界常识，帮助用户读懂文本
 """
 
+import json
 import logging
 
 from typing import (
-    Optional,
+    Iterator,
 )
 
 import httpx
@@ -157,6 +158,11 @@ def _call_model(
         ],
 
         "temperature": 0.2,
+
+        # 百科问答不需要思维链，关掉思考模式
+        # 能显著缩短“无声等待”的时间，
+        # 让流式输出更快开始显示文字。
+        "enable_thinking": False,
     }
 
     headers = {
@@ -192,6 +198,115 @@ def _call_model(
     ).strip()
 
 
+def _iter_stream_deltas(
+    request: QARequest,
+) -> Iterator[str]:
+    """向模型发起流式请求，逐段 yield 增量文本。"""
+
+    payload = {
+        "model": AI_MODEL,
+
+        "messages": [
+            {
+                "role": "system",
+                "content": _SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": (
+                    _build_user_prompt(
+                        request
+                    )
+                ),
+            },
+        ],
+
+        "temperature": 0.2,
+
+        "stream": True,
+
+        # 同上，关掉思考模式，减少内容开始
+        # 流出前的无声等待。
+        "enable_thinking": False,
+    }
+
+    headers = {
+        "Authorization":
+            f"Bearer {AI_API_KEY}",
+
+        "Content-Type":
+            "application/json",
+    }
+
+    with httpx.Client(
+        timeout=AI_TIMEOUT_SECONDS
+    ) as client:
+
+        with client.stream(
+            "POST",
+            (
+                f"{AI_BASE_URL}"
+                f"/chat/completions"
+            ),
+            headers=headers,
+            json=payload,
+        ) as response:
+
+            response.raise_for_status()
+
+            for raw_line in (
+                response.iter_lines()
+            ):
+
+                if not raw_line:
+                    continue
+
+                line = (
+                    raw_line.decode("utf-8")
+                    if isinstance(
+                        raw_line,
+                        bytes,
+                    )
+                    else raw_line
+                )
+
+                if not line.startswith(
+                    "data:"
+                ):
+                    continue
+
+                data = line[
+                    len("data:"):
+                ].strip()
+
+                if data == "[DONE]":
+                    return
+
+                try:
+                    chunk = json.loads(data)
+
+                except json.JSONDecodeError:
+                    continue
+
+                choices = (
+                    chunk.get("choices")
+                    or []
+                )
+
+                if not choices:
+                    continue
+
+                delta = (
+                    choices[0].get("delta")
+                    or {}
+                )
+
+                piece = delta.get("content")
+
+                if piece:
+                    yield piece
+
+
 def _contains_spoiler(
     text: str,
 ) -> bool:
@@ -200,6 +315,152 @@ def _contains_spoiler(
         term in text
         for term in SPOILER_TERMS
     )
+
+
+def stream_answer(
+    request: QARequest,
+) -> Iterator[dict]:
+    """流式版本的 answer_question。
+
+    逐段 yield 事件字典：
+
+    {"type": "delta", "text": "..."}
+    -> 追加到当前回答上
+
+    {"type": "done", "fallback": bool, ...}
+    -> 流结束；如果带 "replace": True 和
+       "answer"，前端应该整体替换成这个文案
+       （用于剧透兜底/完全失败的情况）
+    """
+
+    if not AI_API_KEY:
+
+        logger.info(
+            "AI_API_KEY not "
+            "configured, "
+            "using QA fallback"
+        )
+
+        yield {
+            "type": "done",
+            "answer": _UNAVAILABLE_ANSWER,
+            "fallback": True,
+            "replace": True,
+        }
+        return
+
+    buffer = ""
+    truncated = False
+
+    try:
+
+        for piece in _iter_stream_deltas(
+            request
+        ):
+
+            candidate = buffer + piece
+
+            # 剧透检查基于累计文本，
+            # 命中就整体丢弃、改用兜底文案，
+            # 已经 yield 出去的前半段也一起作废。
+            if _contains_spoiler(candidate):
+
+                logger.warning(
+                    "QA answer contained "
+                    "spoiler term mid-stream, "
+                    "falling back"
+                )
+
+                yield {
+                    "type": "done",
+                    "answer": _SPOILER_ANSWER,
+                    "fallback": True,
+                    "replace": True,
+                }
+                return
+
+            if (
+                len(candidate)
+                > MAX_ANSWER_CHARS
+            ):
+
+                allowed = (
+                    MAX_ANSWER_CHARS
+                    - len(buffer)
+                )
+
+                piece = (
+                    piece[:allowed]
+                    if allowed > 0
+                    else ""
+                )
+
+                candidate = buffer + piece
+
+                truncated = True
+
+            if piece:
+                buffer = candidate
+
+                yield {
+                    "type": "delta",
+                    "text": piece,
+                }
+
+            if truncated:
+                break
+
+    except (
+        httpx.TimeoutException,
+        httpx.HTTPError,
+        KeyError,
+        IndexError,
+        TypeError,
+    ) as exc:
+
+        logger.warning(
+            (
+                "QA stream failed, "
+                "falling back. "
+                "reason=%s"
+            ),
+            type(exc).__name__,
+        )
+
+        if not buffer:
+
+            yield {
+                "type": "done",
+                "answer": _UNAVAILABLE_ANSWER,
+                "fallback": True,
+                "replace": True,
+            }
+
+        else:
+
+            # 已经流出去一部分内容，
+            # 没法整体替换，只能提前结束。
+            yield {
+                "type": "done",
+                "fallback": True,
+            }
+
+        return
+
+    if not buffer:
+
+        yield {
+            "type": "done",
+            "answer": _UNAVAILABLE_ANSWER,
+            "fallback": True,
+            "replace": True,
+        }
+        return
+
+    yield {
+        "type": "done",
+        "fallback": False,
+    }
 
 
 def answer_question(
