@@ -698,6 +698,340 @@
 
 
 /* ========================================
+   结案档案
+   ======================================== */
+
+.caseClosure {
+  width: min(900px, 100%);
+  margin: 36px auto 48px;
+  padding: 0;
+  color: #2b2721;
+  background: #eee5d6;
+  border: 1px solid #aa9c86;
+  box-shadow: 0 22px 60px rgba(42, 34, 25, 0.16);
+}
+
+.caseClosureHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 34px 27px;
+  background: #282b2a;
+  border-bottom: 5px solid #7f2f28;
+}
+
+.caseClosureHeader > div:first-child > span {
+  color: #c7bba8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.caseClosureHeader h2 {
+  margin: 6px 0 5px;
+  color: #f5edde;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 600;
+  letter-spacing: 5px;
+}
+
+.caseClosureHeader p {
+  margin: 0;
+  color: #bdb4a7;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.caseClosureStamp {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  color: #d98c84;
+  border: 2px solid #a85149;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  transform: rotate(-7deg);
+}
+
+.caseClosureMeta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #bbae9b;
+}
+
+.caseClosureMeta > div {
+  min-width: 0;
+  padding: 16px 18px;
+  border-right: 1px solid #c7baa7;
+}
+
+.caseClosureMeta > div:last-child {
+  border-right: 0;
+}
+
+.caseClosureMeta span,
+.caseClosureVersion span,
+.caseClosureQuestion > span,
+.caseClosureResponse > span,
+.caseClosureSealed > div > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #897b69;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.caseClosureMeta strong {
+  color: #302b25;
+  font-size: 12px;
+}
+
+.caseClosureFinding {
+  position: relative;
+  margin: 30px 34px;
+  padding: 25px 28px 23px;
+  overflow: hidden;
+  background: #e4d8c5;
+  border: 1px solid #ad9c84;
+  border-left: 5px solid #7f2f28;
+}
+
+.caseClosureFinding > span {
+  color: #7f2f28;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.caseClosureFinding h3 {
+  max-width: 680px;
+  margin: 10px 0;
+  color: #211e1a;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: clamp(19px, 3vw, 26px);
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.caseClosureFinding p,
+.caseClosureDecisionNote {
+  margin: 0;
+  color: #6a6054;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.caseClosureSection {
+  margin: 0 34px;
+  padding: 28px 0;
+  border-top: 1px solid #c7baa7;
+}
+
+.caseClosureSectionTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.caseClosureSectionTitle > span {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  color: #f2e9dc;
+  background: #49463f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.caseClosureSectionTitle h3 {
+  margin: 0;
+  color: #2d2923;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 18px;
+}
+
+.caseClosureSectionTitle p {
+  margin: 2px 0 0;
+  color: #8c806f;
+  font-size: 11px;
+}
+
+.caseClosureCompare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.caseClosureCompare article {
+  padding: 20px;
+  background: #f8f1e6;
+  border: 1px solid #c8baa6;
+}
+
+.caseClosureCompare article p {
+  min-height: 82px;
+  margin: 15px 0;
+  color: #403a32;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.caseClosureCompare article small {
+  color: #8b7e6c;
+  font-size: 10px;
+}
+
+.caseClosureVersion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.caseClosureVersion strong {
+  color: #7f2f28;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+}
+
+.caseClosureDecision {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8b7d6b;
+  font-size: 9px;
+}
+
+.caseClosureDecision::before,
+.caseClosureDecision::after {
+  content: "";
+  width: 34px;
+  height: 1px;
+  margin: 7px 0;
+  background: #aa9b87;
+}
+
+.caseClosureDecision strong {
+  color: #7f2f28;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+.caseClosureFinalVersion {
+  border-top: 4px solid #7f2f28 !important;
+}
+
+.caseClosureDecisionNote {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.caseClosureAudit {
+  padding: 20px 22px;
+  background: #303230;
+  border-left: 4px solid #7f2f28;
+}
+
+.caseClosureAuditTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.caseClosureAuditTags span {
+  padding: 4px 8px;
+  color: #d2c5b4;
+  border: 1px solid #6a675f;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.caseClosureQuestion p,
+.caseClosureResponse p {
+  margin: 6px 0 0;
+  color: #f1e8da;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.caseClosureResponse {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #68665f;
+}
+
+.caseClosureResponse p {
+  color: #c9c0b4;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.caseClosureSealed {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 22px;
+  margin: 0 34px 30px;
+  padding: 26px;
+  background: #f8f0e3;
+  border: 2px solid #8d7a61;
+}
+
+.caseClosureSeal {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  color: #7f2f28;
+  border: 2px solid #7f2f28;
+  border-radius: 50%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  transform: rotate(-8deg);
+}
+
+.caseClosureSealed h3 {
+  margin: 0 0 9px;
+  color: #29241e;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 20px;
+}
+
+.caseClosureSealed p {
+  margin: 0;
+  color: #484036;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.caseClosureFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 34px;
+  color: #bfb4a5;
+  background: #282b2a;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.caseClosureFooter strong {
+  color: #efe5d6;
+  letter-spacing: 3px;
+}
+
+
+/* ========================================
    手机
    ======================================== */
 
@@ -733,5 +1067,73 @@
   .branchPointStamp {
     top: 16px;
     right: -30px;
+  }
+
+  .caseClosure {
+    margin-top: 20px;
+  }
+
+  .caseClosureHeader {
+    align-items: flex-start;
+    padding: 24px 20px 21px;
+  }
+
+  .caseClosureStamp {
+    padding: 6px 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  .caseClosureMeta {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .caseClosureMeta > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .caseClosureMeta > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #c7baa7;
+  }
+
+  .caseClosureFinding,
+  .caseClosureSection,
+  .caseClosureSealed {
+    margin-right: 18px;
+    margin-left: 18px;
+  }
+
+  .caseClosureFinding {
+    padding: 21px 19px;
+  }
+
+  .caseClosureCompare {
+    grid-template-columns: 1fr;
+  }
+
+  .caseClosureDecision {
+    min-height: 66px;
+  }
+
+  .caseClosureDecision::before,
+  .caseClosureDecision::after {
+    width: 1px;
+    height: 12px;
+    margin: 4px 0;
+  }
+
+  .caseClosureSealed {
+    grid-template-columns: 1fr;
+  }
+
+  .caseClosureSeal {
+    width: 62px;
+    height: 62px;
+  }
+
+  .caseClosureFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 15px 20px;
   }
 }
