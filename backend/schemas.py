@@ -22,7 +22,7 @@ class Evidence(BaseModel):
 
 class Checkpoint(BaseModel):
     checkpoint_id: str
-    kind: Literal["capture", "pressure", "final"]
+    kind: Literal["training", "capture", "pressure", "final"]
     title: str
     prompt: str
 
@@ -66,7 +66,7 @@ class SolutionResponse(BaseModel):
 class HypothesisV1(BaseModel):
     text: str = Field(
         min_length=1,
-        max_length=2000,
+        max_length=300,
     )
 
     confidence: Confidence

@@ -129,6 +129,24 @@ class PressureTestTests(unittest.TestCase):
                 self.input_data,
             )
 
+    def test_solution_seeking_question_is_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_model_output(
+                valid_output(
+                    pressure_question="在没有普通工具的情况下，你打算利用什么具体方法扩大这个通道？"
+                ),
+                self.input_data,
+            )
+
+    def test_question_must_examine_evidence_boundary(self):
+        with self.assertRaises(ValueError):
+            parse_model_output(
+                valid_output(
+                    pressure_question="如果这个通道不能让成年人通过，你的整套方案还能够成立吗？"
+                ),
+                self.input_data,
+            )
+
     def test_unclear_must_match_fixed_fallback(self):
         result = parse_model_output(
             {

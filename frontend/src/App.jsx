@@ -27,7 +27,7 @@ function App() {
       {!isWorkspace && (
         <nav className="navbar">
           <Link className="brand" to="/">
-            Inkecho
+            UNPROVEN
           </Link>
 
           {progress.started && (

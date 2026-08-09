@@ -35,6 +35,8 @@ import Panel
 
 const STAGE_COUNT = 8;
 const TOTAL_PAGES = STAGE_COUNT + 1;
+const HYPOTHESIS_MIN_LENGTH = 20;
+const HYPOTHESIS_MAX_LENGTH = 300;
 
 
 const CONFIDENCE_OPTIONS = [
@@ -60,12 +62,37 @@ function hasText(text) {
 }
 
 
+function validHypothesisText(
+  text,
+) {
+  const length =
+    text?.trim().length || 0;
+
+  return (
+    length >=
+      HYPOTHESIS_MIN_LENGTH &&
+    length <=
+      HYPOTHESIS_MAX_LENGTH
+  );
+}
+
+
 function checkpointDone(
   progress,
   checkpoint,
 ) {
   if (!checkpoint) {
     return true;
+  }
+
+  if (
+    checkpoint.kind ===
+    "training"
+  ) {
+    return Boolean(
+      progress.reading
+        .trainingCompleted,
+    );
   }
 
   if (
@@ -104,6 +131,15 @@ function getCheckpointNoticeText(
 ) {
   if (!checkpoint) {
     return "";
+  }
+
+  if (
+    checkpoint.checkpoint_id ===
+    "CP0"
+  ) {
+    return (
+      "在继续推理前，先判断两句话分别是文本事实，还是尚未证明的前提。"
+    );
   }
 
   if (
@@ -179,7 +215,7 @@ function CheckpointNotification({
       <div
         className="checkpointNotificationAvatar"
       >
-        墨
+        U
       </div>
 
       <div
@@ -189,7 +225,7 @@ function CheckpointNotification({
           className="checkpointNotificationHeader"
         >
           <strong>
-            InkEcho
+            UNPROVEN
           </strong>
 
           <span>
@@ -264,7 +300,7 @@ function FloatingMenu({
             type="button"
             onClick={onOpenQA}
           >
-            InkEcho问答
+            阅读问答
           </button>
 
           <button
@@ -339,7 +375,9 @@ function CaptureCheckpoint({
     progress.hypothesisDraft;
 
   const canSubmit =
-    hasText(draft.text);
+    validHypothesisText(
+      draft.text,
+    );
 
 
   if (
@@ -403,7 +441,7 @@ function CaptureCheckpoint({
         <div
           className="chatAvatar"
         >
-          墨
+          U
         </div>
 
         <div
@@ -425,7 +463,19 @@ function CaptureCheckpoint({
             })
           }
           placeholder="说说你现在怎么想……"
+          maxLength={
+            HYPOTHESIS_MAX_LENGTH
+          }
         />
+
+        <div className="hypothesisLength">
+          <span>
+            请用 20–300 字写出一个完整方案
+          </span>
+          <span>
+            {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
+          </span>
+        </div>
 
         <div
           className="chatComposerFooter"
@@ -455,6 +505,126 @@ function CaptureCheckpoint({
           onClick={handleSubmit}
         >
           发送
+        </button>
+      </div>
+    </>
+  );
+}
+
+
+function TrainingCheckpoint({
+  checkpoint,
+  onClose,
+}) {
+  const {
+    completeTraining,
+  } = useProgress();
+
+  const [
+    answers,
+    setAnswers,
+  ] = useState({});
+
+  const items = [
+    {
+      id: "entry_tools",
+      text: "范·杜森进入十三号牢房时，没有携带锤子、锉刀等普通越狱工具。",
+      correct: "fact",
+    },
+    {
+      id: "future_tools",
+      text: "因此，在接下来的一周里，他也不可能获得任何可用于越狱的工具。",
+      correct: "assumption",
+    },
+  ];
+
+  const answeredAll =
+    items.every(
+      (item) =>
+        answers[item.id],
+    );
+
+  function finishTraining() {
+    if (!answeredAll) {
+      return;
+    }
+
+    completeTraining();
+    onClose();
+  }
+
+  return (
+    <>
+      <p className="checkpointPrompt">
+        {checkpoint.prompt}
+      </p>
+
+      <div className="trainingList">
+        {items.map((item, index) => {
+          const answer =
+            answers[item.id];
+          const correct =
+            answer === item.correct;
+
+          return (
+            <section
+              className="trainingItem"
+              key={item.id}
+            >
+              <span>
+                0{index + 1}
+              </span>
+
+              <p>{item.text}</p>
+
+              <div className="checkpointSwitch">
+                <button
+                  type="button"
+                  className={`optionButton ${answer === "fact" ? "selected" : ""}`}
+                  onClick={() =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [item.id]: "fact",
+                    }))
+                  }
+                >
+                  文本已经证明
+                </button>
+
+                <button
+                  type="button"
+                  className={`optionButton ${answer === "assumption" ? "selected" : ""}`}
+                  onClick={() =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [item.id]: "assumption",
+                    }))
+                  }
+                >
+                  尚未被证明
+                </button>
+              </div>
+
+              {answer && (
+                <p className={`trainingFeedback ${correct ? "correct" : "incorrect"}`}>
+                  {item.id === "entry_tools"
+                    ? "这是文本明确写出的入狱状态。"
+                    : "文本只证明他入狱时没有工具；“之后也不可能获得”已经多走了一步。"}
+                </p>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <div className="actions">
+        <button
+          type="button"
+          className="primaryButton"
+          disabled={!answeredAll}
+          onClick={finishTraining}
+        >
+          记住这种差别，继续阅读
         </button>
       </div>
     </>
@@ -599,16 +769,23 @@ function PressureCheckpoint({
     ) &&
     (
       draft.mode === "keep" ||
-      hasText(revisionText)
+      validHypothesisText(
+        revisionText,
+      )
     );
 
 
   const runAnalysis =
     useCallback(
-      async () => {
+      async ({
+        force = false,
+      } = {}) => {
         if (
           !sourceHypothesis ||
-          stressResult
+          (
+            stressResult &&
+            !force
+          )
         ) {
           return;
         }
@@ -619,6 +796,9 @@ function PressureCheckpoint({
         try {
           const result =
             await analyzeHypothesis({
+              sessionId:
+                progress.sessionId,
+
               hypothesisText:
                 sourceHypothesis
                   .text,
@@ -626,6 +806,8 @@ function PressureCheckpoint({
               confidence:
                 sourceHypothesis
                   .confidence,
+
+              force,
             });
 
           console.log(
@@ -650,6 +832,7 @@ function PressureCheckpoint({
       },
 
       [
+        progress.sessionId,
         stressResult,
         sourceHypothesis,
         submitResult,
@@ -658,13 +841,15 @@ function PressureCheckpoint({
 
 
   useEffect(() => {
+    // 打开压力检查面板后立即发起一次异步分析。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     runAnalysis();
   }, [runAnalysis]);
 
 
   if (!sourceHypothesis) {
     const canSaveLocal =
-      hasText(
+      validHypothesisText(
         localHypothesis.text,
       );
 
@@ -720,7 +905,7 @@ function PressureCheckpoint({
           <div
             className="chatAvatar"
           >
-            墨
+            U
           </div>
 
           <div
@@ -752,7 +937,17 @@ function PressureCheckpoint({
               )
             }
             placeholder="写下你现在的解释……"
+            maxLength={
+              HYPOTHESIS_MAX_LENGTH
+            }
           />
+
+          <div className="hypothesisLength">
+            <span>20–300 字</span>
+            <span>
+              {localHypothesis.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
+            </span>
+          </div>
 
           <ConfidenceSelector
             value={
@@ -802,10 +997,8 @@ function PressureCheckpoint({
 
 
     const finalConfidence =
-      draft.mode === "keep"
-        ? sourceHypothesis
-            .confidence
-        : draft.confidence;
+      draft.confidence ||
+      sourceHypothesis.confidence;
 
 
     submitNextHypothesis({
@@ -856,7 +1049,7 @@ function PressureCheckpoint({
         >
           <div
             className="chatAvatar">
-            墨
+            U
           </div>
 
           <div
@@ -921,7 +1114,7 @@ function PressureCheckpoint({
           <div
             className="chatAvatar"
           >
-            墨
+            U
           </div>
 
           <div
@@ -944,13 +1137,44 @@ function PressureCheckpoint({
 
       {stressResult && (
         <>
+          {stressResult.category ===
+            "UNCLEAR" && (
+            <div
+              className="fallbackNotice"
+              role="status"
+            >
+              <strong>
+                通用自检
+              </strong>
+
+              <p>
+                本次未能可靠识别一个个性化前提，下面显示的是通用检查问题，不代表模型已经判断了你的方案。
+              </p>
+
+              <button
+                type="button"
+                className="secondaryButton"
+                disabled={loading}
+                onClick={() =>
+                  runAnalysis({
+                    force: true,
+                  })
+                }
+              >
+                {loading
+                  ? "正在重新检查…"
+                  : "重新检查一次"}
+              </button>
+            </div>
+          )}
+
           <div
             className="chatMessage chatMessageAgent"
           >
             <div
               className="chatAvatar"
             >
-              墨
+              U
             </div>
 
             <div
@@ -1050,6 +1274,31 @@ function PressureCheckpoint({
 
 
           {draft.mode ===
+            "keep" && (
+            <div className="keepConfidence">
+              <span>
+                现在的确信程度
+              </span>
+
+              <ConfidenceSelector
+                value={
+                  draft.confidence ||
+                  sourceHypothesis
+                    .confidence
+                }
+                onChange={(
+                  confidence,
+                ) =>
+                  updateDraft({
+                    confidence,
+                  })
+                }
+              />
+            </div>
+          )}
+
+
+          {draft.mode ===
             "revise" && (
             <div
               className="chatComposer revisionComposer"
@@ -1069,7 +1318,17 @@ function PressureCheckpoint({
                 placeholder={
                   `写下你的 ${nextVersionLabel}……`
                 }
+                maxLength={
+                  HYPOTHESIS_MAX_LENGTH
+                }
               />
+
+              <div className="hypothesisLength">
+                <span>20–300 字</span>
+                <span>
+                  {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
+                </span>
+              </div>
 
               <div
                 className="chatComposerFooter"
@@ -1249,7 +1508,7 @@ function FinalCheckpoint({
         <div
           className="chatAvatar"
         >
-          墨
+          U
         </div>
 
         <div
@@ -1316,6 +1575,17 @@ function CheckpointPanel({
     <div
       className="checkpointContent"
     >
+      {
+        checkpoint.kind ===
+          "training" && (
+          <TrainingCheckpoint
+            checkpoint={checkpoint}
+            onClose={onClose}
+          />
+        )
+      }
+
+
       {
         checkpoint.kind ===
           "capture" && (
@@ -1484,7 +1754,10 @@ function JourneyPressureNode({
       </div>
 
       <strong>
-        InkEcho 问：
+        {stressResult.category ===
+        "UNCLEAR"
+          ? "通用自检："
+          : "UNPROVEN 问："}
       </strong>
 
       <p>
@@ -1526,6 +1799,19 @@ function ThinkingJourney({
     );
   }
 
+  const branchPoint =
+    progress.stressResult
+      ?.selected_assumption ||
+    "你曾把一条尚未被文本证明的判断，当成了方案成立的条件。";
+
+  const revisionMade =
+    Boolean(
+      progress.hypothesisV2
+        ?.textChanged ||
+      progress.hypothesisV2
+        ?.confidenceChanged,
+    );
+
 
   return (
     <section
@@ -1535,18 +1821,45 @@ function ThinkingJourney({
         className="thinkingJourneyHeader"
       >
         <span>
-          YOUR REASONING JOURNEY
+          CASE 013 · REASONING REPLAY
         </span>
 
         <h2>
-          你的思路是怎样变化的
+          你是在哪里多走了一步
         </h2>
 
         <p>
-          这里不是标准答案，
-          而是你在阅读过程中留下的推理轨迹。
+          这里不评价你是否猜中，
+          只回放事实如何变成了你的判断。
         </p>
       </div>
+
+
+      <section
+        className="branchPointCard"
+      >
+        <div
+          className="branchPointStamp"
+        >
+          UNPROVEN
+        </div>
+
+        <span>
+          你的关键分叉点
+        </span>
+
+        <h3>
+          {branchPoint}
+        </h3>
+
+        <p>
+          {
+            revisionMade
+              ? "你在压力问题之后重新检查了这一步，并对原来的解释或确信程度作出了修正。"
+              : "你看见了这一步仍未被证明，并选择保留原来的解释。保留同样也是一条被记录的推理路径。"
+          }
+        </p>
+      </section>
 
 
       <div
@@ -1601,46 +1914,6 @@ function ThinkingJourney({
         />
 
 
-        {progress.stressResult2 && (
-          <div
-            className="journeyArrow"
-          >
-            ↓
-          </div>
-        )}
-
-
-        <JourneyPressureNode
-          label="第二次压力测试"
-          stressResult={
-            progress.stressResult2
-          }
-          stressAnswer={
-            progress.stressAnswer2
-          }
-        />
-
-
-        {progress.hypothesisV3 && (
-          <div
-            className="journeyArrow"
-          >
-            ↓
-          </div>
-        )}
-
-
-        <JourneyVersionNode
-          label="V3"
-          current={
-            progress.hypothesisV3
-          }
-          previous={
-            progress.hypothesisV2
-          }
-        />
-
-
         {hasText(
           progress.completion
             .feedback,
@@ -1662,7 +1935,7 @@ function ThinkingJourney({
               </div>
 
               <strong>
-                揭晓前的最终解释
+                揭晓前封存的最终推理
               </strong>
 
               <p>
@@ -1821,6 +2094,9 @@ function WorkspacePage() {
   );
 
   analyzeHypothesis({
+    sessionId:
+      progress.sessionId,
+
     stageId: stage.stage_id,
 
     hypothesisText:
@@ -1861,6 +2137,7 @@ function WorkspacePage() {
 
   progress.hypothesisV1,
   progress.hypothesisV2,
+  progress.sessionId,
 
   progress.stressResult,
   progress.stressResult2,
@@ -1881,6 +2158,8 @@ function WorkspacePage() {
 
   // 每到一个新的 checkpoint，重新允许气泡出现
   useEffect(() => {
+    // checkpoint 变化时生成一条新的、可关闭的提醒。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCheckpointNoticeDismissed(false);
   }, [
     checkpoint?.checkpoint_id,
@@ -1914,6 +2193,8 @@ function WorkspacePage() {
       pageId >
       STAGE_COUNT
     ) {
+      // 推理档案是本地汇总页，不需要等待后端内容。
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       setError("");
 
@@ -2012,6 +2293,16 @@ function WorkspacePage() {
     TOTAL_PAGES;
 
 
+  const checkpointBlocking =
+    Boolean(
+      checkpoint &&
+      !checkpointDone(
+        progress,
+        checkpoint,
+      ),
+    );
+
+
   const pageLabel =
     useMemo(
       () =>
@@ -2034,6 +2325,16 @@ function WorkspacePage() {
   function turnPage(
     direction,
   ) {
+    if (
+      direction > 0 &&
+      checkpointBlocking
+    ) {
+      setMenuOpen(false);
+      setCheckpointNoticeDismissed(true);
+      setOpenPanel("checkpoint");
+      return;
+    }
+
     setMenuOpen(false);
     setOpenPanel(null);
 
@@ -2217,7 +2518,11 @@ function WorkspacePage() {
       <button
         type="button"
         className="pageTurnButton pageTurnNext"
-        aria-label="下一页"
+        aria-label={
+          checkpointBlocking
+            ? "完成当前思考后继续"
+            : "下一页"
+        }
         disabled={!canNext}
         onClick={() =>
           turnPage(1)
@@ -2237,7 +2542,7 @@ function WorkspacePage() {
           <span>
             {pageId ===
             TOTAL_PAGES
-              ? "思路历程"
+              ? "推理档案"
               : "第十三号牢房"}
           </span>
 
@@ -2307,7 +2612,7 @@ function WorkspacePage() {
                     )
                   }
                 >
-                  查看我的思路历程
+                  查看我的推理档案
                 </button>
               </div>
             )}
@@ -2331,12 +2636,10 @@ function WorkspacePage() {
       >
         <span>
           {
-            checkpoint &&
-            checkpointDone(
-              progress,
-              checkpoint,
-            )
-              ? "思考已记录"
+            checkpoint
+              ? checkpointBlocking
+                ? "完成当前思考后继续"
+                : "思考已记录"
               : ""
           }
         </span>
@@ -2405,8 +2708,8 @@ function WorkspacePage() {
 
 
       <Panel
-        title="InkEcho问答"
-        subtitle="ASK ANYTHING"
+        title="阅读问答"
+        subtitle="READER ASSISTANT"
 
         open={
           openPanel === "qa"

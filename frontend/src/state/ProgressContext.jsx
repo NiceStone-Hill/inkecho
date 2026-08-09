@@ -54,6 +54,16 @@ export function ProgressProvider({ children }) {
         }));
       },
 
+      completeTraining() {
+        setProgress((prev) => ({
+          ...prev,
+          reading: {
+            ...prev.reading,
+            trainingCompleted: true,
+          },
+        }));
+      },
+
       updateHypothesisDraft(draft) {
         setProgress((prev) => ({
           ...prev,
@@ -66,7 +76,14 @@ export function ProgressProvider({ children }) {
           ...prev,
           hypothesisV1: {
             ...hypothesis,
+            hypothesisId: "H_V1",
+            evidenceState: ["E01", "E02"],
             submittedAt: new Date().toISOString(),
+          },
+          revisionDraft: {
+            ...prev.revisionDraft,
+            text: hypothesis.text,
+            confidence: hypothesis.confidence,
           },
         }));
       },
@@ -135,7 +152,19 @@ export function ProgressProvider({ children }) {
           ...prev,
           hypothesisV2: {
             ...hypothesis,
+            hypothesisId: "H_V2",
+            parentHypothesisId: "H_V1",
+            evidenceState: ["E01", "E02", "E03"],
+            decision:
+              hypothesis.revisionType === "revised"
+                ? "modify"
+                : "insist",
             submittedAt: new Date().toISOString(),
+          },
+          revisionDraft2: {
+            ...prev.revisionDraft2,
+            text: hypothesis.text,
+            confidence: hypothesis.confidence,
           },
         }));
       },

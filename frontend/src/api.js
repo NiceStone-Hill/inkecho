@@ -7,6 +7,12 @@ const PROGRESS_STORAGE_KEY =
   "inkecho_progress_v1";
 
 
+// 同一阅读会话、同一版假说只允许产生一个 Pressure Test 请求。
+// Panel 与 Workspace 即使同时触发，也会复用同一个 Promise。
+const pressureTestRequests =
+  new Map();
+
+
 async function request(
   path,
   options = {},
@@ -201,8 +207,28 @@ export function analyzeHypothesis({
   checkpointId = "CP2",
   hypothesisText,
   confidence,
+  sessionId = getCurrentSessionId(),
+  force = false,
 }) {
-  return request(
+  const requestKey = [
+    sessionId || "anonymous",
+    checkpointId,
+    confidence,
+    hypothesisText.trim(),
+  ].join("::");
+
+  if (
+    !force &&
+    pressureTestRequests.has(
+      requestKey,
+    )
+  ) {
+    return pressureTestRequests.get(
+      requestKey,
+    );
+  }
+
+  const pending = request(
     "/api/analyze",
 
     {
@@ -222,9 +248,28 @@ export function analyzeHypothesis({
               confidence,
             },
           },
-        ),
+      ),
     },
   );
+
+  pressureTestRequests.set(
+    requestKey,
+    pending,
+  );
+
+  pending.catch(() => {
+    if (
+      pressureTestRequests.get(
+        requestKey,
+      ) === pending
+    ) {
+      pressureTestRequests.delete(
+        requestKey,
+      );
+    }
+  });
+
+  return pending;
 }
 
 

@@ -36,6 +36,11 @@ ALLOWED_CATEGORIES = {
 }
 ALLOWED_EVIDENCE_IDS = {"E01", "E02", "E03"}
 JUDGMENTAL_TERMS = ("你错了", "其实", "正确答案是", "标准答案")
+SOLUTION_SEEKING_TERMS = (
+    "你打算", "你准备", "你会如何", "你要如何",
+    "利用什么", "具体条件", "具体方法", "怎样实现",
+)
+EVIDENCE_BOUNDARY_TERMS = ("文本", "证据", "证明", "支持")
 KNOWN_SPOILER_TERMS = tuple(dict.fromkeys([
     *SPOILER_TERMS, "哈奇", "袜线", "布信", "老鼠送信",
     "排水管传递", "运输工具", "换上电工服",
@@ -110,6 +115,21 @@ SYSTEM_PROMPT = """你是 UNPROVEN 的 AI Pressure Test Agent。
 7. rationale_evidence_ids 只能取本次提供的 Evidence ID，且必须与分析直接相关。
 8. 若输入太短、混乱或无法可靠识别，必须返回固定 UNCLEAR 结果，不得硬猜。
 9. 只返回合法 JSON，不要 Markdown，不要解释。
+
+选择关键前提时，必须在内部完成以下判断，但不要输出过程：
+- 从 V1 中辨认用户明确说出的行动或因果步骤。
+- 找出连接这些步骤、却没有被 Evidence 明确支持的逻辑桥梁。
+- 优先选择一旦被移除，就会让整套 V1 明显无法成立的那个前提。
+- 不要把“用户没有猜到谜底”当作未证前提。
+
+pressure_question 的写法必须审查证明边界，而不是邀请用户完善方案：
+- 优先使用“文本证明了 A，但你的方案进一步默认 B；目前文本是否证明/支持 B？”的结构。
+- 尽量沿用用户 V1 中已有的名词，不引入新的解法方向。
+- 问题中必须出现“文本”“证据”“证明”或“支持”之一。
+- 禁止使用“你打算怎么做”“你会如何”“利用什么”“具体方法”等要求用户发明方案的问法。
+
+合格抽象示例：你的方案把“文本确认了 A”进一步理解成了“B 必然成立”。目前证据真的支持这一步吗？
+不合格抽象示例：为了实现 B，你打算利用什么具体方法？
 
 允许的 category：SPACE_PATH、HUMAN_PASSAGE、TOOL_SOURCE、COMMUNICATION、INSIDER_HELP、UNCLEAR。
 JSON 必须且只能包含：selected_assumption、category、pressure_question、rationale_evidence_ids。"""
@@ -221,6 +241,10 @@ def parse_model_output(raw: dict[str, Any], input_data: PressureTestInput) -> An
     generated_text = f"{selected_assumption} {pressure_question}"
     if any(term in generated_text for term in JUDGMENTAL_TERMS):
         raise ValueError("judgmental language detected")
+    if any(term in pressure_question for term in SOLUTION_SEEKING_TERMS):
+        raise ValueError("solution-seeking language detected")
+    if not any(term in pressure_question for term in EVIDENCE_BOUNDARY_TERMS):
+        raise ValueError("question does not examine the evidence boundary")
     if _introduces_spoiler(generated_text, input_data):
         raise ValueError("spoiler detected")
 
