@@ -6,9 +6,12 @@
   min-height: 100vh;
   padding: 24px 7%;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 85% 15%, rgba(193, 171, 134, 0.2), transparent 28%),
-    #f4f0e8;
+  background: #f4f0e8;
+}
+
+.workspaceShell {
+  padding: 0;
+  background: #eee7da;
 }
 
 .navbar {

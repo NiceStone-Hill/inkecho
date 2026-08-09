@@ -132,10 +132,19 @@ function AnnotationsPanel() {
               </span>
 
               <span>
-                第{" "}
-                {annotation.segmentIndex +
-                  1}{" "}
-                段
+                {annotation.segmentEndIndex >
+                annotation.segmentIndex
+                  ? `第 ${
+                      annotation.segmentIndex +
+                      1
+                    } - ${
+                      annotation.segmentEndIndex +
+                      1
+                    } 段`
+                  : `第 ${
+                      annotation.segmentIndex +
+                      1
+                    } 段`}
               </span>
 
               <span>
@@ -158,28 +167,37 @@ function AnnotationsPanel() {
 
             {annotation.inputMode ===
             "draw" ? (
-              annotation.strokes?.length >
-              0 ? (
-                <HandwritingCanvas
-                  strokes={
-                    annotation.strokes
-                  }
-                  readOnly
-                />
-              ) : (
-                <p className="annotationNote muted">
-                  仅高亮，未填写批注。
-                </p>
-              )
-            ) : annotation.note ? (
+              <>
+                {annotation.strokes?.length >
+                0 && (
+                  <HandwritingCanvas
+                    strokes={
+                      annotation.strokes
+                    }
+                    readOnly
+                  />
+                )}
+
+            {annotation.note ? (
               <p className="annotationNote">
+                识别文字：
                 {annotation.note}
               </p>
             ) : (
               <p className="annotationNote muted">
-                仅高亮，未填写批注。
+                未识别到文字。
               </p>
             )}
+          </>
+        ) : annotation.note ? (
+          <p className="annotationNote">
+            {annotation.note}
+          </p>
+        ) : (
+          <p className="annotationNote muted">
+            仅高亮，未填写批注。
+          </p>
+        )}
 
             <div className="annotationItemActions">
               <button
