@@ -1,6 +1,7 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -25,11 +26,15 @@ import AnnotationLayer
 import AnnotationsPanel
   from "../components/AnnotationsPanel";
 
+import QAPanel
+  from "../components/QAPanel";
+
 import Panel
   from "../components/Panel";
 
 
-const TOTAL_PAGES = 8;
+const STAGE_COUNT = 8;
+const TOTAL_PAGES = STAGE_COUNT + 1;
 
 
 const CONFIDENCE_OPTIONS = [
@@ -222,6 +227,7 @@ function FloatingMenu({
   open,
   onToggle,
   onOpenAnnotations,
+  onOpenQA,
   onOpenCheckpoint,
   onReset,
 }) {
@@ -249,6 +255,13 @@ function FloatingMenu({
             }
           >
             我的批注
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenQA}
+          >
+            InkEcho问答
           </button>
 
           <button
@@ -1504,7 +1517,13 @@ function ThinkingJourney({
   if (
     !progress.hypothesisV1
   ) {
-    return null;
+    return (
+      <p
+        className="readerMessage"
+      >
+        完成阅读并提交你的推理方案后，这里会展示你的思路历程。
+      </p>
+    );
   }
 
 
@@ -1735,6 +1754,10 @@ function WorkspacePage() {
   ] = useState(null);
 
 
+  const ebookSurfaceRef =
+    useRef(null);
+
+
   const stage =
     stagesData[pageId];
 
@@ -1783,6 +1806,18 @@ function WorkspacePage() {
     let cancelled =
       false;
 
+    if (
+      pageId >
+      STAGE_COUNT
+    ) {
+      setLoading(false);
+      setError("");
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
     setLoading(true);
     setError("");
 
@@ -1809,7 +1844,7 @@ function WorkspacePage() {
 
         if (
           pageId ===
-          TOTAL_PAGES
+          STAGE_COUNT
         ) {
           completeReading();
         }
@@ -1853,6 +1888,15 @@ function WorkspacePage() {
    * Checkpoint 只发消息提醒，
    * 用户点击后才打开。
    */
+
+
+  // 每次翻页（无论前进还是后退），
+  // 阅读区域都滚动回顶部
+  useEffect(() => {
+    ebookSurfaceRef.current?.scrollTo({
+      top: 0,
+    });
+  }, [pageId]);
 
 
   const canPrev =
@@ -1904,6 +1948,25 @@ function WorkspacePage() {
           ),
         );
       },
+    );
+  }
+
+
+  function goToPage(
+    target,
+  ) {
+    setMenuOpen(false);
+    setOpenPanel(null);
+
+    setPageId(
+      Math.min(
+        TOTAL_PAGES,
+
+        Math.max(
+          1,
+          target,
+        ),
+      ),
     );
   }
 
@@ -1996,6 +2059,12 @@ function WorkspacePage() {
           );
         }}
 
+        onOpenQA={() => {
+          setMenuOpen(false);
+
+          setOpenPanel("qa");
+        }}
+
         onOpenCheckpoint={
           handleOpenCheckpoint
         }
@@ -2055,13 +2124,17 @@ function WorkspacePage() {
 
 
       <main
+        ref={ebookSurfaceRef}
         className="ebookSurface"
       >
         <div
           className="ebookTopline"
         >
           <span>
-            第十三号牢房
+            {pageId ===
+            TOTAL_PAGES
+              ? "思路历程"
+              : "第十三号牢房"}
           </span>
 
           <span>
@@ -2090,7 +2163,9 @@ function WorkspacePage() {
 
 
         {stage &&
-          !error && (
+          !error &&
+          pageId <=
+            STAGE_COUNT && (
           <>
             <h1
               className="ebookTitle"
@@ -2114,15 +2189,35 @@ function WorkspacePage() {
               }
             />
 
-
-            {pageId === 8 && (
-              <ThinkingJourney
-                progress={
-                  progress
-                }
-              />
+            {pageId ===
+              STAGE_COUNT && (
+              <div
+                className="viewJourneyRow"
+              >
+                <button
+                  type="button"
+                  className="secondaryButton"
+                  onClick={() =>
+                    goToPage(
+                      TOTAL_PAGES,
+                    )
+                  }
+                >
+                  查看我的思路历程
+                </button>
+              </div>
             )}
           </>
+        )}
+
+
+        {pageId ===
+          TOTAL_PAGES && (
+          <ThinkingJourney
+            progress={
+              progress
+            }
+          />
         )}
       </main>
 
@@ -2202,6 +2297,30 @@ function WorkspacePage() {
         }
       >
         <AnnotationsPanel />
+      </Panel>
+
+
+      <Panel
+        title="InkEcho问答"
+        subtitle="ASK ANYTHING"
+
+        open={
+          openPanel === "qa"
+        }
+
+        onClose={() =>
+          setOpenPanel(null)
+        }
+
+        variant="side"
+      >
+        <QAPanel
+          stageId={
+            pageId <= STAGE_COUNT
+              ? pageId
+              : null
+          }
+        />
       </Panel>
     </section>
   );

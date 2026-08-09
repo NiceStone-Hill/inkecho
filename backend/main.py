@@ -6,6 +6,8 @@ from datetime import (
     timezone,
 )
 
+from pathlib import Path
+
 from uuid import uuid4
 
 from dotenv import (
@@ -22,7 +24,7 @@ from fastapi.middleware.cors import (
 )
 
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 
 from ai_service import (
@@ -32,6 +34,10 @@ from ai_service import (
 
 from handwriting_service import (
     recognize_handwriting,
+)
+
+from qa_service import (
+    answer_question,
 )
 
 from content import (
@@ -45,6 +51,8 @@ from schemas import (
     AnnotationResponse,
     AnalyzeRequest,
     AnalyzeResponse,
+    QARequest,
+    QAResponse,
     SolutionResponse,
     StageContent,
     StageSummary,
@@ -391,6 +399,68 @@ def analyze(
 
 
 # =========================
+# General QA Agent
+# =========================
+
+
+@app.post(
+    "/api/qa/ask",
+    response_model=QAResponse,
+)
+def ask_question(
+    request: QARequest,
+):
+
+    cleaned_question = (
+        request
+        .question
+        .strip()
+    )
+
+    if not cleaned_question:
+
+        raise HTTPException(
+            status_code=422,
+
+            detail=(
+                "question "
+                "is required"
+            ),
+        )
+
+    if (
+        request.stage_id
+        is not None
+        and
+        request.stage_id
+        not in STAGES_BY_ID
+    ):
+
+        raise HTTPException(
+            status_code=422,
+
+            detail=(
+                "unknown stage_id"
+            ),
+        )
+
+    normalized_request = (
+        request.model_copy(
+            update={
+                "question":
+                    cleaned_question
+            }
+        )
+    )
+
+    return (
+        answer_question(
+            normalized_request
+        )
+    )
+
+
+# =========================
 # Solution
 # =========================
 
@@ -466,7 +536,24 @@ def create_annotation(
     )
 
     if (
+        request.segment_end_index
+        <
         request.segment_index
+    ):
+
+        raise HTTPException(
+            status_code=422,
+
+            detail=(
+                "segment_end_index "
+                "must not be "
+                "before "
+                "segment_index"
+            ),
+        )
+
+    if (
+        request.segment_end_index
         >=
         len(stage.segments)
     ):
@@ -480,26 +567,69 @@ def create_annotation(
             ),
         )
 
-    segment = (
-        stage.segments[
-            request.segment_index
-        ]
+    expected_segment_indexes = list(
+        range(
+            request.segment_index,
+            request.segment_end_index
+            + 1,
+        )
     )
 
+    spans_by_segment = {
+        span.segment_index: span
+        for span in request.spans
+    }
+
     if (
-        request.quote
-        not in segment
+        sorted(
+            spans_by_segment.keys()
+        )
+        != expected_segment_indexes
     ):
 
         raise HTTPException(
             status_code=422,
 
             detail=(
-                "quote does not "
-                "belong to "
-                "this segment"
+                "spans must cover "
+                "exactly "
+                "segment_index "
+                "through "
+                "segment_end_index, "
+                "one span per "
+                "segment"
             ),
         )
+
+    for (
+        segment_index
+    ) in expected_segment_indexes:
+
+        span = spans_by_segment[
+            segment_index
+        ]
+
+        segment = (
+            stage.segments[
+                segment_index
+            ]
+        )
+
+        if (
+            span.quote
+            not in segment
+        ):
+
+            raise HTTPException(
+                status_code=422,
+
+                detail=(
+                    "quote does not "
+                    "belong to "
+                    "segment "
+                    f"{segment_index}"
+                ),
+            )
 
     annotation = (
         AnnotationResponse(
@@ -519,8 +649,16 @@ def create_annotation(
                 request.segment_index
             ),
 
+            segment_end_index=(
+                request.segment_end_index
+            ),
+
             quote=(
                 request.quote
+            ),
+
+            spans=(
+                request.spans
             ),
 
             note=(

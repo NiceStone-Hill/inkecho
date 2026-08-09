@@ -132,10 +132,19 @@ function AnnotationsPanel() {
               </span>
 
               <span>
-                第{" "}
-                {annotation.segmentIndex +
-                  1}{" "}
-                段
+                {annotation.segmentEndIndex >
+                annotation.segmentIndex
+                  ? `第 ${
+                      annotation.segmentIndex +
+                      1
+                    } - ${
+                      annotation.segmentEndIndex +
+                      1
+                    } 段`
+                  : `第 ${
+                      annotation.segmentIndex +
+                      1
+                    } 段`}
               </span>
 
               <span>

@@ -148,6 +148,7 @@ function strokesToImageDataUrl(
 
 function buildHighlightedNodes(
   text,
+  segmentIndex,
   annotations,
 ) {
   if (
@@ -171,9 +172,30 @@ function buildHighlightedNodes(
     of annotations
   ) {
 
+    /*
+     * 跨段批注的 quote 是拼接后的完整文字，
+     * 不能直接拿它去当前这一段里 indexOf。
+     * 高亮用的文字要取这一段自己的 span。
+     */
+
+    const span =
+      (
+        annotation.spans ||
+        []
+      ).find(
+        (item) =>
+          item.segmentIndex ===
+          segmentIndex,
+      );
+
+    const spanQuote =
+      span
+        ? span.quote
+        : annotation.quote;
+
     const index =
       text.indexOf(
-        annotation.quote,
+        spanQuote,
       );
 
 
@@ -184,7 +206,7 @@ function buildHighlightedNodes(
 
         end:
           index +
-          annotation.quote.length,
+          spanQuote.length,
 
         annotationId:
           annotation.id,
@@ -420,7 +442,7 @@ function AnnotationLayer({
 
     if (
       !quote ||
-      quote.length > 200
+      quote.length > 600
     ) {
 
       selection
@@ -430,9 +452,6 @@ function AnnotationLayer({
     }
 
 
-    const anchorNode =
-      selection.anchorNode;
-
     const container =
       containerRef.current;
 
@@ -440,34 +459,178 @@ function AnnotationLayer({
     if (
       !container ||
       !container.contains(
-        anchorNode,
+        selection.anchorNode,
       )
     ) {
       return;
     }
 
 
-    const segmentEl =
-      anchorNode.nodeType === 1
-
-        ? anchorNode.closest(
-            "[data-segment-index]",
-          )
-
-        : anchorNode
-            .parentElement
-            ?.closest(
-              "[data-segment-index]",
-            );
-
-
-    if (!segmentEl) {
-      return;
-    }
+    setError("");
 
 
     const range =
       selection.getRangeAt(0);
+
+
+    /*
+     * 用 range 的 start / end 容器判断，
+     * 而不是 selection.anchorNode。
+     *
+     * anchorNode 只是用户拖动选区的起点，
+     * 反向选择（从后往前拖）时，
+     * anchorNode 可能落在选区末尾的段落里，
+     * 用它来定位段落是不准确的。
+     */
+
+    function resolveSegmentElement(
+      node,
+    ) {
+      return node.nodeType === 1
+
+        ? node.closest(
+            "[data-segment-index]",
+          )
+
+        : node
+            .parentElement
+            ?.closest(
+              "[data-segment-index]",
+            );
+    }
+
+
+    const startEl =
+      resolveSegmentElement(
+        range.startContainer,
+      );
+
+    const endEl =
+      resolveSegmentElement(
+        range.endContainer,
+      );
+
+
+    if (!startEl || !endEl) {
+      return;
+    }
+
+
+    const startSegmentIndex =
+      Number(
+        startEl.dataset
+          .segmentIndex,
+      );
+
+    const endSegmentIndex =
+      Number(
+        endEl.dataset
+          .segmentIndex,
+      );
+
+
+    if (
+      endSegmentIndex <
+      startSegmentIndex
+    ) {
+      return;
+    }
+
+
+    /*
+     * 允许跨段落批注：
+     * 依次为区间内的每一段，
+     * 各自截取被选中的那部分文字，
+     * 存进 spans。
+     *
+     * 后端会用 spans 里每一段的文字，
+     * 分别校验它确实属于对应段落，
+     * 而不是把整段选区文字
+     * 硬塞进单一段落里匹配。
+     */
+
+    const spans = [];
+
+    for (
+      let segmentIndex =
+        startSegmentIndex;
+      segmentIndex <=
+        endSegmentIndex;
+      segmentIndex++
+    ) {
+
+      const segmentEl =
+        container.querySelector(
+          `[data-segment-index="${segmentIndex}"]`,
+        );
+
+      if (!segmentEl) {
+        continue;
+      }
+
+      const segmentRange =
+        document.createRange();
+
+      if (
+        segmentIndex ===
+        startSegmentIndex
+      ) {
+
+        segmentRange.setStart(
+          range.startContainer,
+          range.startOffset,
+        );
+
+      } else {
+
+        segmentRange.setStart(
+          segmentEl,
+          0,
+        );
+      }
+
+      if (
+        segmentIndex ===
+        endSegmentIndex
+      ) {
+
+        segmentRange.setEnd(
+          range.endContainer,
+          range.endOffset,
+        );
+
+      } else {
+
+        segmentRange.setEnd(
+          segmentEl,
+          segmentEl.childNodes
+            .length,
+        );
+      }
+
+      const segmentQuote =
+        segmentRange
+          .toString()
+          .trim();
+
+      if (segmentQuote) {
+
+        spans.push({
+          segmentIndex,
+          quote: segmentQuote,
+        });
+      }
+    }
+
+
+    if (spans.length === 0) {
+
+      selection
+        .removeAllRanges();
+
+      return;
+    }
+
 
     const rect =
       range
@@ -502,11 +665,12 @@ function AnnotationLayer({
       quote,
 
       segmentIndex:
-        Number(
-          segmentEl
-            .dataset
-            .segmentIndex,
-        ),
+        startSegmentIndex,
+
+      segmentEndIndex:
+        endSegmentIndex,
+
+      spans,
 
       top:
         Math.min(
@@ -674,8 +838,14 @@ function AnnotationLayer({
         segmentIndex:
           popover.segmentIndex,
 
+        segmentEndIndex:
+          popover.segmentEndIndex,
+
         quote:
           popover.quote,
+
+        spans:
+          popover.spans,
 
 
         /*
@@ -807,10 +977,14 @@ function AnnotationLayer({
             {buildHighlightedNodes(
               segment,
 
+              index,
+
               stageAnnotations.filter(
                 (item) =>
-                  item.segmentIndex ===
-                  index,
+                  item.segmentIndex <=
+                    index &&
+                  item.segmentEndIndex >=
+                    index,
               ),
             ).map(
               (node) =>
@@ -863,6 +1037,18 @@ function AnnotationLayer({
           </p>
 
         ),
+      )}
+
+
+      {!popover &&
+        error && (
+
+        <p
+          className="annotationError annotationErrorStandalone"
+        >
+          {error}
+        </p>
+
       )}
 
 

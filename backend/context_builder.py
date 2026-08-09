@@ -41,6 +41,8 @@ class AgentAnnotation(BaseModel):
 
     segment_index: int
 
+    segment_end_index: int
+
     quote: str
 
     note: str
@@ -214,6 +216,9 @@ def build_agent_context(
             stage_id=item.stage_id,
             segment_index=(
                 item.segment_index
+            ),
+            segment_end_index=(
+                item.segment_end_index
             ),
             quote=item.quote,
             note=item.note,
