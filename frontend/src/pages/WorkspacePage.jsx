@@ -1633,157 +1633,6 @@ function CheckpointPanel({
 }
 
 
-function JourneyVersionNode({
-  label,
-  current,
-  previous,
-}) {
-  if (!current) {
-    return null;
-  }
-
-
-  const unchanged =
-    previous &&
-    current.text ===
-      previous.text;
-
-
-  return (
-    <div
-      className={
-        `journeyNode ${
-          unchanged
-            ? "journeyNodeUnchanged"
-            : ""
-        }`
-      }
-    >
-      <div
-        className="journeyNodeLabel"
-      >
-        {label}
-      </div>
-
-      {unchanged ? (
-        <>
-          <strong>
-            保留上一版观点
-          </strong>
-
-          <p>
-            这一轮压力测试没有改变你的核心解释。
-          </p>
-        </>
-      ) : (
-        <>
-          <strong>
-            {
-              label === "V1"
-                ? "最初的解释"
-                : "修正后的解释"
-            }
-          </strong>
-
-          <p>
-            {current.text}
-          </p>
-        </>
-      )}
-
-      {current.confidence && (
-        <span
-          className="journeyConfidence"
-        >
-          确信程度：
-          {
-            current.confidence ===
-            "high"
-              ? "高"
-              : current
-                    .confidence ===
-                  "low"
-                ? "低"
-                : "中"
-          }
-        </span>
-      )}
-    </div>
-  );
-}
-
-
-function JourneyPressureNode({
-  label,
-  stressResult,
-  stressAnswer,
-}) {
-  if (!stressResult) {
-    return null;
-  }
-
-
-  const rationaleEvidence =
-    stressResult
-      .rationale_evidence_ids ||
-    [];
-
-
-  return (
-    <div
-      className="journeyPressureNode"
-    >
-      <div
-        className="journeyPressureTop"
-      >
-        <span>
-          {label}
-        </span>
-
-        {rationaleEvidence.length >
-          0 && (
-          <span>
-            依据：
-            {
-              rationaleEvidence.join(
-                " · ",
-              )
-            }
-          </span>
-        )}
-      </div>
-
-      <strong>
-        {stressResult.category ===
-        "UNCLEAR"
-          ? "通用自检："
-          : "UNPROVEN 问："}
-      </strong>
-
-      <p>
-        {
-          stressResult.pressure_question
-        }
-      </p>
-
-      {hasText(
-        stressAnswer,
-      ) && (
-        <>
-          <strong>
-            你的回应：
-          </strong>
-
-          <p>
-            {stressAnswer}
-          </p>
-        </>
-      )}
-    </div>
-  );
-}
-
-
 function ThinkingJourney({
   progress,
 }) {
@@ -1812,143 +1661,138 @@ function ThinkingJourney({
         ?.confidenceChanged,
     );
 
+  const finalHypothesis =
+    hasText(
+      progress.completion
+        .feedback,
+    )
+      ? progress.completion
+          .feedback
+      : progress.hypothesisV2
+          ?.text ||
+        progress.hypothesisV1
+          .text;
+
+  const finalConfidence =
+    progress.hypothesisV2
+      ?.confidence ||
+    progress.hypothesisV1
+      .confidence;
+
+  const confidenceLabel = {
+    low: "低",
+    medium: "中",
+    high: "高",
+  };
+
+  const categoryLabel = {
+    SPACE_PATH: "空间路径",
+    HUMAN_PASSAGE: "人员通行",
+    TOOL_SOURCE: "工具来源",
+    COMMUNICATION: "信息传递",
+    INSIDER_HELP: "内部协助",
+    UNCLEAR: "通用自检",
+  };
+
+  const rationaleEvidence =
+    progress.stressResult
+      ?.rationale_evidence_ids ||
+    [];
+
+  const decisionLabel =
+    revisionMade
+      ? "修正了原有判断"
+      : "看见风险后仍选择保留";
+
 
   return (
-    <section
-      className="thinkingJourney"
-    >
-      <div
-        className="thinkingJourneyHeader"
-      >
-        <span>
-          CASE 013 · REASONING REPLAY
-        </span>
+    <section className="thinkingJourney caseClosure">
+      <header className="caseClosureHeader">
+        <div>
+          <span>UNPROVEN · CASE FILE 013</span>
+          <h2>结案档案</h2>
+          <p>这不是正确率报告，而是你的判断如何经受证据审查的记录。</p>
+        </div>
+        <div className="caseClosureStamp">已封存</div>
+      </header>
 
-        <h2>
-          你是在哪里多走了一步
-        </h2>
-
-        <p>
-          这里不评价你是否猜中，
-          只回放事实如何变成了你的判断。
-        </p>
+      <div className="caseClosureMeta">
+        <div><span>案件</span><strong>第十三号牢房</strong></div>
+        <div><span>推理版本</span><strong>{progress.hypothesisV2 ? "V1 → V2" : "V1"}</strong></div>
+        <div><span>审查证据</span><strong>{rationaleEvidence.length ? rationaleEvidence.join(" · ") : "E01–E03"}</strong></div>
+        <div><span>审查结果</span><strong>发现 1 项关键前提</strong></div>
       </div>
 
-
-      <section
-        className="branchPointCard"
-      >
-        <div
-          className="branchPointStamp"
-        >
-          UNPROVEN
-        </div>
-
-        <span>
-          你的关键分叉点
-        </span>
-
-        <h3>
-          {branchPoint}
-        </h3>
-
-        <p>
-          {
-            revisionMade
-              ? "你在压力问题之后重新检查了这一步，并对原来的解释或确信程度作出了修正。"
-              : "你看见了这一步仍未被证明，并选择保留原来的解释。保留同样也是一条被记录的推理路径。"
-          }
-        </p>
+      <section className="caseClosureFinding">
+        <span>01 · 关键分叉点</span>
+        <h3>{branchPoint}</h3>
+        <p>{revisionMade
+          ? "你在压力问题之后重新检查了这一步，并调整了解释或确信程度。"
+          : "你辨认出这一步尚未被文本证明，并在知晓风险后保留了原来的解释。"}</p>
       </section>
 
-
-      <div
-        className="journeyFlow"
-      >
-        <JourneyVersionNode
-          label="V1"
-          current={
-            progress.hypothesisV1
-          }
-          previous={null}
-        />
-
-
-        {progress.stressResult && (
-          <div
-            className="journeyArrow"
-          >
-            ↓
+      <section className="caseClosureSection">
+        <div className="caseClosureSectionTitle">
+          <span>02</span>
+          <div><h3>判断变化</h3><p>对照最初解释与审查后的选择</p></div>
+        </div>
+        <div className="caseClosureCompare">
+          <article>
+            <div className="caseClosureVersion"><span>HYPOTHESIS</span><strong>V1</strong></div>
+            <p>{progress.hypothesisV1.text}</p>
+            <small>确信程度：{confidenceLabel[progress.hypothesisV1.confidence] || "中"}</small>
+          </article>
+          <div className="caseClosureDecision">
+            <span>审查后</span>
+            <strong>{revisionMade ? "修正" : "保留"}</strong>
           </div>
-        )}
+          <article className="caseClosureFinalVersion">
+            <div className="caseClosureVersion"><span>AFTER REVIEW</span><strong>{progress.hypothesisV2 ? "V2" : "V1"}</strong></div>
+            <p>{progress.hypothesisV2?.text || progress.hypothesisV1.text}</p>
+            <small>确信程度：{confidenceLabel[finalConfidence] || "中"}</small>
+          </article>
+        </div>
+        <p className="caseClosureDecisionNote">本轮决定：{decisionLabel}</p>
+      </section>
 
-
-        <JourneyPressureNode
-          label="第一次压力测试"
-          stressResult={
-            progress.stressResult
-          }
-          stressAnswer={
-            progress.stressAnswer
-          }
-        />
-
-
-        {progress.hypothesisV2 && (
-          <div
-            className="journeyArrow"
-          >
-            ↓
+      {progress.stressResult && (
+        <section className="caseClosureSection">
+          <div className="caseClosureSectionTitle">
+            <span>03</span>
+            <div><h3>压力测试记录</h3><p>AI 只审查未证前提，不判断答案对错</p></div>
           </div>
-        )}
-
-
-        <JourneyVersionNode
-          label="V2"
-          current={
-            progress.hypothesisV2
-          }
-          previous={
-            progress.hypothesisV1
-          }
-        />
-
-
-        {hasText(
-          progress.completion
-            .feedback,
-        ) && (
-          <>
-            <div
-              className="journeyArrow"
-            >
-              ↓
+          <div className="caseClosureAudit">
+            <div className="caseClosureAuditTags">
+              <span>{categoryLabel[progress.stressResult.category] || "未证前提"}</span>
+              <span>{rationaleEvidence.length ? `依据 ${rationaleEvidence.join(" · ")}` : "通用自检"}</span>
             </div>
-
-            <div
-              className="journeyFinalNode"
-            >
-              <div
-                className="journeyNodeLabel"
-              >
-                FINAL
+            <div className="caseClosureQuestion">
+              <span>PRESSURE QUESTION</span>
+              <p>{progress.stressResult.pressure_question}</p>
+            </div>
+            {hasText(progress.stressAnswer) && (
+              <div className="caseClosureResponse">
+                <span>你的回应</span>
+                <p>{progress.stressAnswer}</p>
               </div>
+            )}
+          </div>
+        </section>
+      )}
 
-              <strong>
-                揭晓前封存的最终推理
-              </strong>
+      <section className="caseClosureSealed">
+        <div className="caseClosureSeal">FINAL</div>
+        <div>
+          <span>04 · 揭晓前封存</span>
+          <h3>我的最终逃脱路径</h3>
+          <p>{finalHypothesis}</p>
+        </div>
+      </section>
 
-              <p>
-                {
-                  progress
-                    .completion
-                    .feedback
-                }
-              </p>
-            </div>
-          </>
-        )}
-      </div>
+      <footer className="caseClosureFooter">
+        <strong>UNPROVEN</strong>
+        <span>文本证明到哪里，你的判断就从哪里开始。</span>
+      </footer>
     </section>
   );
 }
