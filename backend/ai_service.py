@@ -329,13 +329,83 @@ selected_assumption
 
 question
 
-这个问题应该：
+这是最终直接展示给用户的问题。
 
-- 测试用户的假设
+必须遵守：
+
+- 只问一个问题
+- 优先围绕 NEW EVIDENCE SINCE LAST CHECKPOINT
+- 针对当前 Hypothesis 中最关键、但尚未被证据支持的一步
+- selected_assumption 必须尽量保持用户原本的说法，不得自行加入新的条件、属性或机制
+- 如果用户说“A 可能通过 B 实现 C”，应优先追问“B 如何连接 A 和 C”，而不是自行假设 B 必须具有某个未被提及的物理属性
+- 问题必须能够由“当前已经读到的内容”继续思考
+- 用自然的阅读对话语气
 - 不直接说用户错了
-- 不给正确答案
+- 不提供正确答案
 - 不透露后续剧情
+- 不替故事补充不存在的事实
+- 不得自行加入“足够大”“足够坚固”“足够长”“能够承重”“能够容纳”等物理属性，除非 Evidence 明确提供了相关信息
+- 如果缺少尺寸、距离、强度等信息，不要要求用户仅凭不存在的数据判断物理可行性
+- 不把“原文没有提到某事”自动理解为“这件事没有发生”
+- 不制造新的反证，例如“为什么没有痕迹”“为什么没人发现”，除非 Evidence 明确说没有
+- 不在问题中出现 E01、E02、E07 等 Evidence ID
+- 不使用“根据 E07”“证据 E08 表明”这种内部系统语言
 - 不连续提出多个问题
+
+例如：
+
+用户说：
+
+“教授可能通过排水管和外面的人取得联系。”
+
+当前已知：
+
+- 老鼠通过某个圆孔消失
+- 圆孔连接一根废弃排水管
+- 教授正在尝试把信息传到牢房外
+
+好的问题：
+
+“你认为这根排水管在‘联系外界’这一步里具体起什么作用？目前哪条线索支持这个连接？”
+
+也可以：
+
+“你把排水管和联系外界联系在了一起，目前读到的哪些信息让你这样判断？”
+
+不好的问题：
+
+“这个排水管足够大吗？”
+
+“不好的原因：
+用户没有提出‘大小’这一前提，
+Evidence 也没有提供足以判断尺寸是否合适的信息。”
+
+例如：
+
+如果用户说：
+
+“教授可能通过排水管逃出去。”
+
+而当前已经知道：
+
+排水管很细，只发现它可以让老鼠通过。
+
+好的问题：
+
+“目前只知道老鼠能通过这根管道，你觉得教授本人也能从这里通过吗？”
+
+不好的问题：
+
+“为什么排水管里没有留下教授爬行的痕迹？”
+
+因为后一个问题凭空假设了
+“没有留下痕迹”这一事实。
+
+好的问题应该让用户意识到：
+
+“我的解释里有哪一步还缺少连接？”
+
+而不是让用户猜 Agent 自己新创造出来的信息。
 
 
 8.
@@ -488,6 +558,30 @@ def _build_user_prompt(
     context: AgentContext,
 ) -> str:
 
+    new_evidence_ids = {
+        item.evidence_id
+        for item in context.new_evidence
+    }
+
+    old_evidence = [
+        item
+        for item in context.allowed_evidence
+        if item.evidence_id
+        not in new_evidence_ids
+    ]
+
+    new_annotation_ids = {
+        item.annotation_id
+        for item in context.new_annotations
+    }
+
+    old_annotations = [
+        item
+        for item in context.annotations
+        if item.annotation_id
+        not in new_annotation_ids
+    ]
+
     return f"""
 [CURRENT CHECKPOINT]
 
@@ -509,23 +603,26 @@ def _build_user_prompt(
 {_format_evidence(context.new_evidence)}
 
 
-[ALL UNLOCKED EVIDENCE]
+[EARLIER EVIDENCE]
 
-{_format_evidence(context.allowed_evidence)}
+{_format_evidence(old_evidence)}
 
 
-[NEW USER ANNOTATIONS SINCE LAST CHECKPOINT]
+[NEW USER ANNOTATIONS]
 
 {_format_annotations(context.new_annotations)}
 
 
-[ALL USER ANNOTATIONS SO FAR]
+[EARLIER USER ANNOTATIONS]
 
-{_format_annotations(context.annotations)}
+{_format_annotations(old_annotations)}
 
 
-请只基于以上信息完成一次 Pressure Test。
+优先检查 NEW EVIDENCE 与 CURRENT HYPOTHESIS 的关系。
+
+只基于以上信息完成一次 Pressure Test。
 """.strip()
+
 
 
 # =========================
