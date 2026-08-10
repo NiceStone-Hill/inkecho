@@ -138,12 +138,12 @@
 
 h1 {
   margin: 18px 0 28px;
-  color: #1d1b18;
+  color: #7f2a27;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(54px, 9vw, 100px);
+  font-size: clamp(40px, 6vw, 72px);
   font-weight: 500;
   line-height: 0.95;
-  letter-spacing: -5px;
+  letter-spacing: -3px;
 }
 
 .introduction {
