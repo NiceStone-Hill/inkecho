@@ -604,3 +604,141 @@
   color: #9b9388;
   font-weight: 400;
 }
+
+/* Reading folio: the evidence lives in the margin, the story stays quiet. */
+.readerPage {
+  background:
+    radial-gradient(circle at 13% 82%, rgba(255, 250, 240, 0.25), transparent 28rem),
+    repeating-linear-gradient(90deg, rgba(67, 50, 33, 0.035) 0 1px, transparent 1px 44px),
+    #c9bdac;
+}
+
+.ebookSurface {
+  position: relative;
+  width: min(800px, calc(100vw - 128px));
+  margin-top: 32px;
+  margin-bottom: 32px;
+  background:
+    linear-gradient(90deg, transparent 0 36px, rgba(141, 64, 56, 0.18) 36px 37px, transparent 37px),
+    linear-gradient(90deg, rgba(255,255,255,0.45), transparent 9%, transparent 91%, rgba(101,77,49,0.04)),
+    var(--paper);
+  border-color: #b5a38a;
+  box-shadow: 14px 14px 0 rgba(109, 87, 61, 0.17), 0 26px 65px rgba(55, 42, 28, 0.17);
+}
+
+.ebookSurface::after {
+  position: absolute;
+  top: 15px;
+  right: 16px;
+  bottom: 15px;
+  width: 1px;
+  content: "";
+  background: rgba(169, 130, 72, 0.24);
+  pointer-events: none;
+}
+
+.ebookTopline {
+  color: #786b5d;
+  border-bottom-color: #cdbda8;
+}
+
+.ebookTitle {
+  color: #29231f;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.segmentBlock {
+  color: #312b25;
+  font-size: clamp(18px, 2vw, 21px);
+  line-height: 2.12;
+}
+
+.readerFooter { color: #746858; }
+
+.pageTurnButton {
+  width: 42px;
+  height: 112px;
+  color: #53473b;
+  background: rgba(250, 244, 234, 0.9);
+  border-color: #b7a58e;
+  font-size: 35px;
+  box-shadow: 0 8px 22px rgba(53, 39, 24, 0.12);
+}
+
+.pageTurnButton:hover {
+  color: var(--paper);
+  background: var(--signal);
+}
+
+.readerMenuButton {
+  width: 48px;
+  height: 48px;
+  background: var(--ink);
+  border-color: #e1d3c0;
+  border-radius: 50%;
+  box-shadow: 0 9px 22px rgba(45, 33, 21, 0.22);
+}
+
+.readerMenuIcon { color: #f7eee0; }
+.readerMenuPanel { background: var(--paper); border-color: #c7b69f; }
+.readerMenuPanel button { color: var(--ink); border-bottom-color: #e6dac8; }
+.readerMenuPanel button:hover { color: var(--signal); background: #f3e9dc; }
+
+.annotationMark {
+  background: linear-gradient(transparent 30%, rgba(214, 178, 91, 0.43) 30% 92%, transparent 92%);
+  border-radius: 0;
+  box-shadow: inset 0 -1px 0 rgba(141, 64, 56, 0.35);
+}
+
+.annotationHoverIcon {
+  width: 46px;
+  height: 46px;
+  color: var(--paper);
+  background: var(--signal);
+  border: 2px solid var(--paper);
+  font-size: 22px;
+  box-shadow: 0 6px 18px rgba(65, 42, 26, 0.24);
+}
+
+.annotationHoverIcon:hover { background: var(--ink); transform: rotate(-8deg) scale(1.05); }
+.annotationPopover { background: var(--paper); border-color: #bfad95; box-shadow: 0 18px 40px rgba(54, 39, 23, 0.2); }
+.annotationPopoverInput { background: #fffaf2; border-color: #cdbda8; }
+
+.annotationModeSwitch button,
+.optionButton {
+  color: #554a3e;
+  background: #faf3e7;
+  border-color: #c9b79f;
+  border-radius: 2px;
+}
+
+.annotationModeSwitch button.active,
+.optionButton.selected { background: var(--ink); border-color: var(--ink); }
+.handwritingCanvas { background-color: #fffaf2; border-color: #c6b49c; }
+
+.panelOverlay { background: rgba(42, 32, 22, 0.38); backdrop-filter: blur(2px); }
+.panelSheet {
+  background:
+    linear-gradient(90deg, transparent 0 18px, rgba(141,64,56,0.14) 18px 19px, transparent 19px),
+    var(--paper);
+  border-color: #b7a58c;
+  border-radius: 0;
+  box-shadow: 15px 15px 0 rgba(93, 68, 43, 0.14), 0 24px 68px rgba(48, 34, 21, 0.28);
+}
+
+.panelSheetSide { box-shadow: -14px 0 48px rgba(48, 34, 21, 0.2); }
+.caseNumber { color: var(--signal); }
+.panelTitle { color: var(--ink); font-weight: 600; }
+.panelCloseButton { color: var(--signal); border-color: #bca88e; border-radius: 0; }
+.panelCloseButton:hover { color: var(--paper); background: var(--signal); }
+.checkpointBlock, .annotationItem { background: #f5ecdf; border-left-color: var(--signal); }
+.pressureQuestionBlock span { color: var(--signal); }
+
+@media (max-width: 720px) {
+  .ebookSurface { background: var(--paper); }
+  .ebookSurface::after { display: none; }
+  .pageTurnButton { width: 44px; height: 44px; }
+  .panelSheet { box-shadow: 0 -14px 42px rgba(48, 34, 21, 0.2); }
+}

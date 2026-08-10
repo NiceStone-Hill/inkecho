@@ -27,7 +27,7 @@ function EntryPage() {
 
       <p className="eyebrow">CASE FILE · NO.13 · UNPROVEN</p>
 
-      <h1>
+      <h1 className="entryTitle">
         《第十三号牢房》
       </h1>
 
