@@ -643,9 +643,6 @@ function PressureCheckpoint({
     submitStressResult,
     submitStressResult2,
 
-    updateStressAnswer,
-    updateStressAnswer2,
-
     updateRevisionDraft,
     updateRevisionDraft2,
 
@@ -706,18 +703,6 @@ function PressureCheckpoint({
       : progress.stressResult;
 
 
-  const stressAnswer =
-    isSecondRound
-      ? progress.stressAnswer2
-      : progress.stressAnswer;
-
-
-  const updateAnswer =
-    isSecondRound
-      ? updateStressAnswer2
-      : updateStressAnswer;
-
-
   const updateDraft =
     isSecondRound
       ? updateRevisionDraft2
@@ -764,14 +749,9 @@ function PressureCheckpoint({
 
 
   const canSubmit =
-    hasText(
-      stressAnswer,
-    ) &&
-    (
-      draft.mode === "keep" ||
-      validHypothesisText(
-        revisionText,
-      )
+    draft.mode === "keep" ||
+    validHypothesisText(
+      revisionText,
     );
 
 
@@ -1012,7 +992,9 @@ function PressureCheckpoint({
         finalConfidence,
 
       pressureAnswer:
-        stressAnswer.trim(),
+        draft.mode === "revise"
+          ? revisionText.trim()
+          : "",
 
       revisionType:
         draft.mode === "revise"
@@ -1184,25 +1166,6 @@ function PressureCheckpoint({
                 stressResult.pressure_question
               }
             </div>
-          </div>
-
-
-          <div
-            className="chatComposer"
-          >
-            <textarea
-              value={
-                stressAnswer
-              }
-              onChange={(event) =>
-                updateAnswer(
-                  event
-                    .target
-                    .value,
-                )
-              }
-              placeholder="回复这条消息……"
-            />
           </div>
 
 
