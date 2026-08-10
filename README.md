@@ -11,7 +11,7 @@ UNPROVEN 是一个面向推理阅读场景的 AI 前提审查系统。
 - Pressure Test Agent：OpenAI-compatible Chat Completions 接口
 - 手写识别：PaddleOCR `PP-OCRv5_mobile_rec` 本地推理
 - 本地状态：`localStorage`
-- 计划部署：GitHub Pages 部署前端，支持 Python / PaddleOCR 的后端服务部署 FastAPI
+- 当前实现：前端使用 Vite 构建，后端使用 FastAPI；生产环境通过 `VITE_API_URL` 指向已部署的后端服务。
 
 ---
 
@@ -81,7 +81,7 @@ Checkpoint
   ↓
 继续阅读
   ↓
-新 Evidence + Annotation
+新 Evidence
   ↓
 Pressure Test Agent
   ↓
@@ -128,20 +128,16 @@ Pressure Test Agent 的职责不是解谜，也不是判断用户对错。
 
 它只负责：
 
-> 根据用户当前的 Hypothesis、已经解锁的 Evidence 和用户自己的 Annotation，找到当前解释中最值得检验的一个前提，并生成一个中性的压力问题。
+> 根据用户当前的 Hypothesis 和服务端固定装入的 Evidence，找到当前解释中最值得检验的一个前提，并生成一个中性的压力问题。
 
 ## Agent 输入
 
 ```text
-Current Hypothesis
+Hypothesis V1
         +
-Unlocked Evidence
+服务端固定 Evidence E01—E03
         +
-New Evidence
-        +
-Reader Annotations
-        +
-Current Checkpoint
+当前 Checkpoint（CP2）
         ↓
 Deterministic Context Builder
         ↓
@@ -158,12 +154,6 @@ Agent 必须区分三类信息。
 
 只有 Evidence 可以作为事实使用。
 
-### Annotation
-
-用户自己的注意、划线、批注、手写和猜测。
-
-Annotation 不是事实。
-
 ### Hypothesis
 
 用户当前对故事的解释。
@@ -176,12 +166,18 @@ Hypothesis 同样不是事实。
 
 Pressure Test 只在 CP2 运行一次。后端固定装入 E01—E03，不接受客户端上传或扩大 Evidence 白名单。
 
-模型只会收到：
+模型实际只会收到：
 
 - Hypothesis V1 文本与确信度
 - E01、E02、E03
 
-小说全文、Solution 和 Annotation 都不会进入 Pressure Test 上下文。
+不会收到：
+
+- 小说全文
+- Solution
+- 用户 Annotation
+
+用户批注目前只用于阅读界面和用户自己的认知记录，不会进入 Pressure Test 上下文。
 
 ---
 
@@ -362,7 +358,7 @@ Text Recognition
 # 项目结构
 
 ```text
-inkecho/
+unproven/
 ├── frontend/
 │   ├── public/
 │   ├── src/
@@ -434,8 +430,8 @@ py --version
 # 获取项目
 
 ```bash
-git clone https://github.com/NiceStone-Hill/inkecho.git
-cd inkecho
+git clone https://github.com/NiceStone-Hill/unproven.git
+cd unproven
 ```
 
 在 VS Code 中打开：
@@ -550,7 +546,7 @@ python -c "import sys; print(sys.executable)"
 输出应指向：
 
 ```text
-...\inkecho\backend\.venv\Scripts\python.exe
+...\unproven\backend\.venv\Scripts\python.exe
 ```
 
 而不是：
@@ -687,7 +683,7 @@ http://127.0.0.1:8000/api/ai/status
 ## 终端一：后端
 
 ```powershell
-cd D:\Desktop\2026Hackthon\inkecho\backend
+cd D:\Desktop\2026Hackthon\unproven\backend
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn main:app --reload
 ```
@@ -695,7 +691,7 @@ python -m uvicorn main:app --reload
 ## 终端二：前端
 
 ```powershell
-cd D:\Desktop\2026Hackthon\inkecho\frontend
+cd D:\Desktop\2026Hackthon\unproven\frontend
 npm run dev
 ```
 
@@ -1230,13 +1226,13 @@ GitHub Pages
 例如：
 
 ```text
-https://NiceStone-Hill.github.io/inkecho/
+https://NiceStone-Hill.github.io/unproven/
 ```
 
 GitHub Pages 使用子路径：
 
 ```text
-/inkecho/
+/unproven/
 ```
 
 因此需要保持：
