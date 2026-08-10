@@ -1,6 +1,8 @@
 import logging
 import os
 
+import contextlib
+
 from datetime import (
     datetime,
     timezone,
@@ -75,15 +77,26 @@ from state_store import (
     as list_annotations_from_store,
 )
 
+from mcp_server import (
+    mcp as inkecho_mcp,
+)
+
 
 logging.basicConfig(
     level=logging.INFO
 )
 
 
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with inkecho_mcp.session_manager.run():
+        yield
+
+
 app = FastAPI(
     title="UNPROVEN API",
     version="1.1.0",
+    lifespan=lifespan,
 )
 
 
@@ -721,3 +734,9 @@ def delete_annotation(
         "status":
             "deleted"
     }
+
+
+app.mount(
+    "/",
+    inkecho_mcp.streamable_http_app(),
+)
