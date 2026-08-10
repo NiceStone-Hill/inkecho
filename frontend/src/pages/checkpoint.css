@@ -1030,6 +1030,37 @@
   letter-spacing: 3px;
 }
 
+/* Checkpoints are marginal notes: intimate, deliberate, and visibly separate from story facts. */
+.checkpointNotification {
+  padding: 11px 34px 11px 11px;
+  background: rgba(255, 249, 239, 0.98);
+  border-color: #b8a68e;
+  border-left-color: var(--signal);
+  border-radius: 0;
+  box-shadow: 8px 8px 0 rgba(102, 76, 49, 0.12), 0 14px 32px rgba(43, 31, 20, 0.15);
+}
+
+.checkpointNotificationAvatar { background: var(--signal); border-radius: 50%; }
+.checkpointNotificationHeader strong { color: var(--ink); letter-spacing: 0.4px; }
+.checkpointNotificationHeader span { color: #9b8d7c; }
+.checkpointNotificationBody p { color: #65594d; }
+.checkpointNotificationClose { color: #8a7866; }
+.checkpointNotificationClose:hover { color: var(--paper); background: var(--signal); }
+
+.chatAvatar { border-radius: 50%; box-shadow: 0 2px 0 #b69770; }
+.chatBubble { border-color: #d7cbbb; border-radius: 2px 15px 15px 15px; box-shadow: 4px 4px 0 rgba(109, 82, 51, 0.05); }
+.chatMessageUser .chatBubble { color: #3c3023; background: #f0dfbe; border-color: #dfc695; border-radius: 15px 2px 15px 15px; }
+.chatComposer textarea { background: #fffaf2; border-color: #cdbda8; border-radius: 0; }
+.chatComposer textarea:focus { border-color: var(--signal); box-shadow: 0 0 0 3px rgba(141, 64, 56, 0.1); }
+
+.versionContext, .versionMiniItem { background: #f3eadc; border-radius: 0; border-left: 3px solid #b58c55; }
+.branchPointCard { background: #f1e6d6; border-color: #b9a58b; border-left-color: var(--signal); box-shadow: 10px 10px 0 rgba(101, 74, 46, 0.1); }
+.journeyNode, .journeyFinalNode { border-color: #cdbca5; border-radius: 0; box-shadow: 5px 5px 0 rgba(109, 82, 51, 0.05); }
+.journeyFinalNode { border-top: 4px solid var(--signal); }
+.journeyNodeLabel { background: var(--ink); border-radius: 0; }
+.journeyPressureNode { background: #f4eadc; border-left-color: var(--signal); border-radius: 0; }
+.caseClosure { border-color: #a9967d; box-shadow: 16px 16px 0 rgba(91, 67, 43, 0.13), 0 22px 60px rgba(42, 34, 25, 0.16); }
+
 
 /* ========================================
    手机

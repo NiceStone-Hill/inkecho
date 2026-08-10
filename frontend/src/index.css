@@ -8,6 +8,18 @@
   text-rendering: optimizeLegibility;
 }
 
+:root {
+  --ink: #27231f;
+  --ink-soft: #625b52;
+  --paper: #fbf7ef;
+  --paper-deep: #eee5d5;
+  --canvas: #cfc4b3;
+  --rule: #cdbda8;
+  --signal: #8d4038;
+  --signal-pale: #ead6cd;
+  --brass: #a98248;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -26,4 +38,19 @@ body {
 button,
 textarea {
   font-family: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
