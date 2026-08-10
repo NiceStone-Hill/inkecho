@@ -4,16 +4,35 @@ The tools in this module are intentionally thin wrappers around the existing
 FastAPI backend services. They do not call the local REST API over HTTP.
 """
 
+import os
+
 from typing import Literal
 from uuid import uuid4
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.server import TransportSecuritySettings
 from pydantic import ValidationError
 
 from ai_service import analyze_hypothesis
 from content import STAGES, STAGES_BY_ID
 from qa_service import answer_question
 from schemas import AnalyzeRequest, QARequest
+
+
+def _allowed_hosts() -> list[str]:
+    configured_hosts = [
+        host.strip()
+        for host in os.environ.get("MCP_ALLOWED_HOSTS", "").split(",")
+        if host.strip()
+    ]
+
+    return [
+        "127.0.0.1",
+        "127.0.0.1:*",
+        "localhost",
+        "localhost:*",
+        *configured_hosts,
+    ]
 
 
 mcp = FastMCP(
@@ -25,6 +44,9 @@ mcp = FastMCP(
     stateless_http=True,
     json_response=True,
     streamable_http_path="/mcp",
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=_allowed_hosts(),
+    ),
 )
 
 
