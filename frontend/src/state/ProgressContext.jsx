@@ -149,6 +149,20 @@ export function ProgressProvider({ children }) {
         }));
       },
 
+      submitFinalReasoning(text) {
+        setProgress((prev) => ({
+          ...prev,
+          finalReasoning: {
+            text,
+            sourceHypothesisId:
+              prev.hypothesisV2?.hypothesisId ||
+              prev.hypothesisV1?.hypothesisId ||
+              null,
+            submittedAt: new Date().toISOString(),
+          },
+        }));
+      },
+
       markReplayViewed() {
         setProgress((prev) => ({
           ...prev,

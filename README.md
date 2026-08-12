@@ -119,9 +119,13 @@ Checkpoint 编号与职责保持连续且唯一：
 | CP0 | 事实/前提训练 | 帮助用户理解阅读规则，不调用 AI | 训练完成状态 |
 | CP1 | 第一次判断 | 保存用户在 E01—E02 条件下的解释 | Hypothesis V1 |
 | CP2 | 压力测试 | Agent 只用 E01—E03 审查 V1 的一个未证前提 | Hypothesis V2 |
-| CP3 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | Final reasoning |
+| CP3 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | `finalReasoning` |
 
 其中只有 CP2 调用 Pressure Test Agent。CP3 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
+
+前端行为由 `checkpoint.kind` 驱动，`checkpoint_id` 只承担稳定身份、日志和接口追踪职责。章节位置由 `stage_id` 决定，三者不可混用。
+
+`Hypothesis V2` 与 `finalReasoning` 是两个不同产物：V2 记录用户回应压力问题后的“保留或修正”，`finalReasoning` 记录谜底揭晓前的完整逃脱路径。最终推理不再借用 `completion.feedback`；后者仅保留给真正的体验反馈。
 
 需要注意：
 

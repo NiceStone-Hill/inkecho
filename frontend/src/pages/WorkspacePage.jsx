@@ -113,9 +113,16 @@ function checkpointDone(
     );
   }
 
-  return Boolean(
-    progress.completion.feedback,
-  );
+  if (
+    checkpoint.kind ===
+    "final"
+  ) {
+    return Boolean(
+      progress.finalReasoning,
+    );
+  }
+
+  return false;
 }
 
 
@@ -126,37 +133,25 @@ function getCheckpointNoticeText(
     return "";
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP0"
-  ) {
+  if (checkpoint.kind === "training") {
     return (
       "在继续推理前，先判断两句话分别是文本事实，还是尚未证明的前提。"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP1"
-  ) {
+  if (checkpoint.kind === "capture") {
     return (
       "读到这里了。要不要先把你现在的猜想记下来？"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP2"
-  ) {
+  if (checkpoint.kind === "pressure") {
     return (
       "刚刚出现了新的线索。我有一个问题想问你。"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP3"
-  ) {
+  if (checkpoint.kind === "final") {
     return (
       "揭晓之前，想看看你现在最完整的解释。"
     );
@@ -1371,7 +1366,7 @@ function FinalCheckpoint({
   onClose,
 }) {
   const {
-    submitFeedback,
+    submitFinalReasoning,
     markReplayViewed,
   } = useProgress();
 
@@ -1380,8 +1375,8 @@ function FinalCheckpoint({
     text,
     setText,
   ] = useState(
-    progress.completion
-      .feedback ||
+    progress.finalReasoning
+      ?.text ||
     "",
   );
 
@@ -1395,7 +1390,7 @@ function FinalCheckpoint({
       return;
     }
 
-    submitFeedback(
+    submitFinalReasoning(
       text.trim(),
     );
 
@@ -1568,11 +1563,11 @@ function ThinkingJourney({
 
   const finalHypothesis =
     hasText(
-      progress.completion
-        .feedback,
+      progress.finalReasoning
+        ?.text,
     )
-      ? progress.completion
-          .feedback
+      ? progress.finalReasoning
+          .text
       : progress.hypothesisV2
           ?.text ||
         progress.hypothesisV1
