@@ -108,15 +108,8 @@ function checkpointDone(
     checkpoint.kind ===
     "pressure"
   ) {
-    return (
-      checkpoint.checkpoint_id
-      === "CP3"
-        ? Boolean(
-            progress.hypothesisV3,
-          )
-        : Boolean(
-            progress.hypothesisV2,
-          )
+    return Boolean(
+      progress.hypothesisV2,
     );
   }
 
@@ -157,15 +150,6 @@ function getCheckpointNoticeText(
   ) {
     return (
       "刚刚出现了新的线索。我有一个问题想问你。"
-    );
-  }
-
-  if (
-    checkpoint.checkpoint_id ===
-    "CP3"
-  ) {
-    return (
-      "你的解释又遇到了新的信息，要不要再检查一次？"
     );
   }
 
@@ -641,13 +625,10 @@ function PressureCheckpoint({
     submitHypothesisV1,
 
     submitStressResult,
-    submitStressResult2,
 
     updateRevisionDraft,
-    updateRevisionDraft2,
 
     submitHypothesisV2,
-    submitHypothesisV3,
   } = useProgress();
 
 
@@ -675,62 +656,39 @@ function PressureCheckpoint({
   ] = useState(null);
 
 
-  const isSecondRound =
-    checkpoint.checkpoint_id
-    === "CP3";
-
-
   const sourceVersionLabel =
-    isSecondRound
-      ? "V2"
-      : "V1";
+    "V1";
 
   const nextVersionLabel =
-    isSecondRound
-      ? "V3"
-      : "V2";
+    "V2";
 
 
   const draft =
-    isSecondRound
-      ? progress.revisionDraft2
-      : progress.revisionDraft;
+    progress.revisionDraft;
 
 
   const stressResult =
-    isSecondRound
-      ? progress.stressResult2
-      : progress.stressResult;
+    progress.stressResult;
 
 
   const updateDraft =
-    isSecondRound
-      ? updateRevisionDraft2
-      : updateRevisionDraft;
+    updateRevisionDraft;
 
 
   const submitResult =
-    isSecondRound
-      ? submitStressResult2
-      : submitStressResult;
+    submitStressResult;
 
 
   const submitNextHypothesis =
-    isSecondRound
-      ? submitHypothesisV3
-      : submitHypothesisV2;
+    submitHypothesisV2;
 
 
   const completedHypothesis =
-    isSecondRound
-      ? progress.hypothesisV3
-      : progress.hypothesisV2;
+    progress.hypothesisV2;
 
 
   const savedSourceHypothesis =
-    isSecondRound
-      ? progress.hypothesisV2
-      : progress.hypothesisV1;
+    progress.hypothesisV1;
 
 
   const sourceHypothesis =
@@ -854,21 +812,12 @@ function PressureCheckpoint({
       };
 
 
-      if (isSecondRound) {
-        submitHypothesisV2({
-          ...hypothesis,
+      submitHypothesisV1({
+        ...hypothesis,
 
-          generatedAtCheckpoint:
-            true,
-        });
-      } else {
-        submitHypothesisV1({
-          ...hypothesis,
-
-          generatedAtCheckpoint:
-            true,
-        });
-      }
+        generatedAtCheckpoint:
+          true,
+      });
 
 
       setLocalSubmitted(
@@ -1359,13 +1308,6 @@ function VersionMiniHistory({
         progress.hypothesisV1,
     },
 
-    {
-      label: "V3",
-      value:
-        progress.hypothesisV3,
-      previous:
-        progress.hypothesisV2,
-    },
   ];
 
 
@@ -1775,7 +1717,6 @@ function WorkspacePage() {
   resetProgress,
 
   submitStressResult,
-  submitStressResult2,
 } = useProgress();
 
 
@@ -1860,18 +1801,11 @@ function WorkspacePage() {
     return;
   }
 
-  const isSecondRound =
-    checkpoint.checkpoint_id === "CP3";
-
   const sourceHypothesis =
-    isSecondRound
-      ? progress.hypothesisV2
-      : progress.hypothesisV1;
+    progress.hypothesisV1;
 
   const existingResult =
-    isSecondRound
-      ? progress.stressResult2
-      : progress.stressResult;
+    progress.stressResult;
 
   if (
     !sourceHypothesis ||
@@ -1918,15 +1852,9 @@ function WorkspacePage() {
         result,
       );
 
-      if (isSecondRound) {
-        submitStressResult2(
-          result,
-        );
-      } else {
-        submitStressResult(
-          result,
-        );
-      }
+      submitStressResult(
+        result,
+      );
     })
     .catch((error) => {
       console.error(
@@ -1943,14 +1871,11 @@ function WorkspacePage() {
   checkpoint,
 
   progress.hypothesisV1,
-  progress.hypothesisV2,
   progress.sessionId,
 
   progress.stressResult,
-  progress.stressResult2,
 
   submitStressResult,
-  submitStressResult2,
 ]);
 
 

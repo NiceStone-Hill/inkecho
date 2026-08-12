@@ -105,13 +105,11 @@ Pressure Test
     ↓
 Hypothesis V2
 
-继续阅读 + 新 Evidence
+继续阅读
     ↓
-Pressure Test
+提交揭晓前的最终推理
     ↓
-用户确认 / 修正
-    ↓
-Hypothesis V3
+查看谜底与 V1 → V2 认知变化档案
 ```
 
 需要注意：
@@ -905,7 +903,7 @@ frontend/src/api.js
 - Annotation
 - 手写 Canvas
 - OCR 结果确认
-- V1 / V2 / V3 展示
+- V1 / V2 与最终推理展示
 - 请求状态与错误提示
 
 后端主要负责：
@@ -1263,7 +1261,7 @@ GitHub Pages 使用子路径：
 - 分阶段 Reading / Evidence 解锁
 - Checkpoint 阅读提醒
 - Checkpoint 30 秒自动消失通知
-- Hypothesis V1 / V2 / V3
+- Hypothesis V1 / V2 与揭晓前最终推理
 - Pressure Test Agent
 - Deterministic Context Builder
 - Evidence 边界控制
