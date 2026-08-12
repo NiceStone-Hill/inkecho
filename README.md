@@ -112,6 +112,17 @@ Hypothesis V2
 查看谜底与 V1 → V2 认知变化档案
 ```
 
+Checkpoint 编号与职责保持连续且唯一：
+
+| Checkpoint | 阶段 | 职责 | 产物 |
+| --- | --- | --- | --- |
+| CP0 | 事实/前提训练 | 帮助用户理解阅读规则，不调用 AI | 训练完成状态 |
+| CP1 | 第一次判断 | 保存用户在 E01—E02 条件下的解释 | Hypothesis V1 |
+| CP2 | 压力测试 | Agent 只用 E01—E03 审查 V1 的一个未证前提 | Hypothesis V2 |
+| CP3 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | Final reasoning |
+
+其中只有 CP2 调用 Pressure Test Agent。CP3 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
+
 需要注意：
 
 > 用户回答 Pressure Test 的问题，并不自动等于形成了新的 Hypothesis。

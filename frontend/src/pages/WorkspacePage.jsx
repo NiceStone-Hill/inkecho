@@ -155,7 +155,7 @@ function getCheckpointNoticeText(
 
   if (
     checkpoint.checkpoint_id ===
-    "CP4"
+    "CP3"
   ) {
     return (
       "揭晓之前，想看看你现在最完整的解释。"
