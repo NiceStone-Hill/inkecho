@@ -26,6 +26,10 @@ export function createDefaultProgress() {
     stressAnswer: "",
     revisionDraft: { mode: "keep", text: "", confidence: "medium", reason: "" },
     hypothesisV2: null,
+    stressResult2: null,
+    stressAnswer2: "",
+    revisionDraft2: { mode: "keep", text: "", confidence: "medium", reason: "" },
+    hypothesisV3: null,
     annotations: [],
     completion: {
       replayViewed: false,
@@ -69,14 +73,6 @@ export function loadProgress() {
     }
 
     const parsed = JSON.parse(raw);
-    const cleanedParsed = { ...parsed };
-
-    // Remove unreachable V3-era fields from previously saved browser state.
-    delete cleanedParsed.stressResult2;
-    delete cleanedParsed.stressAnswer2;
-    delete cleanedParsed.revisionDraft2;
-    delete cleanedParsed.hypothesisV3;
-
     const defaults = createDefaultProgress();
     const legacy =
       parsed.schemaVersion !==
@@ -84,7 +80,7 @@ export function loadProgress() {
 
     return {
       ...defaults,
-      ...cleanedParsed,
+      ...parsed,
       schemaVersion:
         CURRENT_SCHEMA_VERSION,
       sessionId: parsed.sessionId || defaults.sessionId,
@@ -100,6 +96,14 @@ export function loadProgress() {
         legacy
           ? null
           : parsed.hypothesisV2,
+      stressResult2:
+        legacy
+          ? null
+          : migrateStressResult(parsed.stressResult2),
+      hypothesisV3:
+        legacy
+          ? null
+          : parsed.hypothesisV3,
       reading: {
         ...defaults.reading,
         ...(parsed.reading || {}),

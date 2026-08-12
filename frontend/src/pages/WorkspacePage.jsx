@@ -108,8 +108,15 @@ function checkpointDone(
     checkpoint.kind ===
     "pressure"
   ) {
-    return Boolean(
-      progress.hypothesisV2,
+    return (
+      checkpoint.checkpoint_id
+      === "CP3"
+        ? Boolean(
+            progress.hypothesisV3,
+          )
+        : Boolean(
+            progress.hypothesisV2,
+          )
     );
   }
 
@@ -156,6 +163,15 @@ function getCheckpointNoticeText(
   if (
     checkpoint.checkpoint_id ===
     "CP3"
+  ) {
+    return (
+      "你的解释又遇到了新的信息，要不要再检查一次？"
+    );
+  }
+
+  if (
+    checkpoint.checkpoint_id ===
+    "CP4"
   ) {
     return (
       "揭晓之前，想看看你现在最完整的解释。"
@@ -625,10 +641,13 @@ function PressureCheckpoint({
     submitHypothesisV1,
 
     submitStressResult,
+    submitStressResult2,
 
     updateRevisionDraft,
+    updateRevisionDraft2,
 
     submitHypothesisV2,
+    submitHypothesisV3,
   } = useProgress();
 
 
@@ -656,39 +675,62 @@ function PressureCheckpoint({
   ] = useState(null);
 
 
+  const isSecondRound =
+    checkpoint.checkpoint_id
+    === "CP3";
+
+
   const sourceVersionLabel =
-    "V1";
+    isSecondRound
+      ? "V2"
+      : "V1";
 
   const nextVersionLabel =
-    "V2";
+    isSecondRound
+      ? "V3"
+      : "V2";
 
 
   const draft =
-    progress.revisionDraft;
+    isSecondRound
+      ? progress.revisionDraft2
+      : progress.revisionDraft;
 
 
   const stressResult =
-    progress.stressResult;
+    isSecondRound
+      ? progress.stressResult2
+      : progress.stressResult;
 
 
   const updateDraft =
-    updateRevisionDraft;
+    isSecondRound
+      ? updateRevisionDraft2
+      : updateRevisionDraft;
 
 
   const submitResult =
-    submitStressResult;
+    isSecondRound
+      ? submitStressResult2
+      : submitStressResult;
 
 
   const submitNextHypothesis =
-    submitHypothesisV2;
+    isSecondRound
+      ? submitHypothesisV3
+      : submitHypothesisV2;
 
 
   const completedHypothesis =
-    progress.hypothesisV2;
+    isSecondRound
+      ? progress.hypothesisV3
+      : progress.hypothesisV2;
 
 
   const savedSourceHypothesis =
-    progress.hypothesisV1;
+    isSecondRound
+      ? progress.hypothesisV2
+      : progress.hypothesisV1;
 
 
   const sourceHypothesis =
@@ -812,12 +854,21 @@ function PressureCheckpoint({
       };
 
 
-      submitHypothesisV1({
-        ...hypothesis,
+      if (isSecondRound) {
+        submitHypothesisV2({
+          ...hypothesis,
 
-        generatedAtCheckpoint:
-          true,
-      });
+          generatedAtCheckpoint:
+            true,
+        });
+      } else {
+        submitHypothesisV1({
+          ...hypothesis,
+
+          generatedAtCheckpoint:
+            true,
+        });
+      }
 
 
       setLocalSubmitted(
@@ -1308,6 +1359,13 @@ function VersionMiniHistory({
         progress.hypothesisV1,
     },
 
+    {
+      label: "V3",
+      value:
+        progress.hypothesisV3,
+      previous:
+        progress.hypothesisV2,
+    },
   ];
 
 
@@ -1717,6 +1775,7 @@ function WorkspacePage() {
   resetProgress,
 
   submitStressResult,
+  submitStressResult2,
 } = useProgress();
 
 
@@ -1801,11 +1860,18 @@ function WorkspacePage() {
     return;
   }
 
+  const isSecondRound =
+    checkpoint.checkpoint_id === "CP3";
+
   const sourceHypothesis =
-    progress.hypothesisV1;
+    isSecondRound
+      ? progress.hypothesisV2
+      : progress.hypothesisV1;
 
   const existingResult =
-    progress.stressResult;
+    isSecondRound
+      ? progress.stressResult2
+      : progress.stressResult;
 
   if (
     !sourceHypothesis ||
@@ -1852,9 +1918,15 @@ function WorkspacePage() {
         result,
       );
 
-      submitStressResult(
-        result,
-      );
+      if (isSecondRound) {
+        submitStressResult2(
+          result,
+        );
+      } else {
+        submitStressResult(
+          result,
+        );
+      }
     })
     .catch((error) => {
       console.error(
@@ -1871,11 +1943,14 @@ function WorkspacePage() {
   checkpoint,
 
   progress.hypothesisV1,
+  progress.hypothesisV2,
   progress.sessionId,
 
   progress.stressResult,
+  progress.stressResult2,
 
   submitStressResult,
+  submitStressResult2,
 ]);
 
 

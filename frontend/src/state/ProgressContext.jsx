@@ -92,6 +92,10 @@ export function ProgressProvider({ children }) {
         setProgress((prev) => ({ ...prev, stressResult: result }));
       },
 
+      submitStressResult2(result) {
+        setProgress((prev) => ({ ...prev, stressResult2: result }));
+      },
+
       async refreshAnnotations() {
         const annotations = await listAnnotations(progress.sessionId);
         setProgress((prev) => ({ ...prev, annotations }));
@@ -102,10 +106,21 @@ export function ProgressProvider({ children }) {
         setProgress((prev) => ({ ...prev, stressAnswer: text }));
       },
 
+      updateStressAnswer2(text) {
+        setProgress((prev) => ({ ...prev, stressAnswer2: text }));
+      },
+
       updateRevisionDraft(draft) {
         setProgress((prev) => ({
           ...prev,
           revisionDraft: { ...prev.revisionDraft, ...draft },
+        }));
+      },
+
+      updateRevisionDraft2(draft) {
+        setProgress((prev) => ({
+          ...prev,
+          revisionDraft2: { ...prev.revisionDraft2, ...draft },
         }));
       },
 
@@ -144,6 +159,21 @@ export function ProgressProvider({ children }) {
               hypothesis.revisionType === "revised"
                 ? "modify"
                 : "insist",
+            submittedAt: new Date().toISOString(),
+          },
+          revisionDraft2: {
+            ...prev.revisionDraft2,
+            text: hypothesis.text,
+            confidence: hypothesis.confidence,
+          },
+        }));
+      },
+
+      submitHypothesisV3(hypothesis) {
+        setProgress((prev) => ({
+          ...prev,
+          hypothesisV3: {
+            ...hypothesis,
             submittedAt: new Date().toISOString(),
           },
         }));
