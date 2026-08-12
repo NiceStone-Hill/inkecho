@@ -58,11 +58,6 @@ class SolutionResponse(BaseModel):
     steps: List[SolutionStep]
 
 
-# =========================
-# Agent / Pressure Test
-# =========================
-
-
 class HypothesisV1(BaseModel):
     text: str = Field(
         min_length=1,
@@ -70,6 +65,44 @@ class HypothesisV1(BaseModel):
     )
 
     confidence: Confidence
+
+
+class JourneyAnnotation(BaseModel):
+    quote: str = Field(default="", max_length=600)
+    note: str = Field(default="", max_length=300)
+
+
+class JourneyStressResult(BaseModel):
+    selected_assumption: str | None = Field(default=None, max_length=300)
+    pressure_question: str = Field(default="", max_length=300)
+    rationale_evidence_ids: List[str] = Field(default_factory=list)
+
+
+class ReasoningJourneyRequest(BaseModel):
+    hypothesis_v1: HypothesisV1
+    stress_result: JourneyStressResult | None = None
+    hypothesis_v2: HypothesisV1 | None = None
+    final_reasoning: str = Field(min_length=1, max_length=1200)
+    annotations: List[JourneyAnnotation] = Field(default_factory=list, max_length=40)
+
+
+class ReasoningMapNode(BaseModel):
+    label: str = Field(min_length=1, max_length=24)
+    detail: str = Field(min_length=1, max_length=100)
+    evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
+
+
+class ReasoningJourneyResponse(BaseModel):
+    biggest_shift: str = Field(min_length=1, max_length=240)
+    final_reconstruction: str = Field(min_length=1, max_length=360)
+    almost_missed_clue: str = Field(min_length=1, max_length=240)
+    reasoning_map: List[ReasoningMapNode] = Field(min_length=3, max_length=5)
+    source: Literal["model", "fallback"] = "model"
+
+
+# =========================
+# Agent / Pressure Test
+# =========================
 
 
 class AnalyzeRequest(BaseModel):

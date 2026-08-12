@@ -825,6 +825,32 @@
   line-height: 1.7;
 }
 
+.journeyInitialTheory p {
+  margin: 12px 0 14px;
+  color: #302a24;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-size: clamp(17px, 2.5vw, 22px);
+  line-height: 1.75;
+}
+
+.journeyInitialTheory small {
+  color: #897b69;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+}
+
+.journeyShiftSummary {
+  margin: 0 0 20px;
+  padding: 17px 20px;
+  color: #332d27;
+  background: rgba(248, 241, 230, 0.72);
+  border: 0;
+  border-left: 4px solid #7f2f28;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
 .caseClosureSection {
   margin: 0 34px;
   padding: 28px 0;
@@ -1013,6 +1039,113 @@
   line-height: 1.8;
 }
 
+.journeyMissedClue > p {
+  position: relative;
+  margin: 0;
+  padding: 20px 22px 20px 54px;
+  color: #463e35;
+  background: #f6eddf;
+  border: 1px dashed #a9977e;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.journeyMissedClue > p::before {
+  position: absolute;
+  top: 19px;
+  left: 20px;
+  color: #7f2f28;
+  content: "?";
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.reasoningMapSection {
+  padding-bottom: 34px;
+}
+
+.reasoningMap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0;
+  border: 1px solid #ad9e89;
+}
+
+.reasoningMapNode {
+  position: relative;
+  min-height: 170px;
+  padding: 20px 18px 18px;
+  background: #f8f1e6;
+  border-right: 1px solid #c6b8a4;
+}
+
+.reasoningMapNode:last-child {
+  border-right: 0;
+  background: #e4d8c5;
+}
+
+.reasoningMapNode:not(:last-child)::after {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: -8px;
+  width: 15px;
+  height: 15px;
+  content: "";
+  background: #f8f1e6;
+  border-top: 1px solid #c6b8a4;
+  border-right: 1px solid #c6b8a4;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.reasoningMapIndex {
+  margin-bottom: 22px;
+  color: #a48f73;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.reasoningMapNode h4 {
+  margin: 0 0 8px;
+  color: #2a2520;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 16px;
+}
+
+.reasoningMapNode p {
+  margin: 0;
+  color: #5e554a;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.reasoningMapNode small {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 3px 6px;
+  color: #7f2f28;
+  border: 1px solid #bd9d91;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+}
+
+.journeySummaryStatus {
+  padding: 22px;
+  color: #776b5d;
+  background: #f6eddf;
+  border: 1px dashed #aa9b87;
+  font-size: 12px;
+}
+
+.journeySummaryError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .caseClosureFooter {
   display: flex;
   align-items: center;
@@ -1155,6 +1288,36 @@
 
   .caseClosureSealed {
     grid-template-columns: 1fr;
+  }
+
+  .reasoningMap {
+    grid-template-columns: 1fr;
+  }
+
+  .reasoningMapNode {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid #c6b8a4;
+  }
+
+  .reasoningMapNode:last-child {
+    border-bottom: 0;
+  }
+
+  .reasoningMapNode:not(:last-child)::after {
+    top: auto;
+    right: 50%;
+    bottom: -8px;
+    transform: translateX(50%) rotate(135deg);
+  }
+
+  .reasoningMapIndex {
+    margin-bottom: 10px;
+  }
+
+  .journeySummaryError {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .caseClosureSeal {

@@ -281,6 +281,46 @@ export function getSolution() {
 }
 
 
+export function summarizeReasoningJourney({
+  hypothesisV1,
+  stressResult,
+  hypothesisV2,
+  finalReasoning,
+  annotations = [],
+}) {
+  return request(
+    "/api/reasoning-journey",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        hypothesis_v1: {
+          text: hypothesisV1.text,
+          confidence: hypothesisV1.confidence,
+        },
+        stress_result: stressResult
+          ? {
+              selected_assumption: stressResult.selected_assumption || null,
+              pressure_question: stressResult.pressure_question || "",
+              rationale_evidence_ids: stressResult.rationale_evidence_ids || [],
+            }
+          : null,
+        hypothesis_v2: hypothesisV2
+          ? {
+              text: hypothesisV2.text,
+              confidence: hypothesisV2.confidence,
+            }
+          : null,
+        final_reasoning: finalReasoning.text,
+        annotations: annotations.map((item) => ({
+          quote: item.quote || "",
+          note: item.note || "",
+        })),
+      }),
+    },
+  );
+}
+
+
 export function askQuestion({
   sessionId,
   stageId = null,

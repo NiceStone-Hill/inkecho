@@ -1,5 +1,5 @@
 const STORAGE_KEY = "inkecho_progress_v1";
-const CURRENT_SCHEMA_VERSION = 3;
+const CURRENT_SCHEMA_VERSION = 4;
 
 function createSessionId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -27,6 +27,7 @@ export function createDefaultProgress() {
     revisionDraft: { mode: "keep", text: "", confidence: "medium", reason: "" },
     hypothesisV2: null,
     finalReasoning: null,
+    reasoningJourney: null,
     annotations: [],
     completion: {
       replayViewed: false,
@@ -114,6 +115,8 @@ export function loadProgress() {
         migrated.hypothesisV2 || null,
       finalReasoning:
         migrated.finalReasoning || null,
+      reasoningJourney:
+        migrated.reasoningJourney || null,
       reading: {
         ...defaults.reading,
         ...(parsed.reading || {}),

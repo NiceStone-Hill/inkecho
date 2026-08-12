@@ -44,7 +44,7 @@ class ContentFlowTests(unittest.TestCase):
 
         self.assertEqual(
             [checkpoint.checkpoint_id for checkpoint in checkpoints],
-            ["CP0", "CP1", "CP2", "CP3"],
+            ["CP0", "CP1", "CP2", "CP4"],
         )
         self.assertEqual(
             [checkpoint.kind for checkpoint in checkpoints],

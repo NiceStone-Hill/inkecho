@@ -47,6 +47,8 @@ from qa_service import (
     stream_answer,
 )
 
+from reasoning_journey_service import summarize_reasoning_journey
+
 from content import (
     SOLUTION_STEPS,
     STAGES,
@@ -60,6 +62,8 @@ from schemas import (
     AnalyzeResponse,
     QARequest,
     QAResponse,
+    ReasoningJourneyRequest,
+    ReasoningJourneyResponse,
     SolutionResponse,
     StageContent,
     StageSummary,
@@ -478,6 +482,15 @@ def get_solution():
             )
         )
     )
+
+
+@app.post(
+    "/api/reasoning-journey",
+    response_model=ReasoningJourneyResponse,
+)
+def create_reasoning_journey(request: ReasoningJourneyRequest):
+    """Generate one structured retrospective after final reasoning is sealed."""
+    return summarize_reasoning_journey(request)
 
 
 # =========================

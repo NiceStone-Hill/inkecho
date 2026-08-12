@@ -109,19 +109,19 @@ Hypothesis V2
     ↓
 提交揭晓前的最终推理
     ↓
-查看谜底与 V1 → V2 认知变化档案
+查看谜底与个人推理复盘
 ```
 
-Checkpoint 编号与职责保持连续且唯一：
+Checkpoint 编号与职责保持稳定且唯一：
 
 | Checkpoint | 阶段 | 职责 | 产物 |
 | --- | --- | --- | --- |
 | CP0 | 事实/前提训练 | 帮助用户理解阅读规则，不调用 AI | 训练完成状态 |
 | CP1 | 第一次判断 | 保存用户在 E01—E02 条件下的解释 | Hypothesis V1 |
 | CP2 | 压力测试 | Agent 只用 E01—E03 审查 V1 的一个未证前提 | Hypothesis V2 |
-| CP3 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | `finalReasoning` |
+| CP4 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | `finalReasoning` |
 
-其中只有 CP2 调用 Pressure Test Agent。CP3 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
+其中只有 CP2 调用 Pressure Test Agent。CP4 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
 
 前端行为由 `checkpoint.kind` 驱动，`checkpoint_id` 只承担稳定身份、日志和接口追踪职责。章节位置由 `stage_id` 决定，三者不可混用。
 

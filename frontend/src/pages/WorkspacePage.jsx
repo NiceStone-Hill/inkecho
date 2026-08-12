@@ -14,6 +14,7 @@ import {
 import {
   analyzeHypothesis,
   getStage,
+  summarizeReasoningJourney,
 } from "../api";
 
 import {
@@ -1536,6 +1537,42 @@ function CheckpointPanel({
 function ThinkingJourney({
   progress,
 }) {
+  const { saveReasoningJourney } = useProgress();
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
+  const requestedSummary = useRef(false);
+
+  const requestSummary = useCallback(() => {
+    if (
+      requestedSummary.current ||
+      progress.reasoningJourney ||
+      !progress.hypothesisV1 ||
+      !progress.finalReasoning
+    ) {
+      return;
+    }
+    requestedSummary.current = true;
+    setSummaryLoading(true);
+    setSummaryError("");
+    summarizeReasoningJourney({
+      hypothesisV1: progress.hypothesisV1,
+      stressResult: progress.stressResult,
+      hypothesisV2: progress.hypothesisV2,
+      finalReasoning: progress.finalReasoning,
+      annotations: progress.annotations,
+    })
+      .then(saveReasoningJourney)
+      .catch(() => {
+        requestedSummary.current = false;
+        setSummaryError("复盘摘要暂时未能生成，你的原始推理记录仍已完整保留。");
+      })
+      .finally(() => setSummaryLoading(false));
+  }, [progress, saveReasoningJourney]);
+
+  useEffect(() => {
+    requestSummary();
+  }, [requestSummary]);
+
   if (
     !progress.hypothesisV1
   ) {
@@ -1604,14 +1641,23 @@ function ThinkingJourney({
       ? "修正了原有判断"
       : "看见风险后仍选择保留";
 
+  const summary = progress.reasoningJourney;
+  const summarySourceLabel = summaryLoading
+    ? "正在整理"
+    : summary?.source === "model"
+      ? "AI 一次总结"
+      : summary
+        ? "本地安全复盘"
+        : "等待生成";
+
 
   return (
     <section className="thinkingJourney caseClosure">
       <header className="caseClosureHeader">
         <div>
           <span>UNPROVEN · CASE FILE 013</span>
-          <h2>结案档案</h2>
-          <p>这不是正确率报告，而是你的判断如何经受证据审查的记录。</p>
+          <h2>个人推理复盘</h2>
+          <p>不是正确率报告，而是你的判断如何被证据推动、修正并重新连接。</p>
         </div>
         <div className="caseClosureStamp">已封存</div>
       </header>
@@ -1620,22 +1666,24 @@ function ThinkingJourney({
         <div><span>案件</span><strong>第十三号牢房</strong></div>
         <div><span>推理版本</span><strong>{progress.hypothesisV2 ? "V1 → V2" : "V1"}</strong></div>
         <div><span>审查证据</span><strong>{rationaleEvidence.length ? rationaleEvidence.join(" · ") : "E01–E03"}</strong></div>
-        <div><span>审查结果</span><strong>发现 1 项关键前提</strong></div>
+        <div><span>生成方式</span><strong>{summarySourceLabel}</strong></div>
       </div>
 
-      <section className="caseClosureFinding">
-        <span>01 · 关键分叉点</span>
-        <h3>{branchPoint}</h3>
-        <p>{revisionMade
-          ? "你在压力问题之后重新检查了这一步，并调整了解释或确信程度。"
-          : "你辨认出这一步尚未被文本证明，并在知晓风险后保留了原来的解释。"}</p>
+      <section className="caseClosureFinding journeyInitialTheory">
+        <span>01 · INITIAL THEORY</span>
+        <h3>最初，我认为……</h3>
+        <p>{progress.hypothesisV1.text}</p>
+        <small>初始确信程度：{confidenceLabel[progress.hypothesisV1.confidence] || "中"}</small>
       </section>
 
       <section className="caseClosureSection">
         <div className="caseClosureSectionTitle">
           <span>02</span>
-          <div><h3>判断变化</h3><p>对照最初解释与审查后的选择</p></div>
+          <div><h3>Biggest Shift</h3><p>一次压力测试带来的关键转折</p></div>
         </div>
+        <blockquote className="journeyShiftSummary">
+          {summary?.biggest_shift || branchPoint}
+        </blockquote>
         <div className="caseClosureCompare">
           <article>
             <div className="caseClosureVersion"><span>HYPOTHESIS</span><strong>V1</strong></div>
@@ -1659,7 +1707,7 @@ function ThinkingJourney({
         <section className="caseClosureSection">
           <div className="caseClosureSectionTitle">
             <span>03</span>
-            <div><h3>压力测试记录</h3><p>AI 只审查未证前提，不判断答案对错</p></div>
+            <div><h3>Pressure Record</h3><p>AI 只审查未证前提，不判断答案对错</p></div>
           </div>
           <div className="caseClosureAudit">
             <div className="caseClosureAuditTags">
@@ -1683,10 +1731,46 @@ function ThinkingJourney({
       <section className="caseClosureSealed">
         <div className="caseClosureSeal">FINAL</div>
         <div>
-          <span>04 · 揭晓前封存</span>
-          <h3>我的最终逃脱路径</h3>
-          <p>{finalHypothesis}</p>
+          <span>04 · FINAL RECONSTRUCTION</span>
+          <h3>最终重构</h3>
+          <p>{summary?.final_reconstruction || finalHypothesis}</p>
         </div>
+      </section>
+
+      <section className="caseClosureSection journeyMissedClue">
+        <div className="caseClosureSectionTitle">
+          <span>05</span>
+          <div><h3>Almost Missed Clue</h3><p>一条值得在结案后重新看的线索</p></div>
+        </div>
+        <p>{summary?.almost_missed_clue || "正在对照你的批注与最终推理……"}</p>
+      </section>
+
+      <section className="caseClosureSection reasoningMapSection">
+        <div className="caseClosureSectionTitle">
+          <span>MAP</span>
+          <div><h3>Final Reasoning Map</h3><p>从异常到最终解释的因果链</p></div>
+        </div>
+        {summaryLoading && <div className="journeySummaryStatus">正在整理你的推理档案……</div>}
+        {summaryError && (
+          <div className="journeySummaryStatus journeySummaryError">
+            <span>{summaryError}</span>
+            <button type="button" className="secondaryButton" onClick={requestSummary}>重新生成</button>
+          </div>
+        )}
+        {summary?.reasoning_map && (
+          <div className="reasoningMap" role="list" aria-label="最终推理地图">
+            {summary.reasoning_map.map((node, index) => (
+              <article className="reasoningMapNode" role="listitem" key={`${node.label}-${index}`}>
+                <div className="reasoningMapIndex">{String(index + 1).padStart(2, "0")}</div>
+                <div>
+                  <h4>{node.label}</h4>
+                  <p>{node.detail}</p>
+                  {!!node.evidence_ids?.length && <small>{node.evidence_ids.join(" · ")}</small>}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <footer className="caseClosureFooter">

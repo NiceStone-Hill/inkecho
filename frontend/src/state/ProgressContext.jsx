@@ -163,6 +163,16 @@ export function ProgressProvider({ children }) {
         }));
       },
 
+      saveReasoningJourney(summary) {
+        setProgress((prev) => ({
+          ...prev,
+          reasoningJourney: {
+            ...summary,
+            generatedAt: new Date().toISOString(),
+          },
+        }));
+      },
+
       markReplayViewed() {
         setProgress((prev) => ({
           ...prev,
