@@ -36,7 +36,6 @@ import Panel
 
 const STAGE_COUNT = 8;
 const TOTAL_PAGES = STAGE_COUNT + 1;
-const HYPOTHESIS_MIN_LENGTH = 20;
 const HYPOTHESIS_MAX_LENGTH = 300;
 
 
@@ -70,8 +69,7 @@ function validHypothesisText(
     text?.trim().length || 0;
 
   return (
-    length >=
-      HYPOTHESIS_MIN_LENGTH &&
+    length > 0 &&
     length <=
       HYPOTHESIS_MAX_LENGTH
   );
@@ -450,7 +448,7 @@ function CaptureCheckpoint({
 
         <div className="hypothesisLength">
           <span>
-            请用 20–300 字写出一个完整方案
+            写下你的推理（最多 300 字）
           </span>
           <span>
             {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
@@ -868,7 +866,7 @@ function PressureCheckpoint({
           />
 
           <div className="hypothesisLength">
-            <span>20–300 字</span>
+            <span>最多 300 字</span>
             <span>
               {localHypothesis.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
             </span>
@@ -1232,7 +1230,7 @@ function PressureCheckpoint({
               />
 
               <div className="hypothesisLength">
-                <span>20–300 字</span>
+                <span>最多 300 字</span>
                 <span>
                   {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
                 </span>
