@@ -851,6 +851,48 @@
   line-height: 1.8;
 }
 
+.journeyShiftGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.journeyShiftCard {
+  min-width: 0;
+  padding: 17px 18px;
+  background: #f8f1e6;
+  border: 1px solid #c8baa6;
+  border-top: 4px solid #716c61;
+}
+
+.journeyShiftCard > span {
+  display: block;
+  color: #857866;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.journeyShiftCard > strong {
+  display: block;
+  margin-top: 5px;
+  color: #2e2923;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 15px;
+}
+
+.journeyShiftCard > p {
+  margin: 10px 0 0;
+  color: #5e554a;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.journeyShiftCHANGED { border-top-color: #7f2f28; }
+.journeyShiftADDED { border-top-color: #65705d; }
+
 .caseClosureSection {
   margin: 0 34px;
   padding: 28px 0;
@@ -1061,9 +1103,89 @@
   font-weight: 700;
 }
 
+.lateClueRecord {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 18px;
+  padding: 20px 22px;
+  background: #f6eddf;
+  border: 1px dashed #a9977e;
+}
+
+.lateClueRecord > strong {
+  color: #342e27;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lateClueRecord > span {
+  align-self: start;
+  padding: 4px 7px;
+  color: #7f2f28;
+  border: 1px solid #bd9d91;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+}
+
+.lateClueRecord > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #665c50;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.lateClueRecord > small { color: #7f2f28; }
+
 .reasoningMapSection {
   padding-bottom: 34px;
 }
+
+.reasoningTracks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.reasoningTrack > h4 {
+  margin: 0 0 10px;
+  color: #38322b;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 13px;
+}
+
+.reasoningTrack > h4 span {
+  margin-right: 7px;
+  color: #7f2f28;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.reasoningTracks .reasoningMap { grid-template-columns: 1fr; }
+.reasoningTracks .reasoningMapNode { min-height: 0; border-right: 0; border-bottom: 1px solid #c6b8a4; }
+.reasoningTracks .reasoningMapNode:last-child { border-bottom: 0; }
+.reasoningTracks .reasoningMapNode:not(:last-child)::after { top: auto; right: 50%; bottom: -8px; transform: translateX(50%) rotate(135deg); }
+.reasoningTracks .reasoningMapIndex { margin-bottom: 10px; }
+
+.solutionPath {
+  border: 1px solid #565850;
+  background: #303230;
+}
+
+.solutionPath article {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 4px 10px;
+  padding: 15px;
+  border-bottom: 1px solid #565850;
+}
+
+.solutionPath article:last-child { border-bottom: 0; }
+.solutionPath b { color: #c88b83; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+.solutionPath p { margin: 0; color: #e6ddd0; font-size: 11px; line-height: 1.65; }
+.solutionPath small { grid-column: 2; color: #a99d8d; font-size: 9px; }
 
 .reasoningMap {
   display: grid;
@@ -1272,6 +1394,11 @@
   }
 
   .caseClosureCompare {
+    grid-template-columns: 1fr;
+  }
+
+  .journeyShiftGrid,
+  .reasoningTracks {
     grid-template-columns: 1fr;
   }
 

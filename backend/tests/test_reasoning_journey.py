@@ -44,7 +44,10 @@ class ReasoningJourneyTests(unittest.TestCase):
             result = summarize_reasoning_journey(make_request())
         self.assertEqual(result.source, "fallback")
         self.assertGreaterEqual(len(result.reasoning_map), 3)
-        self.assertIn("V2", result.biggest_shift)
+        self.assertIn("隐藏出口", result.shift.changed)
+        self.assertEqual([node.stage for node in result.reasoning_map], ["V1", "CP2", "V2", "FINAL"])
+        self.assertEqual(result.late_arriving_clue.arrived_at, "ANNOTATION_ONLY")
+        self.assertEqual(len(result.solution_path), 5)
 
 
 if __name__ == "__main__":

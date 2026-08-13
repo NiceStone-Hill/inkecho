@@ -87,16 +87,31 @@ class ReasoningJourneyRequest(BaseModel):
 
 
 class ReasoningMapNode(BaseModel):
+    stage: Literal["V1", "CP2", "V2", "FINAL"]
     label: str = Field(min_length=1, max_length=24)
     detail: str = Field(min_length=1, max_length=100)
     evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
 
 
+class JourneyShift(BaseModel):
+    kept: str = Field(min_length=1, max_length=180)
+    changed: str = Field(min_length=1, max_length=180)
+    added: str = Field(min_length=1, max_length=180)
+
+
+class LateArrivingClue(BaseModel):
+    clue: str = Field(min_length=1, max_length=180)
+    arrived_at: Literal["V2", "FINAL", "ANNOTATION_ONLY", "NOT_USED"]
+    basis: str = Field(min_length=1, max_length=220)
+    evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
+
+
 class ReasoningJourneyResponse(BaseModel):
-    biggest_shift: str = Field(min_length=1, max_length=240)
+    shift: JourneyShift
     final_reconstruction: str = Field(min_length=1, max_length=360)
-    almost_missed_clue: str = Field(min_length=1, max_length=240)
-    reasoning_map: List[ReasoningMapNode] = Field(min_length=3, max_length=5)
+    late_arriving_clue: LateArrivingClue
+    reasoning_map: List[ReasoningMapNode] = Field(min_length=4, max_length=4)
+    solution_path: List[SolutionStep] = Field(min_length=1)
     source: Literal["model", "fallback"] = "model"
 
 

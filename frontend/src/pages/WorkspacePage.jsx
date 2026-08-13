@@ -1543,7 +1543,7 @@ function ThinkingJourney({
   const requestSummary = useCallback(() => {
     if (
       requestedSummary.current ||
-      progress.reasoningJourney ||
+      (progress.reasoningJourney?.shift && progress.reasoningJourney?.late_arriving_clue) ||
       !progress.hypothesisV1 ||
       !progress.finalReasoning
     ) {
@@ -1582,11 +1582,6 @@ function ThinkingJourney({
       </p>
     );
   }
-
-  const branchPoint =
-    progress.stressResult
-      ?.selected_assumption ||
-    "你曾把一条尚未被文本证明的判断，当成了方案成立的条件。";
 
   const revisionMade =
     Boolean(
@@ -1677,11 +1672,11 @@ function ThinkingJourney({
       <section className="caseClosureSection">
         <div className="caseClosureSectionTitle">
           <span>02</span>
-          <div><h3>Biggest Shift</h3><p>一次压力测试带来的关键转折</p></div>
+          <div><h3>The Turning Point</h3><p>KEPT / CHANGED / ADDED：这一次审查究竟改变了什么</p></div>
         </div>
-        <blockquote className="journeyShiftSummary">
-          {summary?.biggest_shift || branchPoint}
-        </blockquote>
+        {progress.stressResult?.pressure_question && (
+          <blockquote className="journeyShiftSummary">{progress.stressResult.pressure_question}</blockquote>
+        )}
         <div className="caseClosureCompare">
           <article>
             <div className="caseClosureVersion"><span>HYPOTHESIS</span><strong>V1</strong></div>
@@ -1698,15 +1693,20 @@ function ThinkingJourney({
             <small>确信程度：{confidenceLabel[finalConfidence] || "中"}</small>
           </article>
         </div>
+        <div className="journeyShiftGrid">
+          {[
+            ["KEPT", "保留", summary?.shift?.kept],
+            ["CHANGED", "改变", summary?.shift?.changed],
+            ["ADDED", "新增", summary?.shift?.added],
+          ].map(([key, label, detail]) => (
+            <article className={`journeyShiftCard journeyShift${key}`} key={key}>
+              <span>{key}</span><strong>{label}</strong>
+              <p>{detail || "正在比对你的各版推理……"}</p>
+            </article>
+          ))}
+        </div>
         <p className="caseClosureDecisionNote">本轮决定：{decisionLabel}</p>
-      </section>
-
-      {progress.stressResult && (
-        <section className="caseClosureSection">
-          <div className="caseClosureSectionTitle">
-            <span>03</span>
-            <div><h3>Pressure Record</h3><p>AI 只审查未证前提，不判断答案对错</p></div>
-          </div>
+        {progress.stressResult && (
           <div className="caseClosureAudit">
             <div className="caseClosureAuditTags">
               <span>{categoryLabel[progress.stressResult.category] || "未证前提"}</span>
@@ -1723,13 +1723,13 @@ function ThinkingJourney({
               </div>
             )}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       <section className="caseClosureSealed">
         <div className="caseClosureSeal">FINAL</div>
         <div>
-          <span>04 · FINAL RECONSTRUCTION</span>
+          <span>03 · FINAL RECONSTRUCTION</span>
           <h3>最终重构</h3>
           <p>{summary?.final_reconstruction || finalHypothesis}</p>
         </div>
@@ -1737,16 +1737,23 @@ function ThinkingJourney({
 
       <section className="caseClosureSection journeyMissedClue">
         <div className="caseClosureSectionTitle">
-          <span>05</span>
-          <div><h3>Almost Missed Clue</h3><p>一条值得在结案后重新看的线索</p></div>
+          <span>04</span>
+          <div><h3>Late-arriving Clue</h3><p>只按你的记录判断：这条线索何时进入推理</p></div>
         </div>
-        <p>{summary?.almost_missed_clue || "正在对照你的批注与最终推理……"}</p>
+        {summary?.late_arriving_clue ? (
+          <div className="lateClueRecord">
+            <strong>{summary.late_arriving_clue.clue}</strong>
+            <span>{summary.late_arriving_clue.arrived_at.replace("_", " ")}</span>
+            <p>{summary.late_arriving_clue.basis}</p>
+            {!!summary.late_arriving_clue.evidence_ids?.length && <small>{summary.late_arriving_clue.evidence_ids.join(" · ")}</small>}
+          </div>
+        ) : <p>正在对照 V1、V2、最终推理与批注……</p>}
       </section>
 
       <section className="caseClosureSection reasoningMapSection">
         <div className="caseClosureSectionTitle">
-          <span>MAP</span>
-          <div><h3>Final Reasoning Map</h3><p>从异常到最终解释的因果链</p></div>
+          <span>05</span>
+          <div><h3>Two-track Reasoning Map</h3><p>Your Path 记录认知变化；His Path 展示案件机制，二者不再混为一谈</p></div>
         </div>
         {summaryLoading && <div className="journeySummaryStatus">正在整理你的推理档案……</div>}
         {summaryError && (
@@ -1756,17 +1763,29 @@ function ThinkingJourney({
           </div>
         )}
         {summary?.reasoning_map && (
-          <div className="reasoningMap" role="list" aria-label="最终推理地图">
-            {summary.reasoning_map.map((node, index) => (
-              <article className="reasoningMapNode" role="listitem" key={`${node.label}-${index}`}>
-                <div className="reasoningMapIndex">{String(index + 1).padStart(2, "0")}</div>
-                <div>
-                  <h4>{node.label}</h4>
-                  <p>{node.detail}</p>
-                  {!!node.evidence_ids?.length && <small>{node.evidence_ids.join(" · ")}</small>}
-                </div>
-              </article>
-            ))}
+          <div className="reasoningTracks">
+            <div className="reasoningTrack">
+              <h4><span>YOUR PATH</span> 你的认知变化链</h4>
+              <div className="reasoningMap" role="list" aria-label="你的认知变化链">
+                {summary.reasoning_map.map((node, index) => (
+                  <article className="reasoningMapNode" role="listitem" key={`${node.stage}-${index}`}>
+                    <div className="reasoningMapIndex">{node.stage}</div>
+                    <div><h4>{node.label}</h4><p>{node.detail}</p>{!!node.evidence_ids?.length && <small>{node.evidence_ids.join(" · ")}</small>}</div>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div className="reasoningTrack solutionTrack">
+              <h4><span>HIS PATH</span> 教授的行动机制</h4>
+              <div className="solutionPath" role="list" aria-label="教授的行动机制">
+                {summary.solution_path?.map((step) => (
+                  <article role="listitem" key={step.step_id}>
+                    <b>{String(step.step_id).padStart(2, "0")}</b><p>{step.text}</p>
+                    {!!step.evidence_ids?.length && <small>{step.evidence_ids.join(" · ")}</small>}
+                  </article>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </section>
