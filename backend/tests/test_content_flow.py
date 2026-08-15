@@ -36,6 +36,29 @@ class ContentFlowTests(unittest.TestCase):
             )
         )
 
+    def test_checkpoint_ids_form_one_contiguous_flow(self):
+        checkpoints = [
+            STAGES_BY_ID[stage_id].checkpoint
+            for stage_id in (3, 5, 6, 7)
+        ]
+
+        self.assertEqual(
+            [checkpoint.checkpoint_id for checkpoint in checkpoints],
+            ["CP0", "CP1", "CP2", "CP4"],
+        )
+        self.assertEqual(
+            [checkpoint.kind for checkpoint in checkpoints],
+            ["training", "capture", "pressure", "final"],
+        )
+        self.assertEqual(
+            [
+                checkpoint.checkpoint_id
+                for checkpoint in checkpoints
+                if checkpoint.kind == "pressure"
+            ],
+            ["CP2"],
+        )
+
     def test_cp1_content_does_not_overprove_e02(self):
         text_before_cp2 = " ".join(
             segment

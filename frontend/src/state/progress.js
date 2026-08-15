@@ -1,5 +1,5 @@
 const STORAGE_KEY = "inkecho_progress_v1";
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 4;
 
 function createSessionId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -26,10 +26,8 @@ export function createDefaultProgress() {
     stressAnswer: "",
     revisionDraft: { mode: "keep", text: "", confidence: "medium", reason: "" },
     hypothesisV2: null,
-    stressResult2: null,
-    stressAnswer2: "",
-    revisionDraft2: { mode: "keep", text: "", confidence: "medium", reason: "" },
-    hypothesisV3: null,
+    finalReasoning: null,
+    reasoningJourney: null,
     annotations: [],
     completion: {
       replayViewed: false,
@@ -74,59 +72,73 @@ export function loadProgress() {
 
     const parsed = JSON.parse(raw);
     const defaults = createDefaultProgress();
-    const legacy =
-      parsed.schemaVersion !==
-      CURRENT_SCHEMA_VERSION;
+    const migrated = { ...parsed };
+    const usesLegacyFinalReasoning =
+      (parsed.schemaVersion || 0) < 3;
+
+    // Schema v2 used completion.feedback to store the user's reveal-before
+    // reasoning. Promote that value to a first-class domain object before
+    // removing the unreachable second pressure-test state.
+    if (
+      usesLegacyFinalReasoning &&
+      !migrated.finalReasoning &&
+      parsed.completion?.feedback?.trim()
+    ) {
+      migrated.finalReasoning = {
+        text: parsed.completion.feedback.trim(),
+        sourceHypothesisId:
+          parsed.hypothesisV2?.hypothesisId ||
+          parsed.hypothesisV1?.hypothesisId ||
+          null,
+        submittedAt: null,
+      };
+    }
+
+    delete migrated.stressResult2;
+    delete migrated.stressAnswer2;
+    delete migrated.revisionDraft2;
+    delete migrated.hypothesisV3;
 
     return {
       ...defaults,
-      ...parsed,
+      ...migrated,
       schemaVersion:
         CURRENT_SCHEMA_VERSION,
       sessionId: parsed.sessionId || defaults.sessionId,
       hypothesisV1:
-        legacy
-          ? null
-          : parsed.hypothesisV1,
+        migrated.hypothesisV1 || null,
       stressResult:
-        legacy
-          ? null
-          : migrateStressResult(parsed.stressResult),
+        migrateStressResult(
+          migrated.stressResult,
+        ),
       hypothesisV2:
-        legacy
-          ? null
-          : parsed.hypothesisV2,
-      stressResult2:
-        legacy
-          ? null
-          : migrateStressResult(parsed.stressResult2),
-      hypothesisV3:
-        legacy
-          ? null
-          : parsed.hypothesisV3,
+        migrated.hypothesisV2 || null,
+      finalReasoning:
+        migrated.finalReasoning || null,
+      reasoningJourney:
+        migrated.reasoningJourney || null,
       reading: {
         ...defaults.reading,
         ...(parsed.reading || {}),
         currentStageId:
-          legacy
-            ? 1
-            : parsed.reading
-                ?.currentStageId || 1,
+          migrated.reading
+            ?.currentStageId || 1,
         trainingCompleted:
-          legacy
-            ? false
-            : Boolean(
-                parsed.reading
-                  ?.trainingCompleted,
-              ),
+          Boolean(
+            migrated.reading
+              ?.trainingCompleted,
+          ),
       },
       completion: {
         ...defaults.completion,
-        ...(
-          legacy
-            ? {}
-            : parsed.completion || {}
-        ),
+        ...(migrated.completion || {}),
+        // Before schema v3 this field held the reveal-before reasoning. From
+        // v3 onward it is reserved for actual experience feedback.
+        feedback:
+          usesLegacyFinalReasoning
+            ? ""
+            : migrated.completion
+                ?.feedback || "",
       },
     };
   } catch (error) {

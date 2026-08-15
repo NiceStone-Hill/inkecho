@@ -58,11 +58,6 @@ class SolutionResponse(BaseModel):
     steps: List[SolutionStep]
 
 
-# =========================
-# Agent / Pressure Test
-# =========================
-
-
 class HypothesisV1(BaseModel):
     text: str = Field(
         min_length=1,
@@ -70,6 +65,60 @@ class HypothesisV1(BaseModel):
     )
 
     confidence: Confidence
+
+
+class JourneyAnnotation(BaseModel):
+    quote: str = Field(default="", max_length=600)
+    note: str = Field(default="", max_length=300)
+
+
+class JourneyStressResult(BaseModel):
+    selected_assumption: str | None = Field(default=None, max_length=300)
+    pressure_question: str = Field(default="", max_length=300)
+    rationale_evidence_ids: List[str] = Field(default_factory=list)
+
+
+class ReasoningJourneyRequest(BaseModel):
+    hypothesis_v1: HypothesisV1
+    stress_result: JourneyStressResult | None = None
+    stress_answer: str = Field(default="", max_length=500)
+    hypothesis_v2: HypothesisV1 | None = None
+    final_reasoning: str = Field(min_length=1, max_length=1200)
+    annotations: List[JourneyAnnotation] = Field(default_factory=list, max_length=40)
+
+
+class ReasoningMapNode(BaseModel):
+    stage: Literal["V1", "CP2", "V2", "FINAL"]
+    label: str = Field(min_length=1, max_length=24)
+    detail: str = Field(min_length=1, max_length=100)
+    evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
+
+
+class JourneyShift(BaseModel):
+    kept: str = Field(min_length=1, max_length=180)
+    changed: str = Field(min_length=1, max_length=180)
+    added: str = Field(min_length=1, max_length=180)
+
+
+class LateArrivingClue(BaseModel):
+    clue: str = Field(min_length=1, max_length=180)
+    arrived_at: Literal["V2", "FINAL", "ANNOTATION_ONLY", "NOT_USED"]
+    basis: str = Field(min_length=1, max_length=220)
+    evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
+
+
+class ReasoningJourneyResponse(BaseModel):
+    shift: JourneyShift
+    final_reconstruction: str = Field(min_length=1, max_length=360)
+    late_arriving_clue: LateArrivingClue
+    reasoning_map: List[ReasoningMapNode] = Field(min_length=4, max_length=4)
+    solution_path: List[SolutionStep] = Field(min_length=1)
+    source: Literal["model", "fallback"] = "model"
+
+
+# =========================
+# Agent / Pressure Test
+# =========================
 
 
 class AnalyzeRequest(BaseModel):

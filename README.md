@@ -105,14 +105,27 @@ Pressure Test
     ↓
 Hypothesis V2
 
-继续阅读 + 新 Evidence
+继续阅读
     ↓
-Pressure Test
+提交揭晓前的最终推理
     ↓
-用户确认 / 修正
-    ↓
-Hypothesis V3
+查看谜底与个人推理复盘
 ```
+
+Checkpoint 编号与职责保持稳定且唯一：
+
+| Checkpoint | 阶段 | 职责 | 产物 |
+| --- | --- | --- | --- |
+| CP0 | 事实/前提训练 | 帮助用户理解阅读规则，不调用 AI | 训练完成状态 |
+| CP1 | 第一次判断 | 保存用户在 E01—E02 条件下的解释 | Hypothesis V1 |
+| CP2 | 压力测试 | Agent 只用 E01—E03 审查 V1 的一个未证前提 | Hypothesis V2 |
+| CP4 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | `finalReasoning` |
+
+其中只有 CP2 调用 Pressure Test Agent。CP4 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
+
+前端行为由 `checkpoint.kind` 驱动，`checkpoint_id` 只承担稳定身份、日志和接口追踪职责。章节位置由 `stage_id` 决定，三者不可混用。
+
+`Hypothesis V2` 与 `finalReasoning` 是两个不同产物：V2 记录用户回应压力问题后的“保留或修正”，`finalReasoning` 记录谜底揭晓前的完整逃脱路径。最终推理不再借用 `completion.feedback`；后者仅保留给真正的体验反馈。
 
 需要注意：
 
@@ -905,7 +918,7 @@ frontend/src/api.js
 - Annotation
 - 手写 Canvas
 - OCR 结果确认
-- V1 / V2 / V3 展示
+- V1 / V2 与最终推理展示
 - 请求状态与错误提示
 
 后端主要负责：
@@ -1263,7 +1276,7 @@ GitHub Pages 使用子路径：
 - 分阶段 Reading / Evidence 解锁
 - Checkpoint 阅读提醒
 - Checkpoint 30 秒自动消失通知
-- Hypothesis V1 / V2 / V3
+- Hypothesis V1 / V2 与揭晓前最终推理
 - Pressure Test Agent
 - Deterministic Context Builder
 - Evidence 边界控制

@@ -14,7 +14,12 @@ import {
 import {
   analyzeHypothesis,
   getStage,
+  summarizeReasoningJourney,
 } from "../api";
+
+import {
+  buildLocalReasoningJourney,
+} from "../reasoningFallback";
 
 import {
   useProgress,
@@ -35,7 +40,6 @@ import Panel
 
 const STAGE_COUNT = 8;
 const TOTAL_PAGES = STAGE_COUNT + 1;
-const HYPOTHESIS_MIN_LENGTH = 20;
 const HYPOTHESIS_MAX_LENGTH = 300;
 
 
@@ -69,8 +73,7 @@ function validHypothesisText(
     text?.trim().length || 0;
 
   return (
-    length >=
-      HYPOTHESIS_MIN_LENGTH &&
+    length > 0 &&
     length <=
       HYPOTHESIS_MAX_LENGTH
   );
@@ -108,21 +111,21 @@ function checkpointDone(
     checkpoint.kind ===
     "pressure"
   ) {
-    return (
-      checkpoint.checkpoint_id
-      === "CP3"
-        ? Boolean(
-            progress.hypothesisV3,
-          )
-        : Boolean(
-            progress.hypothesisV2,
-          )
+    return Boolean(
+      progress.hypothesisV2,
     );
   }
 
-  return Boolean(
-    progress.completion.feedback,
-  );
+  if (
+    checkpoint.kind ===
+    "final"
+  ) {
+    return Boolean(
+      progress.finalReasoning,
+    );
+  }
+
+  return false;
 }
 
 
@@ -133,46 +136,25 @@ function getCheckpointNoticeText(
     return "";
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP0"
-  ) {
+  if (checkpoint.kind === "training") {
     return (
       "在继续推理前，先判断两句话分别是文本事实，还是尚未证明的前提。"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP1"
-  ) {
+  if (checkpoint.kind === "capture") {
     return (
       "读到这里了。要不要先把你现在的猜想记下来？"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP2"
-  ) {
+  if (checkpoint.kind === "pressure") {
     return (
       "刚刚出现了新的线索。我有一个问题想问你。"
     );
   }
 
-  if (
-    checkpoint.checkpoint_id ===
-    "CP3"
-  ) {
-    return (
-      "你的解释又遇到了新的信息，要不要再检查一次？"
-    );
-  }
-
-  if (
-    checkpoint.checkpoint_id ===
-    "CP4"
-  ) {
+  if (checkpoint.kind === "final") {
     return (
       "揭晓之前，想看看你现在最完整的解释。"
     );
@@ -470,7 +452,7 @@ function CaptureCheckpoint({
 
         <div className="hypothesisLength">
           <span>
-            请用 20–300 字写出一个完整方案
+            写下你的推理（最多 300 字）
           </span>
           <span>
             {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
@@ -641,13 +623,12 @@ function PressureCheckpoint({
     submitHypothesisV1,
 
     submitStressResult,
-    submitStressResult2,
+
+    updateStressAnswer,
 
     updateRevisionDraft,
-    updateRevisionDraft2,
 
     submitHypothesisV2,
-    submitHypothesisV3,
   } = useProgress();
 
 
@@ -675,62 +656,42 @@ function PressureCheckpoint({
   ] = useState(null);
 
 
-  const isSecondRound =
-    checkpoint.checkpoint_id
-    === "CP3";
-
-
   const sourceVersionLabel =
-    isSecondRound
-      ? "V2"
-      : "V1";
+    "V1";
 
   const nextVersionLabel =
-    isSecondRound
-      ? "V3"
-      : "V2";
+    "V2";
 
 
   const draft =
-    isSecondRound
-      ? progress.revisionDraft2
-      : progress.revisionDraft;
+    progress.revisionDraft;
 
 
   const stressResult =
-    isSecondRound
-      ? progress.stressResult2
-      : progress.stressResult;
+    progress.stressResult;
+
+  const stressAnswer =
+    progress.stressAnswer;
 
 
   const updateDraft =
-    isSecondRound
-      ? updateRevisionDraft2
-      : updateRevisionDraft;
+    updateRevisionDraft;
 
 
   const submitResult =
-    isSecondRound
-      ? submitStressResult2
-      : submitStressResult;
+    submitStressResult;
 
 
   const submitNextHypothesis =
-    isSecondRound
-      ? submitHypothesisV3
-      : submitHypothesisV2;
+    submitHypothesisV2;
 
 
   const completedHypothesis =
-    isSecondRound
-      ? progress.hypothesisV3
-      : progress.hypothesisV2;
+    progress.hypothesisV2;
 
 
   const savedSourceHypothesis =
-    isSecondRound
-      ? progress.hypothesisV2
-      : progress.hypothesisV1;
+    progress.hypothesisV1;
 
 
   const sourceHypothesis =
@@ -749,9 +710,12 @@ function PressureCheckpoint({
 
 
   const canSubmit =
-    draft.mode === "keep" ||
-    validHypothesisText(
-      revisionText,
+    hasText(stressAnswer) &&
+    (
+      draft.mode === "keep" ||
+      validHypothesisText(
+        revisionText,
+      )
     );
 
 
@@ -854,21 +818,12 @@ function PressureCheckpoint({
       };
 
 
-      if (isSecondRound) {
-        submitHypothesisV2({
-          ...hypothesis,
+      submitHypothesisV1({
+        ...hypothesis,
 
-          generatedAtCheckpoint:
-            true,
-        });
-      } else {
-        submitHypothesisV1({
-          ...hypothesis,
-
-          generatedAtCheckpoint:
-            true,
-        });
-      }
+        generatedAtCheckpoint:
+          true,
+      });
 
 
       setLocalSubmitted(
@@ -923,7 +878,7 @@ function PressureCheckpoint({
           />
 
           <div className="hypothesisLength">
-            <span>20–300 字</span>
+            <span>最多 300 字</span>
             <span>
               {localHypothesis.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
             </span>
@@ -992,9 +947,7 @@ function PressureCheckpoint({
         finalConfidence,
 
       pressureAnswer:
-        draft.mode === "revise"
-          ? revisionText.trim()
-          : "",
+        stressAnswer.trim(),
 
       revisionType:
         draft.mode === "revise"
@@ -1168,6 +1121,23 @@ function PressureCheckpoint({
             </div>
           </div>
 
+          <div className="chatComposer revisionComposer">
+            <label className="checkpointResponseLabel" htmlFor="stress-answer">
+              我的回应
+            </label>
+            <textarea
+              id="stress-answer"
+              value={stressAnswer}
+              onChange={(event) => updateStressAnswer(event.target.value)}
+              placeholder="这一步为什么仍成立，或为什么需要修改？"
+              maxLength={500}
+            />
+            <div className="hypothesisLength">
+              <span>先回应这个问题，再决定是否修改观点</span>
+              <span>{stressAnswer.trim().length} / 500</span>
+            </div>
+          </div>
+
 
           <div
             className="revisionChoice"
@@ -1287,7 +1257,7 @@ function PressureCheckpoint({
               />
 
               <div className="hypothesisLength">
-                <span>20–300 字</span>
+                <span>最多 300 字</span>
                 <span>
                   {draft.text.trim().length} / {HYPOTHESIS_MAX_LENGTH}
                 </span>
@@ -1359,13 +1329,6 @@ function VersionMiniHistory({
         progress.hypothesisV1,
     },
 
-    {
-      label: "V3",
-      value:
-        progress.hypothesisV3,
-      previous:
-        progress.hypothesisV2,
-    },
   ];
 
 
@@ -1429,7 +1392,7 @@ function FinalCheckpoint({
   onClose,
 }) {
   const {
-    submitFeedback,
+    submitFinalReasoning,
     markReplayViewed,
   } = useProgress();
 
@@ -1438,14 +1401,17 @@ function FinalCheckpoint({
     text,
     setText,
   ] = useState(
-    progress.completion
-      .feedback ||
+    progress.finalReasoning
+      ?.text ||
     "",
   );
 
 
+  const finalReasoningLength =
+    text.trim().length;
+
   const canSubmit =
-    hasText(text);
+    finalReasoningLength >= 20;
 
 
   function handleSubmit() {
@@ -1453,7 +1419,7 @@ function FinalCheckpoint({
       return;
     }
 
-    submitFeedback(
+    submitFinalReasoning(
       text.trim(),
     );
 
@@ -1498,7 +1464,13 @@ function FinalCheckpoint({
             )
           }
           placeholder="在揭晓之前，写下你现在最完整的解释……"
+          maxLength={1200}
         />
+
+        <div className="hypothesisLength">
+          <span>{finalReasoningLength < 20 ? "至少写下 20 个字" : "最终推理将被封存"}</span>
+          <span>{finalReasoningLength} / 1200</span>
+        </div>
 
         <button
           className="primaryButton"
@@ -1599,6 +1571,45 @@ function CheckpointPanel({
 function ThinkingJourney({
   progress,
 }) {
+  const { saveReasoningJourney } = useProgress();
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
+  const requestedSummary = useRef(false);
+
+  const requestSummary = useCallback(() => {
+    if (
+      requestedSummary.current ||
+      (progress.reasoningJourney?.shift && progress.reasoningJourney?.late_arriving_clue) ||
+      !progress.hypothesisV1 ||
+      !progress.finalReasoning
+    ) {
+      return;
+    }
+    requestedSummary.current = true;
+    setSummaryLoading(true);
+    setSummaryError("");
+    summarizeReasoningJourney({
+      hypothesisV1: progress.hypothesisV1,
+      stressResult: progress.stressResult,
+      stressAnswer: progress.stressAnswer,
+      hypothesisV2: progress.hypothesisV2,
+      finalReasoning: progress.finalReasoning,
+      annotations: progress.annotations,
+    })
+      .then(saveReasoningJourney)
+      .catch(() => {
+        saveReasoningJourney(
+          buildLocalReasoningJourney(progress),
+        );
+        setSummaryError("AI 摘要暂时不可用，已根据你的原始记录生成本地复盘。");
+      })
+      .finally(() => setSummaryLoading(false));
+  }, [progress, saveReasoningJourney]);
+
+  useEffect(() => {
+    requestSummary();
+  }, [requestSummary]);
+
   if (
     !progress.hypothesisV1
   ) {
@@ -1611,11 +1622,6 @@ function ThinkingJourney({
     );
   }
 
-  const branchPoint =
-    progress.stressResult
-      ?.selected_assumption ||
-    "你曾把一条尚未被文本证明的判断，当成了方案成立的条件。";
-
   const revisionMade =
     Boolean(
       progress.hypothesisV2
@@ -1626,11 +1632,11 @@ function ThinkingJourney({
 
   const finalHypothesis =
     hasText(
-      progress.completion
-        .feedback,
+      progress.finalReasoning
+        ?.text,
     )
-      ? progress.completion
-          .feedback
+      ? progress.finalReasoning
+          .text
       : progress.hypothesisV2
           ?.text ||
         progress.hypothesisV1
@@ -1667,14 +1673,23 @@ function ThinkingJourney({
       ? "修正了原有判断"
       : "看见风险后仍选择保留";
 
+  const summary = progress.reasoningJourney;
+  const summarySourceLabel = summaryLoading
+    ? "正在整理"
+    : summary?.source === "model"
+      ? "AI 一次总结"
+      : summary
+        ? "本地安全复盘"
+        : "等待生成";
+
 
   return (
     <section className="thinkingJourney caseClosure">
       <header className="caseClosureHeader">
         <div>
           <span>UNPROVEN · CASE FILE 013</span>
-          <h2>结案档案</h2>
-          <p>这不是正确率报告，而是你的判断如何经受证据审查的记录。</p>
+          <h2>个人推理复盘</h2>
+          <p>不是正确率报告，而是你的判断如何被证据推动、修正并重新连接。</p>
         </div>
         <div className="caseClosureStamp">已封存</div>
       </header>
@@ -1683,22 +1698,24 @@ function ThinkingJourney({
         <div><span>案件</span><strong>第十三号牢房</strong></div>
         <div><span>推理版本</span><strong>{progress.hypothesisV2 ? "V1 → V2" : "V1"}</strong></div>
         <div><span>审查证据</span><strong>{rationaleEvidence.length ? rationaleEvidence.join(" · ") : "E01–E03"}</strong></div>
-        <div><span>审查结果</span><strong>发现 1 项关键前提</strong></div>
+        <div><span>生成方式</span><strong>{summarySourceLabel}</strong></div>
       </div>
 
-      <section className="caseClosureFinding">
-        <span>01 · 关键分叉点</span>
-        <h3>{branchPoint}</h3>
-        <p>{revisionMade
-          ? "你在压力问题之后重新检查了这一步，并调整了解释或确信程度。"
-          : "你辨认出这一步尚未被文本证明，并在知晓风险后保留了原来的解释。"}</p>
+      <section className="caseClosureFinding journeyInitialTheory">
+        <span>01 · INITIAL THEORY</span>
+        <h3>最初，我认为……</h3>
+        <p>{progress.hypothesisV1.text}</p>
+        <small>初始确信程度：{confidenceLabel[progress.hypothesisV1.confidence] || "中"}</small>
       </section>
 
       <section className="caseClosureSection">
         <div className="caseClosureSectionTitle">
           <span>02</span>
-          <div><h3>判断变化</h3><p>对照最初解释与审查后的选择</p></div>
+          <div><h3>The Turning Point</h3><p>KEPT / CHANGED / ADDED：这一次审查究竟改变了什么</p></div>
         </div>
+        {progress.stressResult?.pressure_question && (
+          <blockquote className="journeyShiftSummary">{progress.stressResult.pressure_question}</blockquote>
+        )}
         <div className="caseClosureCompare">
           <article>
             <div className="caseClosureVersion"><span>HYPOTHESIS</span><strong>V1</strong></div>
@@ -1715,15 +1732,20 @@ function ThinkingJourney({
             <small>确信程度：{confidenceLabel[finalConfidence] || "中"}</small>
           </article>
         </div>
+        <div className="journeyShiftGrid">
+          {[
+            ["KEPT", "保留", summary?.shift?.kept],
+            ["CHANGED", "改变", summary?.shift?.changed],
+            ["ADDED", "新增", summary?.shift?.added],
+          ].map(([key, label, detail]) => (
+            <article className={`journeyShiftCard journeyShift${key}`} key={key}>
+              <span>{key}</span><strong>{label}</strong>
+              <p>{detail || "正在比对你的各版推理……"}</p>
+            </article>
+          ))}
+        </div>
         <p className="caseClosureDecisionNote">本轮决定：{decisionLabel}</p>
-      </section>
-
-      {progress.stressResult && (
-        <section className="caseClosureSection">
-          <div className="caseClosureSectionTitle">
-            <span>03</span>
-            <div><h3>压力测试记录</h3><p>AI 只审查未证前提，不判断答案对错</p></div>
-          </div>
+        {progress.stressResult && (
           <div className="caseClosureAudit">
             <div className="caseClosureAuditTags">
               <span>{categoryLabel[progress.stressResult.category] || "未证前提"}</span>
@@ -1740,16 +1762,73 @@ function ThinkingJourney({
               </div>
             )}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       <section className="caseClosureSealed">
         <div className="caseClosureSeal">FINAL</div>
         <div>
-          <span>04 · 揭晓前封存</span>
-          <h3>我的最终逃脱路径</h3>
-          <p>{finalHypothesis}</p>
+          <span>03 · FINAL RECONSTRUCTION</span>
+          <h3>最终重构</h3>
+          <p>{summary?.final_reconstruction || finalHypothesis}</p>
         </div>
+      </section>
+
+      <section className="caseClosureSection journeyMissedClue">
+        <div className="caseClosureSectionTitle">
+          <span>04</span>
+          <div><h3>Late-arriving Clue</h3><p>只按你的记录判断：这条线索何时进入推理</p></div>
+        </div>
+        {summary?.late_arriving_clue ? (
+          <div className="lateClueRecord">
+            <strong>{summary.late_arriving_clue.clue}</strong>
+            <span>{summary.late_arriving_clue.arrived_at.replace("_", " ")}</span>
+            <p>{summary.late_arriving_clue.basis}</p>
+            {!!summary.late_arriving_clue.evidence_ids?.length && <small>{summary.late_arriving_clue.evidence_ids.join(" · ")}</small>}
+          </div>
+        ) : <p>正在对照 V1、V2、最终推理与批注……</p>}
+      </section>
+
+      <section className="caseClosureSection reasoningMapSection">
+        <div className="caseClosureSectionTitle">
+          <span>05</span>
+          <div><h3>Two-track Reasoning Map</h3><p>Your Path 记录认知变化；His Path 展示案件机制，二者不再混为一谈</p></div>
+        </div>
+        {summaryLoading && <div className="journeySummaryStatus">正在整理你的推理档案……</div>}
+        {summaryError && (
+          <div className="journeySummaryStatus journeySummaryError">
+            <span>{summaryError}</span>
+            {!summary && (
+              <button type="button" className="secondaryButton" onClick={requestSummary}>重新生成</button>
+            )}
+          </div>
+        )}
+        {summary?.reasoning_map && (
+          <div className="reasoningTracks">
+            <div className="reasoningTrack">
+              <h4><span>YOUR PATH</span> 你的认知变化链</h4>
+              <div className="reasoningMap" role="list" aria-label="你的认知变化链">
+                {summary.reasoning_map.map((node, index) => (
+                  <article className="reasoningMapNode" role="listitem" key={`${node.stage}-${index}`}>
+                    <div className="reasoningMapIndex">{node.stage}</div>
+                    <div><h4>{node.label}</h4><p>{node.detail}</p>{!!node.evidence_ids?.length && <small>{node.evidence_ids.join(" · ")}</small>}</div>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div className="reasoningTrack solutionTrack">
+              <h4><span>HIS PATH</span> 教授的行动机制</h4>
+              <div className="solutionPath" role="list" aria-label="教授的行动机制">
+                {summary.solution_path?.map((step) => (
+                  <article role="listitem" key={step.step_id}>
+                    <b>{String(step.step_id).padStart(2, "0")}</b><p>{step.text}</p>
+                    {!!step.evidence_ids?.length && <small>{step.evidence_ids.join(" · ")}</small>}
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <footer className="caseClosureFooter">
@@ -1775,7 +1854,6 @@ function WorkspacePage() {
   resetProgress,
 
   submitStressResult,
-  submitStressResult2,
 } = useProgress();
 
 
@@ -1860,18 +1938,11 @@ function WorkspacePage() {
     return;
   }
 
-  const isSecondRound =
-    checkpoint.checkpoint_id === "CP3";
-
   const sourceHypothesis =
-    isSecondRound
-      ? progress.hypothesisV2
-      : progress.hypothesisV1;
+    progress.hypothesisV1;
 
   const existingResult =
-    isSecondRound
-      ? progress.stressResult2
-      : progress.stressResult;
+    progress.stressResult;
 
   if (
     !sourceHypothesis ||
@@ -1918,15 +1989,9 @@ function WorkspacePage() {
         result,
       );
 
-      if (isSecondRound) {
-        submitStressResult2(
-          result,
-        );
-      } else {
-        submitStressResult(
-          result,
-        );
-      }
+      submitStressResult(
+        result,
+      );
     })
     .catch((error) => {
       console.error(
@@ -1943,14 +2008,11 @@ function WorkspacePage() {
   checkpoint,
 
   progress.hypothesisV1,
-  progress.hypothesisV2,
   progress.sessionId,
 
   progress.stressResult,
-  progress.stressResult2,
 
   submitStressResult,
-  submitStressResult2,
 ]);
 
 
