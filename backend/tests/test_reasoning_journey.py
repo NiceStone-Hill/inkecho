@@ -18,6 +18,7 @@ def make_request() -> ReasoningJourneyRequest:
             "pressure_question": "老鼠能够消失，是否已经证明成年人也能从同一路径通过？",
             "rationale_evidence_ids": ["E02"],
         },
+        stress_answer="这条路径只能证明存在联系，不能证明人能直接通过。",
         hypothesis_v2={"text": "隐藏路径也许用于与外界建立联系。", "confidence": "medium"},
         final_reasoning="他通过隐藏路径联系外界，再借停电和维修人员进入的机会离开。",
         annotations=[{"quote": "五美元变成了零钱", "note": "可能发生了交换"}],
@@ -31,6 +32,7 @@ class ReasoningJourneyTests(unittest.TestCase):
         self.assertIn("五美元变成了零钱", prompt)
         self.assertIn("E01", prompt)
         self.assertIn("solution_steps", prompt)
+        self.assertIn("这条路径只能证明存在联系", prompt)
 
     def test_payload_is_one_low_temperature_json_call(self):
         payload = build_journey_model_payload(make_request())
@@ -48,6 +50,7 @@ class ReasoningJourneyTests(unittest.TestCase):
         self.assertEqual([node.stage for node in result.reasoning_map], ["V1", "CP2", "V2", "FINAL"])
         self.assertEqual(result.late_arriving_clue.arrived_at, "ANNOTATION_ONLY")
         self.assertEqual(len(result.solution_path), 5)
+        self.assertIn("不能证明人能直接通过", result.reasoning_map[1].detail)
 
 
 if __name__ == "__main__":

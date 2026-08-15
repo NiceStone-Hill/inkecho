@@ -81,6 +81,7 @@ class JourneyStressResult(BaseModel):
 class ReasoningJourneyRequest(BaseModel):
     hypothesis_v1: HypothesisV1
     stress_result: JourneyStressResult | None = None
+    stress_answer: str = Field(default="", max_length=500)
     hypothesis_v2: HypothesisV1 | None = None
     final_reasoning: str = Field(min_length=1, max_length=1200)
     annotations: List[JourneyAnnotation] = Field(default_factory=list, max_length=40)

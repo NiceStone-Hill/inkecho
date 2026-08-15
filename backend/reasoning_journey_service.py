@@ -24,11 +24,11 @@ ALLOWED_EVIDENCE_IDS = {"E01", "E02", "E03"}
 SYSTEM_PROMPT = """你是 UNPROVEN 的终局推理复盘编辑。你的任务不是打分，而是根据用户已经留下的推理记录，写出克制、具体、有证据依据的个人复盘。
 
 严格规则：
-1. 只总结输入中的 V1、压力测试、V2、最终推理、批注，以及服务端提供的 E01—E03 和 Solution Steps。
+1. 只总结输入中的 V1、压力问题、用户对压力问题的回应、V2、最终推理、批注，以及服务端提供的 E01—E03 和 Solution Steps。
 2. shift 必须拆成 kept / changed / added：分别写用户保留的判断、真正改变的解释、后来新增的机制。即使没有明显变化，也要如实说明“未改变”或“未新增”，不能编造。
 3. late_arriving_clue 只能根据 V1、V2、Final 与批注的文本先后关系判断。clue 写具体线索；arrived_at 只能是 V2、FINAL、ANNOTATION_ONLY、NOT_USED；basis 必须明确指出它在哪份用户记录中首次出现，或始终未被使用。不要声称用户“差点错过”。
 4. final_reconstruction 用一段话复述用户最终如何连接机制，不把标准答案冒充成用户自己的发现。
-5. reasoning_map 必须返回 4 个“用户认知变化”节点，不是案件机制的因果链。节点严格按 V1 → CP2 → V2 → FINAL 排列；detail 描述用户当时相信什么、质疑什么或新增了什么。
+5. reasoning_map 必须返回 4 个“用户认知变化”节点，不是案件机制的因果链。节点严格按 V1 → CP2 → V2 → FINAL 排列；CP2 节点优先依据用户自己的 stress_answer，不能只根据 V1/V2 猜测其回应。
 6. 语气像结案档案，不夸奖，不给分，不使用空泛人格标签。
 7. 只返回合法 JSON，字段必须且只能是 shift、final_reconstruction、late_arriving_clue、reasoning_map。solution_path 由服务端提供，不要生成。"""
 
@@ -50,6 +50,7 @@ def build_journey_prompt(request: ReasoningJourneyRequest) -> str:
     payload = {
         "hypothesis_v1": request.hypothesis_v1.model_dump(),
         "stress_result": request.stress_result.model_dump() if request.stress_result else None,
+        "stress_answer": request.stress_answer.strip(),
         "hypothesis_v2": request.hypothesis_v2.model_dump() if request.hypothesis_v2 else None,
         "final_reasoning": request.final_reasoning.strip(),
         "annotations": _compact_annotations(request),
@@ -86,6 +87,7 @@ def _fallback(request: ReasoningJourneyRequest) -> ReasoningJourneyResponse:
     v1_text = request.hypothesis_v1.text.strip()
     v2_text = v2.text.strip()
     final_text = request.final_reasoning.strip()
+    stress_answer = request.stress_answer.strip()
     if annotated in v2_text and annotated not in v1_text:
         clue_stage = "V2"
         clue_basis = "这条线索没有出现在 V1，却在 V2 中首次出现。"
@@ -115,7 +117,12 @@ def _fallback(request: ReasoningJourneyRequest) -> ReasoningJourneyResponse:
         ),
         reasoning_map=[
             ReasoningMapNode(stage="V1", label="最初判断", detail=request.hypothesis_v1.text.strip()[:100], evidence_ids=[]),
-            ReasoningMapNode(stage="CP2", label="前提受压", detail=f"压力测试要求重新检查：{assumption}"[:100], evidence_ids=(request.stress_result.rationale_evidence_ids if request.stress_result else [])),
+            ReasoningMapNode(
+                stage="CP2",
+                label="回应质疑",
+                detail=(stress_answer or f"压力测试要求重新检查：{assumption}")[:100],
+                evidence_ids=(request.stress_result.rationale_evidence_ids if request.stress_result else []),
+            ),
             ReasoningMapNode(stage="V2", label="审查决定", detail=v2.text.strip()[:100], evidence_ids=[]),
             ReasoningMapNode(stage="FINAL", label="最终连接", detail=request.final_reasoning.strip()[:100], evidence_ids=[]),
         ],

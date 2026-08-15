@@ -18,6 +18,10 @@ import {
 } from "../api";
 
 import {
+  buildLocalReasoningJourney,
+} from "../reasoningFallback";
+
+import {
   useProgress,
 } from "../state/ProgressContext";
 
@@ -620,6 +624,8 @@ function PressureCheckpoint({
 
     submitStressResult,
 
+    updateStressAnswer,
+
     updateRevisionDraft,
 
     submitHypothesisV2,
@@ -664,6 +670,9 @@ function PressureCheckpoint({
   const stressResult =
     progress.stressResult;
 
+  const stressAnswer =
+    progress.stressAnswer;
+
 
   const updateDraft =
     updateRevisionDraft;
@@ -701,9 +710,12 @@ function PressureCheckpoint({
 
 
   const canSubmit =
-    draft.mode === "keep" ||
-    validHypothesisText(
-      revisionText,
+    hasText(stressAnswer) &&
+    (
+      draft.mode === "keep" ||
+      validHypothesisText(
+        revisionText,
+      )
     );
 
 
@@ -935,9 +947,7 @@ function PressureCheckpoint({
         finalConfidence,
 
       pressureAnswer:
-        draft.mode === "revise"
-          ? revisionText.trim()
-          : "",
+        stressAnswer.trim(),
 
       revisionType:
         draft.mode === "revise"
@@ -1108,6 +1118,23 @@ function PressureCheckpoint({
               {
                 stressResult.pressure_question
               }
+            </div>
+          </div>
+
+          <div className="chatComposer revisionComposer">
+            <label className="checkpointResponseLabel" htmlFor="stress-answer">
+              我的回应
+            </label>
+            <textarea
+              id="stress-answer"
+              value={stressAnswer}
+              onChange={(event) => updateStressAnswer(event.target.value)}
+              placeholder="这一步为什么仍成立，或为什么需要修改？"
+              maxLength={500}
+            />
+            <div className="hypothesisLength">
+              <span>先回应这个问题，再决定是否修改观点</span>
+              <span>{stressAnswer.trim().length} / 500</span>
             </div>
           </div>
 
@@ -1380,8 +1407,11 @@ function FinalCheckpoint({
   );
 
 
+  const finalReasoningLength =
+    text.trim().length;
+
   const canSubmit =
-    hasText(text);
+    finalReasoningLength >= 20;
 
 
   function handleSubmit() {
@@ -1434,7 +1464,13 @@ function FinalCheckpoint({
             )
           }
           placeholder="在揭晓之前，写下你现在最完整的解释……"
+          maxLength={1200}
         />
+
+        <div className="hypothesisLength">
+          <span>{finalReasoningLength < 20 ? "至少写下 20 个字" : "最终推理将被封存"}</span>
+          <span>{finalReasoningLength} / 1200</span>
+        </div>
 
         <button
           className="primaryButton"
@@ -1555,14 +1591,17 @@ function ThinkingJourney({
     summarizeReasoningJourney({
       hypothesisV1: progress.hypothesisV1,
       stressResult: progress.stressResult,
+      stressAnswer: progress.stressAnswer,
       hypothesisV2: progress.hypothesisV2,
       finalReasoning: progress.finalReasoning,
       annotations: progress.annotations,
     })
       .then(saveReasoningJourney)
       .catch(() => {
-        requestedSummary.current = false;
-        setSummaryError("复盘摘要暂时未能生成，你的原始推理记录仍已完整保留。");
+        saveReasoningJourney(
+          buildLocalReasoningJourney(progress),
+        );
+        setSummaryError("AI 摘要暂时不可用，已根据你的原始记录生成本地复盘。");
       })
       .finally(() => setSummaryLoading(false));
   }, [progress, saveReasoningJourney]);
@@ -1759,7 +1798,9 @@ function ThinkingJourney({
         {summaryError && (
           <div className="journeySummaryStatus journeySummaryError">
             <span>{summaryError}</span>
-            <button type="button" className="secondaryButton" onClick={requestSummary}>重新生成</button>
+            {!summary && (
+              <button type="button" className="secondaryButton" onClick={requestSummary}>重新生成</button>
+            )}
           </div>
         )}
         {summary?.reasoning_map && (

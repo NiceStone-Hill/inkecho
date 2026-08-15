@@ -284,6 +284,7 @@ export function getSolution() {
 export function summarizeReasoningJourney({
   hypothesisV1,
   stressResult,
+  stressAnswer = "",
   hypothesisV2,
   finalReasoning,
   annotations = [],
@@ -304,6 +305,7 @@ export function summarizeReasoningJourney({
               rationale_evidence_ids: stressResult.rationale_evidence_ids || [],
             }
           : null,
+        stress_answer: stressAnswer,
         hypothesis_v2: hypothesisV2
           ? {
               text: hypothesisV2.text,
