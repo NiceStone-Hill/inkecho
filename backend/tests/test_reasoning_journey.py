@@ -52,6 +52,13 @@ class ReasoningJourneyTests(unittest.TestCase):
         self.assertEqual(len(result.solution_path), 5)
         self.assertIn("不能证明人能直接通过", result.reasoning_map[1].detail)
 
+    def test_missing_annotations_do_not_claim_annotation_only_clue(self):
+        request = make_request().model_copy(update={"annotations": []})
+        with patch("reasoning_journey_service.AI_API_KEY", ""):
+            result = summarize_reasoning_journey(request)
+        self.assertEqual(result.late_arriving_clue.arrived_at, "NOT_USED")
+        self.assertIn("没有留下", result.late_arriving_clue.basis)
+
 
 if __name__ == "__main__":
     unittest.main()

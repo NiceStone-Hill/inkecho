@@ -1896,6 +1896,11 @@ function WorkspacePage() {
     setError,
   ] = useState("");
 
+  const [
+    stageRetryToken,
+    setStageRetryToken,
+  ] = useState(0);
+
 
   const [
     openPanel,
@@ -2058,6 +2063,9 @@ function WorkspacePage() {
     let cancelled =
       false;
 
+    let retryTimer =
+      null;
+
     if (
       pageId >
       STAGE_COUNT
@@ -2076,7 +2084,10 @@ function WorkspacePage() {
     setError("");
 
 
-    getStage(pageId)
+    function loadStage(
+      attempt = 0,
+    ) {
+      getStage(pageId)
       .then((data) => {
         if (cancelled) {
           return;
@@ -2102,28 +2113,51 @@ function WorkspacePage() {
         ) {
           completeReading();
         }
+
+        setLoading(false);
       })
 
       .catch(() => {
-        if (!cancelled) {
-          setError(
-            "暂时无法读取文本，请确认后端服务正在运行。",
-          );
+        if (cancelled) {
+          return;
         }
-      })
 
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
+        if (attempt === 0) {
+          setError(
+            "正在唤醒阅读服务，将自动重试一次……",
+          );
+
+          retryTimer = window.setTimeout(
+            () => loadStage(1),
+            1500,
+          );
+
+          return;
         }
+
+        setError(
+          "暂时无法读取文本，请稍后重新加载。",
+        );
+
+        setLoading(false);
       });
+    }
+
+    loadStage();
 
 
     return () => {
       cancelled = true;
+
+      if (retryTimer) {
+        window.clearTimeout(
+          retryTimer,
+        );
+      }
     };
   }, [
     pageId,
+    stageRetryToken,
     setCurrentStage,
     completeReading,
   ]);
@@ -2431,17 +2465,27 @@ function WorkspacePage() {
         )}
 
 
-        {error && (
-          <p
-            className="readerMessage readerError"
-          >
-            {error}
-          </p>
+        {error && !stage && (
+          <div className="readerMessage readerError">
+            <p>{error}</p>
+            {!loading && (
+              <button
+                type="button"
+                className="secondaryButton"
+                onClick={() =>
+                  setStageRetryToken(
+                    (value) => value + 1,
+                  )
+                }
+              >
+                重新加载这一页
+              </button>
+            )}
+          </div>
         )}
 
 
         {stage &&
-          !error &&
           pageId <=
             STAGE_COUNT && (
           <>

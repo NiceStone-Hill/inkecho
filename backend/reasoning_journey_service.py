@@ -82,13 +82,17 @@ def _fallback(request: ReasoningJourneyRequest) -> ReasoningJourneyResponse:
     )
     annotated = next(
         (item.quote.strip() for item in request.annotations if item.quote.strip()),
-        "老鼠消失、钱币变化与外部维修人员进入监狱之间的联系",
+        "",
     )
     v1_text = request.hypothesis_v1.text.strip()
     v2_text = v2.text.strip()
     final_text = request.final_reasoning.strip()
     stress_answer = request.stress_answer.strip()
-    if annotated in v2_text and annotated not in v1_text:
+    if not annotated:
+        annotated = "现有记录不足以确定一条更晚进入推理的具体线索"
+        clue_stage = "NOT_USED"
+        clue_basis = "你没有留下可供核对的批注；因此不虚构一条只存在于批注中的线索。"
+    elif annotated in v2_text and annotated not in v1_text:
         clue_stage = "V2"
         clue_basis = "这条线索没有出现在 V1，却在 V2 中首次出现。"
     elif annotated in final_text and annotated not in v1_text and annotated not in v2_text:
