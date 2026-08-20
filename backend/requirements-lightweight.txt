@@ -4,6 +4,3 @@ pydantic
 python-dotenv
 httpx
 mcp[cli]==1.28.1
-paddleocr
-pillow
-numpy
