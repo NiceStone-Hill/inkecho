@@ -5,16 +5,16 @@
 .page {
   min-height: 100vh;
   padding: 24px 7%;
-  overflow: hidden;
   background:
-    radial-gradient(circle at 14% 18%, rgba(255, 250, 240, 0.46), transparent 25rem),
-    repeating-linear-gradient(0deg, rgba(69, 56, 39, 0.025) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 12% 14%, rgba(219, 235, 232, 0.48), transparent 26rem),
+    linear-gradient(112deg, transparent 0 69%, rgba(23, 27, 28, 0.06) 69% 69.15%, transparent 69.15%),
+    repeating-linear-gradient(0deg, rgba(13, 27, 28, 0.026) 0 1px, transparent 1px 6px),
     var(--canvas);
 }
 
 .workspaceShell {
   padding: 0;
-  background: #c8bdac;
+  background: var(--canvas);
 }
 
 .navbar {
@@ -27,45 +27,45 @@
   width: 84px;
   height: 1px;
   content: "";
-  background: var(--signal);
-  opacity: 0.72;
+  background: var(--scan);
+  opacity: 0.9;
 }
 
 .brand {
   color: var(--ink);
-  font-family: "Bodoni 72", Didot, "Noto Serif SC", Georgia, serif;
-  font-size: 25px;
+  font-family: var(--font-mono);
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 2.6px;
+  letter-spacing: 3.8px;
   text-decoration: none;
 }
 
 .statusButton {
   padding: 10px 17px;
   color: var(--ink-soft);
-  background: rgba(255, 251, 244, 0.38);
+  background: rgba(243, 242, 237, 0.48);
   border: 1px solid var(--rule);
   border-radius: 999px;
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 .statusButton:hover {
-  color: var(--signal);
-  background: rgba(255, 251, 244, 0.82);
-  border-color: var(--signal);
+  color: var(--ink);
+  background: var(--paper);
+  border-color: var(--scan);
 }
 
 .hero {
   position: relative;
-  width: min(900px, 100%);
-  margin: 86px auto 46px;
-  padding: clamp(38px, 6.4vw, 76px) clamp(34px, 7vw, 96px) clamp(36px, 5vw, 60px);
+  width: min(980px, 100%);
+  margin: 70px auto 46px;
+  padding: clamp(46px, 6.4vw, 76px) clamp(36px, 7vw, 96px) clamp(42px, 5vw, 64px);
   background:
-    linear-gradient(90deg, transparent 0 44px, rgba(141, 64, 56, 0.22) 44px 45px, transparent 45px),
-    linear-gradient(90deg, rgba(255,255,255,0.45), transparent 14%, transparent 86%, rgba(121,96,66,0.06)),
+    linear-gradient(90deg, transparent 0 42px, rgba(168, 57, 52, 0.23) 42px 44px, transparent 44px),
+    linear-gradient(100deg, rgba(255, 255, 255, 0.68), transparent 36%),
     var(--paper);
-  border: 1px solid #b7a78f;
-  box-shadow: 18px 18px 0 rgba(111, 91, 66, 0.16), 0 24px 64px rgba(55, 42, 28, 0.18);
+  border: 1px solid var(--rule-strong);
+  box-shadow: 16px 16px 0 var(--ink), 0 28px 70px var(--shadow);
 }
 
 .hero::before {
@@ -75,9 +75,21 @@
   bottom: auto;
   left: 0;
   width: 100%;
-  height: 5px;
+  height: 4px;
   content: "";
-  background: linear-gradient(90deg, var(--signal) 0 30%, var(--brass) 30% 46%, var(--ink) 46% 100%);
+  background: linear-gradient(90deg, var(--signal) 0 26%, var(--scan) 26% 42%, var(--ink) 42% 100%);
+}
+
+.hero::after {
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+  width: 54px;
+  height: 152px;
+  content: "";
+  background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px, var(--ink) 5px 6px, transparent 6px 10px);
+  opacity: 0.13;
+  pointer-events: none;
 }
 
 .dossierTab {
@@ -86,9 +98,9 @@
   left: 22px;
   padding: 8px 16px 7px;
   color: var(--paper);
-  background: var(--ink);
+  background: var(--ink-raised);
   border: 1px solid var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -99,9 +111,9 @@
   top: 56px;
   right: 48px;
   padding: 8px 14px;
-  color: rgba(141, 64, 56, 0.5);
-  border: 3px double rgba(141, 64, 56, 0.44);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: rgba(168, 57, 52, 0.6);
+  border: 3px double rgba(168, 57, 52, 0.5);
+  font-family: var(--font-mono);
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 2px;
@@ -112,13 +124,13 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0 0 30px;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
 }
 
 .dossierMeta div {
   padding: 13px 16px 12px 0;
-  border-right: 1px solid #d9cdbd;
+  border-right: 1px solid var(--rule);
 }
 
 .dossierMeta div + div {
@@ -130,7 +142,8 @@
 }
 
 .dossierMeta dt {
-  color: #887966;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.2px;
@@ -139,7 +152,7 @@
 .dossierMeta dd {
   margin: 5px 0 0;
   color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
 }
 
@@ -148,51 +161,79 @@
   color: var(--signal);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 3px;
+  font-family: var(--font-mono);
+  letter-spacing: 2.2px;
 }
 
 .entryTitle {
-  margin: 18px 0 28px;
+  margin: 20px 0 24px;
   color: var(--ink);
-  font-family: "Bodoni 72", Didot, "Noto Serif SC", "Songti SC", Georgia, serif;
-  font-size: clamp(28px, 8vw, 82px);
-  font-weight: 500;
-  line-height: 0.95;
-  letter-spacing: -5px;
-  white-space: nowrap;
+  font-family: var(--font-reading);
+  font-size: clamp(42px, 8vw, 84px);
+  font-weight: 720;
+  line-height: 1.08;
+  letter-spacing: 0.06em;
+  white-space: normal;
 }
 
 .introduction {
   max-width: 560px;
   margin: 0 0 34px;
-  color: #5e554c;
-  font-size: 18px;
-  line-height: 1.8;
+  color: var(--ink-soft);
+  font-family: var(--font-reading);
+  font-size: 17px;
+  line-height: 1.9;
 }
 
 .entryAuthor {
   margin: -14px 0 18px;
-  color: #746556;
-  font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
+  color: var(--ink-soft);
+  font-family: var(--font-reading);
   font-size: 18px;
 }
 
 .entryTagline {
   max-width: 680px;
   margin: 0 0 22px;
-  color: #312a24;
-  font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
-  font-size: clamp(22px, 3vw, 30px);
-  line-height: 1.45;
+  color: var(--ink-raised);
+  font-family: var(--font-reading);
+  padding-left: 18px;
+  border-left: 3px solid var(--scan);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 650;
+  line-height: 1.55;
 }
 
 .editor {
   position: relative;
-  padding: 22px 24px 20px;
-  background: #f4ecdf;
-  border: 1px solid #d0bea6;
-  border-left: 4px solid var(--brass);
-  box-shadow: 7px 7px 0 rgba(114, 88, 59, 0.08);
+  margin-top: 36px;
+  padding: 28px 26px 22px;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--scan);
+  box-shadow: 7px 7px 0 rgba(23, 27, 28, 0.08);
+}
+
+.editor::before {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  padding: 2px 8px;
+  color: var(--paper);
+  background: var(--scan);
+  content: "CHALLENGE BRIEF";
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.caseSynopsis {
+  margin: 0;
+  color: #424b4c;
+  font-family: var(--font-reading);
+  font-size: 15px;
+  line-height: 1.9;
 }
 
 textarea {
@@ -244,17 +285,17 @@ button:disabled {
   color: var(--paper);
   background: var(--ink);
   border: 1px solid var(--ink);
-  box-shadow: 3px 3px 0 var(--signal);
+  box-shadow: 4px 4px 0 var(--signal);
 }
 
 .secondaryButton {
   color: var(--ink);
   background: transparent;
-  border: 1px solid #aa9a84;
+  border: 1px solid var(--rule-strong);
 }
 
-.primaryButton:hover { background: var(--signal); border-color: var(--signal); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #d0ad81; }
-.secondaryButton:hover { background: #fffaf2; border-color: var(--signal); }
+.primaryButton:hover { background: var(--signal); border-color: var(--signal); transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--scan); }
+.secondaryButton:hover { background: var(--paper-raised); border-color: var(--scan); }
 
 .result {
   margin-top: 20px;
@@ -289,9 +330,9 @@ button:disabled {
   }
 
   .hero {
-    margin-top: 54px;
     margin-top: 56px;
     padding: 38px 28px 32px;
+    box-shadow: 8px 8px 0 var(--ink), 0 20px 46px var(--shadow);
   }
 
   .dossierMeta {
@@ -302,7 +343,7 @@ button:disabled {
   .dossierMeta div + div {
     padding: 9px 0;
     border-right: 0;
-    border-bottom: 1px solid #c9bda9;
+    border-bottom: 1px solid var(--rule);
   }
 
   .dossierMeta div:last-child {
@@ -315,8 +356,15 @@ button:disabled {
     font-size: 11px;
   }
 
+  .hero::after {
+    right: 16px;
+    bottom: 18px;
+    width: 38px;
+    height: 100px;
+  }
+
   .entryTitle {
-    letter-spacing: -3px;
+    letter-spacing: 0.035em;
   }
 
   .actions {
