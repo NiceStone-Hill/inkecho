@@ -112,6 +112,20 @@ Hypothesis V2
 查看谜底与个人推理复盘
 ```
 
+终局复盘的核心产物不是正确率或版本摘要，而是 Evidence Impact Map：
+
+```text
+Claim（用户当时相信什么）
+    ↓
+Evidence Impact（哪条证据撞击了哪个未证前提）
+    ↓
+Cognitive Operation（收窄、重新定义、补充机制或建立连接）
+    ↓
+New Claim（新的世界模型）
+```
+
+系统同时保留一个反事实记录：如果没有这次证据撞击，用户的解释最可能停在哪个版本。V1、V2、Final、批注和标准答案仍保留，但在页面中降级为可展开的档案依据。
+
 Checkpoint 编号与职责保持稳定且唯一：
 
 | Checkpoint | 阶段 | 职责 | 产物 |

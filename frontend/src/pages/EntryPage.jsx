@@ -58,7 +58,7 @@ function EntryPage() {
       </p>
 
       <div className="editor">
-        <p style={{ margin: 0, color: "#625c53", fontSize: 15, lineHeight: 1.8 }}>
+        <p className="caseSynopsis">
           一次争论最终变成了真正的挑战：把他关进任何一座监狱的任何一间牢房，
           只让他穿着最必要的衣物，他也能在一周之内脱身。
         </p>

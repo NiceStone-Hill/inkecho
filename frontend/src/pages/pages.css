@@ -41,7 +41,7 @@
   margin-bottom: 26px;
   padding-bottom: 10px;
   border-bottom: 1px solid #bcae99;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 .readerFooter {
@@ -55,7 +55,7 @@
 .ebookTitle {
   margin: 0 0 24px;
   color: #1f1c18;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(26px, 4vw, 36px);
   font-weight: 500;
   line-height: 1.25;
@@ -71,7 +71,7 @@
   margin: 0 0 1.05em;
   padding: 0;
   color: #26221d;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(18px, 2.1vw, 22px);
   line-height: 2.05;
   text-align: justify;
@@ -166,7 +166,7 @@
   height: 100%;
   place-items: center;
   color: #f5eddf;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-weight: 900;
 }
 
@@ -404,7 +404,7 @@
 .panelTitle {
   margin: 5px 0 0;
   color: #1f1c18;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: 26px;
   font-weight: 500;
   letter-spacing: 0;
@@ -644,7 +644,7 @@
 
 .ebookTitle {
   color: #29231f;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -741,4 +741,480 @@
   .ebookSurface::after { display: none; }
   .pageTurnButton { width: 44px; height: 44px; }
   .panelSheet { box-shadow: 0 -14px 42px rgba(48, 34, 21, 0.2); }
+}
+
+/* UI v3 — cold forensic reading surface */
+.readerPage {
+  color: var(--ink);
+  background:
+    linear-gradient(90deg, rgba(218, 232, 230, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 82% 16%, rgba(57, 119, 122, 0.18), transparent 25rem),
+    #77807e;
+  background-size: 48px 100%, auto, auto;
+}
+
+.ebookSurface {
+  width: min(820px, calc(100vw - 136px));
+  height: calc(100vh - 64px);
+  margin: 32px auto;
+  padding: clamp(34px, 5vw, 64px) clamp(32px, 6vw, 76px) 104px;
+  background:
+    linear-gradient(90deg, transparent 0 38px, rgba(168, 57, 52, 0.22) 38px 40px, transparent 40px),
+    linear-gradient(105deg, rgba(255, 255, 255, 0.72), transparent 38%),
+    var(--paper);
+  border: 1px solid #6f7875;
+  box-shadow: 14px 14px 0 var(--ink), 0 26px 72px rgba(13, 20, 21, 0.3);
+  scrollbar-color: var(--scan) transparent;
+  scrollbar-width: thin;
+}
+
+.ebookSurface::after {
+  top: 18px;
+  right: 20px;
+  bottom: 18px;
+  background: rgba(57, 119, 122, 0.28);
+}
+
+.checkpointDocked .ebookSurface {
+  width: min(780px, calc(100vw - 530px));
+}
+
+.archiveSurface {
+  width: min(1120px, calc(100vw - 116px));
+  padding: 36px clamp(28px, 4vw, 52px) 72px;
+}
+
+.archiveSurface .ebookTopline {
+  margin-bottom: 22px;
+}
+
+.ebookTopline,
+.readerFooter {
+  color: #606b6b;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+}
+
+.ebookTopline {
+  margin-bottom: 34px;
+  padding-bottom: 12px;
+  border-bottom-color: var(--rule-strong);
+}
+
+.ebookTitle {
+  margin-bottom: 28px;
+  color: var(--ink);
+  font-family: var(--font-reading);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 680;
+  letter-spacing: 0.05em;
+}
+
+.segmentBlock {
+  color: #252b2c;
+  font-family: var(--font-reading);
+  font-size: clamp(18px, 2vw, 21px);
+  font-weight: 440;
+  line-height: 2.08;
+  letter-spacing: 0.015em;
+}
+
+.pageTurnButton {
+  width: 44px;
+  height: 108px;
+  color: var(--paper);
+  background: rgba(23, 27, 28, 0.88);
+  border-color: #919a97;
+  box-shadow: 5px 5px 0 rgba(13, 20, 21, 0.18);
+}
+
+.pageTurnButton:hover {
+  color: #fff;
+  background: var(--scan);
+}
+
+.readerMenuButton {
+  background: var(--ink);
+  border-color: #aeb9b6;
+  box-shadow: 0 10px 28px rgba(12, 20, 21, 0.28);
+}
+
+.readerMenuIcon,
+.readerMenuPanel,
+.readerMenuPanel button,
+.annotationPopover,
+.annotationPopoverInput,
+.handwritingCanvas,
+.panelSheet {
+  font-family: var(--font-ui);
+}
+
+.readerMenuIcon {
+  color: var(--paper);
+  font-family: var(--font-mono);
+}
+
+.readerMenuPanel,
+.annotationPopover {
+  background: var(--paper-raised);
+  border-color: var(--rule-strong);
+  box-shadow: 10px 12px 0 rgba(23, 27, 28, 0.12), 0 20px 52px rgba(13, 20, 21, 0.22);
+}
+
+.readerMenuPanel button {
+  color: var(--ink);
+  border-bottom-color: var(--rule);
+}
+
+.readerMenuPanel button:hover {
+  color: var(--signal-dark);
+  background: var(--scan-pale);
+}
+
+.annotationMark {
+  background: linear-gradient(transparent 32%, rgba(74, 147, 150, 0.34) 32% 92%, transparent 92%);
+  box-shadow: inset 0 -1px 0 rgba(57, 119, 122, 0.55);
+}
+
+.annotationHoverIcon {
+  color: #fff;
+  background: var(--scan);
+  border-color: var(--paper);
+  box-shadow: 4px 5px 0 var(--signal-dark), 0 10px 24px rgba(13, 20, 21, 0.24);
+}
+
+.annotationHoverIcon:hover {
+  background: var(--signal);
+}
+
+.annotationPopoverInput,
+.handwritingCanvas {
+  color: var(--ink);
+  background-color: var(--paper);
+  border-color: var(--rule);
+}
+
+.annotationModeSwitch button,
+.optionButton {
+  color: #465051;
+  background: var(--paper-deep);
+  border-color: var(--rule-strong);
+}
+
+.annotationModeSwitch button.active,
+.optionButton.selected {
+  color: #fff;
+  background: var(--scan);
+  border-color: var(--scan);
+}
+
+.panelOverlay {
+  background: rgba(17, 25, 26, 0.52);
+  backdrop-filter: blur(5px);
+}
+
+.panelSheet {
+  background:
+    linear-gradient(90deg, transparent 0 20px, rgba(168, 57, 52, 0.2) 20px 22px, transparent 22px),
+    var(--paper);
+  border-color: var(--rule-strong);
+  box-shadow: 14px 14px 0 rgba(17, 25, 26, 0.18), 0 30px 82px rgba(9, 17, 18, 0.35);
+}
+
+.caseNumber,
+.pressureQuestionBlock span {
+  color: var(--signal);
+  font-family: var(--font-mono);
+}
+
+.panelTitle {
+  color: var(--ink);
+  font-family: var(--font-reading);
+  font-weight: 680;
+}
+
+.panelCloseButton {
+  color: var(--signal);
+  border-color: var(--rule-strong);
+}
+
+.panelCloseButton:hover {
+  color: #fff;
+  background: var(--signal);
+}
+
+.checkpointBlock,
+.annotationItem {
+  background: var(--paper-deep);
+  border-left-color: var(--scan);
+}
+
+@media (max-width: 720px) {
+  .readerPage {
+    background: var(--paper);
+  }
+
+  .ebookSurface {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 62px 25px 76px;
+    background: var(--paper);
+    border: 0;
+    box-shadow: none;
+  }
+
+  .archiveSurface {
+    width: 100vw;
+    padding: 58px 14px 72px;
+  }
+
+  .ebookTopline {
+    margin-bottom: 26px;
+  }
+
+  .segmentBlock {
+    font-size: 18px;
+    line-height: 2;
+  }
+
+  .pageTurnButton {
+    width: 46px;
+    height: 46px;
+    border-radius: 2px;
+  }
+
+  .panelSheet {
+    box-shadow: 0 -10px 44px rgba(13, 20, 21, 0.25);
+  }
+}
+
+/* Explicit reading-tool affordance: annotations should never hide behind a logo. */
+.readerToolsButton {
+  position: relative;
+  display: flex;
+  width: auto;
+  min-width: 132px;
+  height: 48px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 0 13px 0 9px;
+  overflow: visible;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid #aeb9b6;
+  border-radius: 999px;
+}
+
+.readerToolsButton:hover {
+  background: #24494b;
+  border-color: #b8d0cd;
+  transform: translateY(-1px);
+}
+
+.readerToolsIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  background: var(--scan);
+  border-radius: 50%;
+  font-family: var(--font-reading);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.readerToolsLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.readerToolsCount {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  place-items: center;
+  color: var(--ink);
+  background: #d8e9e6;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.readerToolsAttention {
+  position: absolute;
+  top: -3px;
+  right: 3px;
+  width: 11px;
+  height: 11px;
+  background: var(--signal);
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(168, 57, 52, 0.18);
+  animation: readerToolsAttention 1.8s ease-in-out infinite;
+}
+
+@keyframes readerToolsAttention {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(168, 57, 52, 0.14); }
+  50% { box-shadow: 0 0 0 7px rgba(168, 57, 52, 0); }
+}
+
+.readerToolsHint {
+  position: absolute;
+  top: 62px;
+  right: 0;
+  width: min(296px, calc(100vw - 28px));
+  padding: 18px 19px 16px;
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-top: 4px solid var(--scan);
+  box-shadow: 9px 9px 0 rgba(23, 27, 28, 0.13), 0 20px 46px rgba(13, 20, 21, 0.2);
+}
+
+.readerToolsHint::before {
+  position: absolute;
+  top: -10px;
+  right: 30px;
+  width: 16px;
+  height: 16px;
+  content: "";
+  background: var(--paper-raised);
+  border-top: 1px solid var(--rule-strong);
+  border-left: 1px solid var(--rule-strong);
+  transform: rotate(45deg);
+}
+
+.readerToolsHint > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--scan);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.readerToolsHint strong {
+  display: block;
+  font-family: var(--font-reading);
+  font-size: 17px;
+  font-weight: 680;
+}
+
+.readerToolsHint p {
+  margin: 7px 0 13px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.readerToolsHint button {
+  padding: 7px 11px;
+  color: #fff;
+  background: var(--scan);
+  border: 1px solid var(--scan);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.readerToolsHint button:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.readerToolsButton + .readerMenuPanel,
+.readerToolsHint + .readerMenuPanel {
+  top: 58px;
+  min-width: 238px;
+}
+
+.readerToolsPanelIntro {
+  padding: 14px 16px 12px;
+  background: var(--scan-pale);
+  border-bottom: 1px solid #a8bfbd;
+}
+
+.readerToolsPanelIntro strong,
+.readerToolsPanelIntro span {
+  display: block;
+}
+
+.readerToolsPanelIntro strong {
+  color: #1f4749;
+  font-family: var(--font-reading);
+  font-size: 14px;
+}
+
+.readerToolsPanelIntro span {
+  margin-top: 3px;
+  color: #557170;
+  font-size: 10px;
+}
+
+.readerMenuPanel button {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.readerMenuPanel button > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.readerMenuPanel button b {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: var(--scan);
+  border: 1px solid #9db3b1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.readerMenuPanel button small {
+  color: #778280;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.readerMenuPanel button:last-child b {
+  color: var(--signal);
+  border-color: #c9a29f;
+}
+
+@media (max-width: 720px) {
+  .readerToolsButton {
+    min-width: 124px;
+    height: 44px;
+  }
+
+  .readerToolsIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .readerToolsHint {
+    top: 56px;
+  }
+
+  .readerToolsButton + .readerMenuPanel,
+  .readerToolsHint + .readerMenuPanel {
+    top: 54px;
+  }
 }

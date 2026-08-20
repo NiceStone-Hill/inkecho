@@ -1,5 +1,6 @@
 """前后端共享的请求/响应数据结构。"""
 
+from datetime import datetime
 from typing import List, Literal
 
 from pydantic import BaseModel, Field
@@ -70,6 +71,8 @@ class HypothesisV1(BaseModel):
 class JourneyAnnotation(BaseModel):
     quote: str = Field(default="", max_length=600)
     note: str = Field(default="", max_length=300)
+    stage_id: int | None = Field(default=None, ge=1, le=8)
+    created_at: datetime | None = None
 
 
 class JourneyStressResult(BaseModel):
@@ -107,11 +110,79 @@ class LateArrivingClue(BaseModel):
     evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
 
 
+class ClueAdoptionRecord(BaseModel):
+    clue: str = Field(min_length=1, max_length=120)
+    noticed_at: str = Field(min_length=1, max_length=40)
+    adopted_at: Literal["V1", "V2", "FINAL", "NOT_USED"]
+    role: str = Field(min_length=1, max_length=160)
+    basis: str = Field(min_length=1, max_length=220)
+
+
+class TheoryComponent(BaseModel):
+    subject: str = Field(min_length=1, max_length=36)
+    before: str = Field(min_length=1, max_length=120)
+    after: str = Field(min_length=1, max_length=120)
+    status: Literal["KEPT", "CHANGED", "ADDED", "DROPPED"]
+    source_stages: List[Literal["V1", "CP2", "V2", "FINAL", "ANNOTATION"]] = Field(
+        default_factory=list,
+        min_length=1,
+    )
+
+
+class SolutionCoverageItem(BaseModel):
+    mechanism: str = Field(min_length=1, max_length=80)
+    status: Literal["COVERED", "PARTIAL", "NOT_CONNECTED"]
+    note: str = Field(min_length=1, max_length=160)
+
+
+class CognitiveClaim(BaseModel):
+    stage: Literal["V1", "V2", "FINAL"]
+    label: str = Field(min_length=1, max_length=32)
+    claim: str = Field(min_length=1, max_length=220)
+    confidence: Confidence
+
+
+class EvidenceImpact(BaseModel):
+    evidence_ids: List[Literal["E01", "E02", "E03"]] = Field(default_factory=list)
+    evidence_summary: str = Field(min_length=1, max_length=180)
+    challenged_assumption: str = Field(min_length=1, max_length=180)
+    operation: Literal[
+        "ASSUMPTION_EXPOSED",
+        "ROLE_REDEFINED",
+        "CLAIM_NARROWED",
+        "MECHANISM_ADDED",
+        "LINK_CREATED",
+        "IDEA_ABANDONED",
+        "CLAIM_REINFORCED",
+    ]
+    operation_label: str = Field(min_length=1, max_length=24)
+    before_claim: str = Field(min_length=1, max_length=180)
+    after_claim: str = Field(min_length=1, max_length=180)
+    user_basis: str = Field(min_length=1, max_length=220)
+    counterfactual: str = Field(min_length=1, max_length=220)
+
+
+class WorldModelJourney(BaseModel):
+    initial_world_model: str = Field(min_length=1, max_length=240)
+    final_world_model: str = Field(min_length=1, max_length=300)
+    biggest_reconstruction: str = Field(min_length=1, max_length=180)
+    missing_bridge: str = Field(min_length=1, max_length=220)
+    claims: List[CognitiveClaim] = Field(min_length=2, max_length=3)
+    impacts: List[EvidenceImpact] = Field(min_length=1, max_length=3)
+
+
 class ReasoningJourneyResponse(BaseModel):
+    world_model: WorldModelJourney
+    headline: str = Field(min_length=1, max_length=160)
     shift: JourneyShift
+    pressure_handling: str = Field(min_length=1, max_length=180)
+    confidence_insight: str = Field(min_length=1, max_length=180)
+    theory_components: List[TheoryComponent] = Field(default_factory=list, max_length=8)
     final_reconstruction: str = Field(min_length=1, max_length=360)
     late_arriving_clue: LateArrivingClue
+    clue_adoption: List[ClueAdoptionRecord] = Field(default_factory=list, max_length=4)
     reasoning_map: List[ReasoningMapNode] = Field(min_length=4, max_length=4)
+    solution_coverage: List[SolutionCoverageItem] = Field(default_factory=list, max_length=6)
     solution_path: List[SolutionStep] = Field(min_length=1)
     source: Literal["model", "fallback"] = "model"
 

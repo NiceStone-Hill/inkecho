@@ -67,10 +67,7 @@
 
   border-radius: 1px;
 
-  font-family:
-    "Noto Serif SC",
-    "Songti SC",
-    serif;
+  font-family: var(--font-reading);
 
   font-size: 13px;
   font-weight: 900;
@@ -199,10 +196,7 @@
 
   border-radius: 8px;
 
-  font-family:
-    "Noto Serif SC",
-    "Songti SC",
-    serif;
+  font-family: var(--font-reading);
 
   font-size: 0;
 }
@@ -401,12 +395,7 @@
 
   color: #28231d;
 
-  font-family:
-    "Noto Serif SC",
-    "Songti SC",
-    SimSun,
-    Georgia,
-    serif;
+  font-family: var(--font-reading);
 
   font-size: 25px;
   font-weight: 500;
@@ -444,7 +433,7 @@
   max-width: 560px;
   margin: 13px 0 12px;
   color: #211d19;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(21px, 4vw, 29px);
   font-weight: 600;
   line-height: 1.55;
@@ -465,7 +454,7 @@
   padding: 7px 26px;
   color: rgba(127, 47, 40, 0.28);
   border: 2px solid rgba(127, 47, 40, 0.25);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 2px;
@@ -647,7 +636,7 @@
 
 .trainingItem > span {
   color: #8a7966;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -723,7 +712,7 @@
 
 .caseClosureHeader > div:first-child > span {
   color: #c7bba8;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 2px;
 }
@@ -731,7 +720,7 @@
 .caseClosureHeader h2 {
   margin: 6px 0 5px;
   color: #f5edde;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(28px, 5vw, 42px);
   font-weight: 600;
   letter-spacing: 5px;
@@ -749,7 +738,7 @@
   padding: 9px 12px;
   color: #d98c84;
   border: 2px solid #a85149;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 18px;
   font-weight: 800;
   letter-spacing: 4px;
@@ -811,7 +800,7 @@
   max-width: 680px;
   margin: 10px 0;
   color: #211e1a;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(19px, 3vw, 26px);
   font-weight: 600;
   line-height: 1.55;
@@ -825,10 +814,443 @@
   line-height: 1.7;
 }
 
+.journeyHeadline p {
+  max-width: 820px;
+  font-size: clamp(1.25rem, 2.3vw, 2rem);
+  line-height: 1.55;
+  color: #2f2922;
+}
+
+.theoryComponentList {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.theoryComponent {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #cfc1ad;
+  background: rgba(255, 252, 244, 0.72);
+}
+
+.theoryComponent header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theoryComponent header span,
+.solutionCoverageList article > span {
+  width: fit-content;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.theoryComponent div small,
+.theoryComponent footer {
+  color: #776b5d;
+  font-size: 0.73rem;
+  letter-spacing: 0.06em;
+}
+
+.theoryComponent div p {
+  margin: 5px 0 0;
+  line-height: 1.7;
+}
+
+.theoryComponent footer {
+  grid-column: 2 / -1;
+}
+
+.pressureHandling {
+  border-left-color: #315b50;
+  background: #edf3ef;
+}
+
+.confidenceInsight {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-left: 3px solid #6c5f91;
+  background: #f1eef7;
+}
+
+.confidenceInsight span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #51466f;
+}
+
+.confidenceInsight p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.finalReasoningGuide {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid #cfc1ad;
+  background: rgba(247, 242, 231, 0.72);
+}
+
+.finalReasoningGuide strong {
+  color: #3f372e;
+}
+
+.finalReasoningGuide ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 22px;
+  margin: 12px 0;
+  padding-left: 20px;
+  color: #574e43;
+  line-height: 1.55;
+}
+
+.finalReasoningGuide small {
+  color: #786d60;
+}
+
+.clueAdoptionList {
+  display: grid;
+  gap: 12px;
+}
+
+.clueAdoptionRecord {
+  padding: 16px 18px;
+  border: 1px solid #cfc1ad;
+  background: rgba(255, 252, 244, 0.72);
+}
+
+.clueAdoptionRecord > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.clueAdoptionRecord > div:first-child span {
+  flex: 0 0 auto;
+  color: #735c37;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.clueAdoptionRecord dl {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 20px;
+  margin: 14px 0;
+}
+
+.clueAdoptionRecord dl > div {
+  display: contents;
+}
+
+.clueAdoptionRecord dt {
+  color: #766b5f;
+  font-size: 0.76rem;
+}
+
+.clueAdoptionRecord dd {
+  margin: 0;
+}
+
+.clueAdoptionRecord p {
+  margin: 0;
+  color: #665c50;
+  line-height: 1.65;
+}
+
+.journeyRawRecord {
+  margin-top: 20px;
+  border-top: 1px solid #cfc1ad;
+  padding-top: 14px;
+}
+
+.journeyRawRecord summary {
+  cursor: pointer;
+  color: #5f5141;
+  font-weight: 700;
+}
+
+.journeyRawRecord > div {
+  margin-top: 14px;
+}
+
+.journeyRawRecord p {
+  line-height: 1.75;
+}
+
+.singleReasoningTrack {
+  grid-template-columns: 1fr;
+}
+
+.solutionCoverageList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.solutionCoverageList article {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #cfc1ad;
+  background: rgba(255, 252, 244, 0.72);
+}
+
+.solutionCoverageList article p {
+  margin: 0;
+  color: #62584c;
+  line-height: 1.6;
+}
+
+.coverageCOVERED > span { color: #315b50; }
+.coveragePARTIAL > span { color: #8a641d; }
+.coverageNOT_CONNECTED > span { color: #83514a; }
+
+.stageLoadError .actions {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Evidence Impact Map — the signature of the reasoning dossier */
+.worldModelSection {
+  position: relative;
+}
+
+.impactMap {
+  position: relative;
+  display: grid;
+  gap: 0;
+  padding: 6px 0 10px 52px;
+}
+
+.impactMap::before {
+  position: absolute;
+  top: 22px;
+  bottom: 26px;
+  left: 20px;
+  width: 2px;
+  content: "";
+  background: linear-gradient(#373b39 0 36%, #8a322b 36% 72%, #66745f 72%);
+}
+
+.worldClaim {
+  position: relative;
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 16px;
+  padding: 20px 22px;
+  color: #eee6da;
+  background: #303331;
+  border: 1px solid #464a47;
+}
+
+.worldClaim::before {
+  position: absolute;
+  top: 29px;
+  left: -40px;
+  width: 14px;
+  height: 14px;
+  content: "";
+  background: #eee5d6;
+  border: 3px solid #3d423f;
+  border-radius: 50%;
+}
+
+.worldClaimFinal {
+  color: #243027;
+  background: #dce2d6;
+  border-color: #798773;
+}
+
+.worldClaimFinal::before {
+  border-color: #66745f;
+}
+
+.worldClaimStage {
+  align-self: start;
+  color: #d58b83;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.worldClaim > div:last-child > span {
+  color: #aaa297;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.worldClaimFinal > div:last-child > span {
+  color: #61705d;
+}
+
+.worldClaim p {
+  margin: 7px 0 0;
+  font-family: var(--font-reading);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.75;
+}
+
+.impactTransition {
+  display: grid;
+  gap: 0;
+}
+
+.evidenceImpact {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+  padding: 18px;
+  background: #f7efe2;
+  border: 1px solid #b8a892;
+  border-left: 5px solid #8a322b;
+}
+
+.evidenceImpact > div > span,
+.missingBridgeSection > span {
+  color: #827463;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.evidenceImpact p {
+  margin: 7px 0 0;
+  color: #453e35;
+  line-height: 1.65;
+}
+
+.impactCollision {
+  display: grid;
+  place-items: center;
+}
+
+.impactCollision span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: #f4e8d8;
+  background: #8a322b;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+}
+
+.impactOperation {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px dashed #b9aa96;
+}
+
+.impactOperation strong {
+  color: #8a322b;
+  font-family: var(--font-reading);
+  font-size: 1.05rem;
+}
+
+.impactOperation small {
+  color: #756958;
+}
+
+.impactEvidenceTrace {
+  grid-column: 1 / -1;
+  padding-top: 4px;
+}
+
+.impactEvidenceTrace summary,
+.appendixRecord summary {
+  cursor: pointer;
+  color: #5f5446;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.impactEvidenceTrace p {
+  padding-left: 14px;
+  border-left: 2px solid #c9baa4;
+  font-size: 0.82rem;
+}
+
+.missingBridgeSection {
+  margin: 4px 34px 30px;
+  padding: 26px 30px;
+  color: #eee8dd;
+  background: #262b29;
+  border-top: 5px solid #66745f;
+}
+
+.missingBridgeSection > span {
+  color: #9eae97;
+}
+
+.missingBridgeSection h3 {
+  margin: 8px 0;
+  font-family: var(--font-reading);
+  font-size: 1.25rem;
+}
+
+.missingBridgeSection p {
+  margin: 0;
+  color: #c8c4bb;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.dossierAppendix {
+  padding-bottom: 34px;
+}
+
+.appendixRecord {
+  border-top: 1px solid #c4b6a2;
+}
+
+.appendixRecord:last-child {
+  border-bottom: 1px solid #c4b6a2;
+}
+
+.appendixRecord summary {
+  padding: 15px 4px;
+  list-style-position: inside;
+}
+
+.appendixBody {
+  padding: 0 18px 18px;
+}
+
+.appendixBody p {
+  color: #5a5146;
+  line-height: 1.75;
+}
+
+.compactClueList p {
+  margin: 7px 0;
+}
+
 .journeyInitialTheory p {
   margin: 12px 0 14px;
   color: #302a24;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+  font-family: var(--font-reading);
   font-size: clamp(17px, 2.5vw, 22px);
   line-height: 1.75;
 }
@@ -846,7 +1268,7 @@
   background: rgba(248, 241, 230, 0.72);
   border: 0;
   border-left: 4px solid #7f2f28;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 15px;
   line-height: 1.8;
 }
@@ -869,7 +1291,7 @@
 .journeyShiftCard > span {
   display: block;
   color: #857866;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 1.4px;
@@ -879,7 +1301,7 @@
   display: block;
   margin-top: 5px;
   color: #2e2923;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 15px;
 }
 
@@ -913,14 +1335,14 @@
   height: 27px;
   color: #f2e9dc;
   background: #49463f;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
 }
 
 .caseClosureSectionTitle h3 {
   margin: 0;
   color: #2d2923;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 18px;
 }
 
@@ -963,7 +1385,7 @@
 
 .caseClosureVersion strong {
   color: #7f2f28;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 18px;
 }
 
@@ -1025,7 +1447,7 @@
 .caseClosureResponse p {
   margin: 6px 0 0;
   color: #f1e8da;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 16px;
   line-height: 1.75;
 }
@@ -1060,7 +1482,7 @@
   color: #7f2f28;
   border: 2px solid #7f2f28;
   border-radius: 50%;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 2px;
@@ -1070,7 +1492,7 @@
 .caseClosureSealed h3 {
   margin: 0 0 9px;
   color: #29241e;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 20px;
 }
 
@@ -1114,7 +1536,7 @@
 
 .lateClueRecord > strong {
   color: #342e27;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -1124,7 +1546,7 @@
   padding: 4px 7px;
   color: #7f2f28;
   border: 1px solid #bd9d91;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
 }
 
@@ -1151,14 +1573,14 @@
 .reasoningTrack > h4 {
   margin: 0 0 10px;
   color: #38322b;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 13px;
 }
 
 .reasoningTrack > h4 span {
   margin-right: 7px;
   color: #7f2f28;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 1px;
 }
@@ -1183,7 +1605,7 @@
 }
 
 .solutionPath article:last-child { border-bottom: 0; }
-.solutionPath b { color: #c88b83; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+.solutionPath b { color: #c88b83; font-family: var(--font-mono); font-size: 10px; }
 .solutionPath p { margin: 0; color: #e6ddd0; font-size: 11px; line-height: 1.65; }
 .solutionPath small { grid-column: 2; color: #a99d8d; font-size: 9px; }
 
@@ -1224,7 +1646,7 @@
 .reasoningMapIndex {
   margin-bottom: 22px;
   color: #a48f73;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 1px;
 }
@@ -1232,7 +1654,7 @@
 .reasoningMapNode h4 {
   margin: 0 0 8px;
   color: #2a2520;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-reading);
   font-size: 16px;
 }
 
@@ -1249,7 +1671,7 @@
   padding: 3px 6px;
   color: #7f2f28;
   border: 1px solid #bd9d91;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9px;
 }
 
@@ -1397,6 +1819,50 @@
     grid-template-columns: 1fr;
   }
 
+  .theoryComponent {
+    grid-template-columns: 1fr;
+  }
+
+  .theoryComponent footer {
+    grid-column: 1;
+  }
+
+  .solutionCoverageList {
+    grid-template-columns: 1fr;
+  }
+
+  .impactMap {
+    padding-left: 30px;
+  }
+
+  .impactMap::before {
+    left: 8px;
+  }
+
+  .worldClaim::before {
+    left: -28px;
+  }
+
+  .worldClaim,
+  .evidenceImpact {
+    grid-template-columns: 1fr;
+  }
+
+  .impactCollision {
+    min-height: 30px;
+  }
+
+  .impactOperation,
+  .impactEvidenceTrace {
+    grid-column: 1;
+  }
+
+  .confidenceInsight,
+  .clueAdoptionRecord dl,
+  .finalReasoningGuide ul {
+    grid-template-columns: 1fr;
+  }
+
   .journeyShiftGrid,
   .reasoningTracks {
     grid-template-columns: 1fr;
@@ -1456,5 +1922,564 @@
     align-items: flex-start;
     flex-direction: column;
     padding: 15px 20px;
+  }
+}
+
+/* UI v3 — evidence reconstruction dossier */
+.checkpointNotification {
+  color: var(--ink);
+  background: rgba(250, 249, 245, 0.97);
+  border-color: var(--rule-strong);
+  border-left-color: var(--scan);
+  box-shadow: 7px 7px 0 rgba(23, 27, 28, 0.14), 0 16px 38px rgba(13, 20, 21, 0.2);
+}
+
+.checkpointNotificationAvatar {
+  color: #fff;
+  background: var(--scan);
+  font-family: var(--font-mono);
+}
+
+.checkpointNotificationHeader strong,
+.checkpointNotificationHeader span {
+  font-family: var(--font-mono);
+}
+
+.checkpointNotificationBody p {
+  color: var(--ink-soft);
+}
+
+.checkpointNotificationClose:hover {
+  color: #fff;
+  background: var(--signal);
+}
+
+.chatAvatar {
+  border: 2px solid var(--paper);
+  box-shadow: 3px 3px 0 var(--scan);
+}
+
+.chatBubble {
+  color: var(--ink);
+  background: var(--paper-raised);
+  border-color: var(--rule);
+  box-shadow: 4px 4px 0 rgba(23, 27, 28, 0.06);
+}
+
+.chatMessageUser .chatBubble {
+  color: #173235;
+  background: var(--scan-pale);
+  border-color: #a3bfbd;
+}
+
+.chatComposer textarea {
+  color: var(--ink);
+  background: var(--paper-raised);
+  border-color: var(--rule-strong);
+  border-radius: 2px;
+}
+
+.chatComposer textarea:focus {
+  border-color: var(--scan);
+  box-shadow: 0 0 0 3px rgba(57, 119, 122, 0.14);
+}
+
+.versionContext,
+.versionMiniItem,
+.trainingItem,
+.keepConfidence {
+  color: var(--ink);
+  background: var(--paper-deep);
+  border-color: var(--rule);
+  border-radius: 2px;
+}
+
+.versionContext,
+.versionMiniItem {
+  border-left: 3px solid var(--scan);
+}
+
+.versionContext > span,
+.versionMiniItem strong,
+.trainingItem > span,
+.hypothesisLength {
+  color: #647170;
+  font-family: var(--font-mono);
+}
+
+.versionContext p,
+.versionMiniItem span,
+.trainingItem > p,
+.keepConfidence {
+  color: #303839;
+}
+
+.branchPointCard {
+  background: var(--paper-raised);
+  border-color: var(--rule-strong);
+  border-left-color: var(--signal);
+  box-shadow: 9px 9px 0 rgba(23, 27, 28, 0.1);
+}
+
+.branchPointCard > span,
+.branchPointStamp {
+  font-family: var(--font-mono);
+}
+
+.branchPointCard h3 {
+  color: var(--ink);
+  font-family: var(--font-reading);
+}
+
+.branchPointCard p {
+  color: var(--ink-soft);
+}
+
+.journeyNode,
+.journeyFinalNode {
+  background: var(--paper-raised);
+  border-color: var(--rule);
+  border-radius: 2px;
+  box-shadow: 5px 5px 0 rgba(23, 27, 28, 0.06);
+}
+
+.journeyFinalNode {
+  background: var(--scan-pale);
+  border-color: #91adaa;
+  border-top: 4px solid var(--scan);
+}
+
+.journeyNodeLabel {
+  color: #fff;
+  background: var(--ink);
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+.journeyNode strong,
+.journeyFinalNode strong,
+.journeyNode p,
+.journeyFinalNode p {
+  color: #303839;
+}
+
+.journeyPressureNode {
+  background: #e8ece8;
+  border-left-color: var(--signal);
+  border-radius: 0 2px 2px 0;
+}
+
+.journeyPressureTop,
+.journeyConfidence {
+  color: #687372;
+  font-family: var(--font-mono);
+}
+
+.fallbackNotice {
+  color: var(--ink-soft);
+  background: var(--paper-deep);
+  border-color: var(--rule-strong);
+}
+
+.fallbackNotice strong,
+.trainingFeedback.incorrect {
+  color: var(--signal-dark);
+}
+
+.trainingFeedback.correct {
+  color: var(--scan);
+}
+
+.caseClosure {
+  width: 100%;
+  margin: 0 auto 34px;
+  color: var(--ink);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule-strong);
+  box-shadow: 12px 12px 0 rgba(23, 27, 28, 0.12);
+}
+
+.caseClosureHeader {
+  position: relative;
+  padding: 38px 42px 34px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    var(--ink);
+  background-size: 42px 100%, auto;
+  border-bottom: 5px solid var(--scan);
+}
+
+.caseClosureHeader::after {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  width: 76px;
+  height: 16px;
+  content: "";
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.6) 0 2px, transparent 2px 5px);
+  opacity: 0.24;
+}
+
+.caseClosureHeader > div:first-child > span {
+  color: #9eb6b4;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+}
+
+.caseClosureHeader h2 {
+  max-width: 760px;
+  margin: 10px 0 8px;
+  color: #f5f4ee;
+  font-family: var(--font-reading);
+  font-size: clamp(30px, 4.6vw, 48px);
+  font-weight: 720;
+  line-height: 1.3;
+  letter-spacing: 0.045em;
+}
+
+.caseClosureHeader p {
+  max-width: 660px;
+  color: #aeb8b6;
+  font-size: 13px;
+}
+
+.caseClosureStamp {
+  color: #ef9a93;
+  border-color: var(--signal);
+  font-family: var(--font-reading);
+}
+
+.caseClosureMeta {
+  background: #e8e9e4;
+  border-bottom-color: var(--rule-strong);
+}
+
+.caseClosureMeta > div {
+  padding: 17px 20px;
+  border-right-color: var(--rule);
+}
+
+.caseClosureMeta span,
+.caseClosureSectionTitle > span,
+.evidenceImpact > div > span,
+.missingBridgeSection > span {
+  font-family: var(--font-mono);
+}
+
+.caseClosureMeta span {
+  color: #687271;
+}
+
+.caseClosureMeta strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.caseClosureFinding {
+  margin: 34px 38px;
+  padding: 28px 30px;
+  background: var(--paper-raised);
+  border-color: var(--rule);
+  border-left: 5px solid var(--signal);
+}
+
+.caseClosureFinding > span {
+  color: var(--signal);
+  font-family: var(--font-mono);
+}
+
+.caseClosureFinding h3 {
+  color: var(--ink);
+  font-family: var(--font-reading);
+  font-weight: 680;
+}
+
+.journeyHeadline p {
+  max-width: 840px;
+  color: #293132;
+  font-family: var(--font-reading);
+  font-size: clamp(1.28rem, 2.4vw, 2.05rem);
+  font-weight: 580;
+  line-height: 1.65;
+}
+
+.caseClosureSection {
+  margin: 0 38px;
+  padding: 32px 0;
+  border-top-color: var(--rule);
+}
+
+.caseClosureSectionTitle {
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.caseClosureSectionTitle > span {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  background: var(--scan);
+}
+
+.caseClosureSectionTitle h3 {
+  color: var(--ink);
+  font-family: var(--font-reading);
+  font-size: 21px;
+  font-weight: 680;
+}
+
+.caseClosureSectionTitle p {
+  color: #687372;
+  font-size: 12px;
+}
+
+.impactMap {
+  padding: 8px 0 12px 58px;
+}
+
+.impactMap::before {
+  left: 22px;
+  width: 3px;
+  background: linear-gradient(var(--ink) 0 34%, var(--signal) 34% 68%, var(--scan) 68%);
+}
+
+.worldClaim {
+  grid-template-columns: 72px 1fr;
+  padding: 23px 26px;
+  color: #f2f1ec;
+  background: var(--ink-raised);
+  border-color: #4a5555;
+  box-shadow: 7px 7px 0 rgba(23, 27, 28, 0.1);
+}
+
+.worldClaim::before {
+  left: -44px;
+  background: var(--paper-deep);
+  border-color: var(--ink);
+}
+
+.worldClaimStage {
+  color: #ef8d86;
+  font-family: var(--font-mono);
+}
+
+.worldClaim > div:last-child > span {
+  color: #aeb9b7;
+  font-family: var(--font-ui);
+}
+
+.worldClaim p {
+  font-family: var(--font-reading);
+  font-size: clamp(1.05rem, 2vw, 1.32rem);
+  font-weight: 520;
+  line-height: 1.8;
+}
+
+.worldClaimFinal {
+  color: #153336;
+  background: var(--scan-pale);
+  border-color: #8aa8a6;
+}
+
+.worldClaimFinal::before {
+  border-color: var(--scan);
+}
+
+.worldClaimFinal > div:last-child > span {
+  color: var(--scan);
+}
+
+.evidenceImpact {
+  grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+  gap: 16px;
+  margin: 22px 0;
+  padding: 22px;
+  background: var(--paper-raised);
+  border-color: var(--rule-strong);
+  border-left-color: var(--signal);
+}
+
+.evidenceImpact > div > span {
+  color: #64706f;
+}
+
+.evidenceImpact p {
+  color: #3e4848;
+}
+
+.impactCollision span {
+  color: #fff;
+  background: var(--signal);
+  box-shadow: 3px 3px 0 var(--scan);
+}
+
+.impactOperation {
+  border-top-color: var(--rule);
+}
+
+.impactOperation strong {
+  padding: 3px 8px;
+  color: #fff;
+  background: var(--signal);
+  font-family: var(--font-reading);
+  font-size: 0.94rem;
+}
+
+.impactOperation small {
+  color: var(--ink-soft);
+}
+
+.impactEvidenceTrace summary,
+.appendixRecord summary {
+  color: #465253;
+}
+
+.impactEvidenceTrace p {
+  border-left-color: var(--scan);
+}
+
+.missingBridgeSection {
+  margin: 4px 38px 34px;
+  padding: 30px 32px;
+  color: #eff5f3;
+  background: #24494b;
+  border-top: 5px solid #73a7a5;
+  box-shadow: 8px 8px 0 rgba(23, 27, 28, 0.12);
+}
+
+.missingBridgeSection > span {
+  color: #9fcecb;
+}
+
+.missingBridgeSection h3 {
+  font-family: var(--font-reading);
+  font-size: 1.4rem;
+}
+
+.missingBridgeSection p {
+  color: #d5e3e1;
+  font-family: var(--font-reading);
+  font-size: 1.05rem;
+}
+
+.appendixRecord {
+  border-top-color: var(--rule);
+}
+
+.appendixRecord:last-child {
+  border-bottom-color: var(--rule);
+}
+
+.appendixRecord summary {
+  padding: 17px 6px;
+  font-size: 0.84rem;
+}
+
+.appendixRecord[open] summary {
+  color: var(--signal-dark);
+}
+
+.appendixBody {
+  padding: 2px 20px 20px;
+}
+
+.appendixBody p {
+  color: #4e5959;
+}
+
+.solutionPath {
+  background: var(--ink-raised);
+  border-color: #4b5655;
+}
+
+.solutionPath article {
+  border-bottom-color: #4b5655;
+}
+
+.solutionPath b {
+  color: #ef8d86;
+  font-family: var(--font-mono);
+}
+
+.solutionPath p {
+  color: #e9ece8;
+}
+
+.caseClosureFooter {
+  padding: 18px 38px;
+  color: #aeb8b6;
+  background: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.caseClosureFooter strong {
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .caseClosure {
+    margin-top: 0;
+    box-shadow: none;
+  }
+
+  .caseClosureHeader {
+    padding: 30px 22px 25px;
+  }
+
+  .caseClosureHeader::after {
+    display: none;
+  }
+
+  .caseClosureHeader h2 {
+    font-size: clamp(27px, 8vw, 36px);
+    letter-spacing: 0.025em;
+  }
+
+  .caseClosureMeta > div {
+    padding: 14px;
+  }
+
+  .caseClosureFinding,
+  .caseClosureSection,
+  .missingBridgeSection {
+    margin-right: 16px;
+    margin-left: 16px;
+  }
+
+  .caseClosureFinding,
+  .missingBridgeSection {
+    padding: 23px 20px;
+  }
+
+  .impactMap {
+    padding-left: 29px;
+  }
+
+  .impactMap::before {
+    left: 7px;
+  }
+
+  .worldClaim::before {
+    left: -28px;
+  }
+
+  .worldClaim,
+  .evidenceImpact {
+    grid-template-columns: 1fr;
+    padding: 19px;
+  }
+
+  .worldClaimStage {
+    margin-bottom: -6px;
+  }
+
+  .impactCollision {
+    min-height: 36px;
+  }
+
+  .caseClosureFooter {
+    padding: 18px 20px;
   }
 }

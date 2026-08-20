@@ -41,6 +41,7 @@ import Panel
 const STAGE_COUNT = 8;
 const TOTAL_PAGES = STAGE_COUNT + 1;
 const HYPOTHESIS_MAX_LENGTH = 300;
+const READER_TOOLS_HINT_KEY = "unproven_reader_tools_hint_seen_v1";
 
 
 const CONFIDENCE_OPTIONS = [
@@ -243,7 +244,11 @@ function CheckpointNotification({
 
 function FloatingMenu({
   open,
+  annotationCount,
+  hasPendingCheckpoint,
+  showHint,
   onToggle,
+  onDismissHint,
   onOpenAnnotations,
   onOpenQA,
   onOpenCheckpoint,
@@ -255,34 +260,67 @@ function FloatingMenu({
     >
       <button
         type="button"
-        className="readerMenuButton"
-        aria-label="打开阅读菜单"
-        onClick={onToggle}
+        className="readerMenuButton readerToolsButton"
+        aria-label={`打开阅读工具：${annotationCount} 条批注${hasPendingCheckpoint ? "，有待回应的思考" : ""}`}
+        aria-expanded={open}
+        aria-controls="reader-tools-menu"
+        onClick={() => {
+          onDismissHint();
+          onToggle();
+        }}
       >
         <span
-          className="readerMenuIcon"
+          className="readerToolsIcon"
           aria-hidden="true"
-        />
+        >
+          ✎
+        </span>
+        <span className="readerToolsLabel">阅读工具</span>
+        {annotationCount > 0 && (
+          <span className="readerToolsCount" aria-label={`${annotationCount} 条批注`}>
+            {annotationCount}
+          </span>
+        )}
+        {hasPendingCheckpoint && (
+          <span className="readerToolsAttention" aria-hidden="true" />
+        )}
       </button>
+
+      {showHint && !open && (
+        <aside className="readerToolsHint" aria-label="阅读工具提示">
+          <span>第一次使用</span>
+          <strong>选中文字，就能留下批注</strong>
+          <p>你的批注、阅读问答和当前思考都收在“阅读工具”里。</p>
+          <button type="button" onClick={onDismissHint}>知道了</button>
+        </aside>
+      )}
 
       {open && (
         <div
+          id="reader-tools-menu"
           className="readerMenuPanel"
         >
+          <div className="readerToolsPanelIntro">
+            <strong>阅读工具</strong>
+            <span>拖选正文即可添加批注</span>
+          </div>
+
           <button
             type="button"
             onClick={
               onOpenAnnotations
             }
           >
-            我的批注
+            <span><b aria-hidden="true">✎</b>我的批注</span>
+            <small>{annotationCount || "暂无"}</small>
           </button>
 
           <button
             type="button"
             onClick={onOpenQA}
           >
-            阅读问答
+            <span><b aria-hidden="true">?</b>阅读问答</span>
+            <small>针对文本</small>
           </button>
 
           <button
@@ -291,14 +329,15 @@ function FloatingMenu({
               onOpenCheckpoint
             }
           >
-            当前思考
+            <span><b aria-hidden="true">◇</b>当前思考</span>
+            <small>{hasPendingCheckpoint ? "待回应" : "查看"}</small>
           </button>
 
           <button
             type="button"
             onClick={onReset}
           >
-            重置体验
+            <span><b aria-hidden="true">↺</b>重置体验</span>
           </button>
         </div>
       )}
@@ -1452,6 +1491,17 @@ function FinalCheckpoint({
         progress={progress}
       />
 
+      <div className="finalReasoningGuide" aria-label="最终推理参考结构">
+        <strong>如果需要，可以沿着这四步整理</strong>
+        <ul>
+          <li>他如何与外界建立联系？</li>
+          <li>工具或物资如何进入？</li>
+          <li>他如何离开牢房？</li>
+          <li>他如何穿过监狱并完成离场？</li>
+        </ul>
+        <small>不必逐题回答，也不要求猜对；只写下你当前能够连接起来的部分。</small>
+      </div>
+
 
       <div
         className="chatComposer"
@@ -1463,7 +1513,7 @@ function FinalCheckpoint({
               event.target.value,
             )
           }
-          placeholder="在揭晓之前，写下你现在最完整的解释……"
+          placeholder="例如：他先通过……联系外界，再利用……制造机会，最后借助……离开。"
           maxLength={1200}
         />
 
@@ -1579,7 +1629,16 @@ function ThinkingJourney({
   const requestSummary = useCallback(() => {
     if (
       requestedSummary.current ||
-      (progress.reasoningJourney?.shift && progress.reasoningJourney?.late_arriving_clue) ||
+      (
+        progress.reasoningJourney?.headline &&
+        progress.reasoningJourney?.world_model &&
+        progress.reasoningJourney?.shift &&
+        progress.reasoningJourney?.confidence_insight &&
+        progress.reasoningJourney?.late_arriving_clue &&
+        progress.reasoningJourney?.clue_adoption &&
+        progress.reasoningJourney?.theory_components &&
+        progress.reasoningJourney?.solution_coverage
+      ) ||
       !progress.hypothesisV1 ||
       !progress.finalReasoning
     ) {
@@ -1596,7 +1655,30 @@ function ThinkingJourney({
       finalReasoning: progress.finalReasoning,
       annotations: progress.annotations,
     })
-      .then(saveReasoningJourney)
+      .then((remoteJourney) => {
+        const localJourney =
+          buildLocalReasoningJourney(progress);
+
+        saveReasoningJourney({
+          ...localJourney,
+          ...remoteJourney,
+          world_model:
+            remoteJourney?.world_model ||
+            localJourney.world_model,
+          confidence_insight:
+            remoteJourney?.confidence_insight ||
+            localJourney.confidence_insight,
+          clue_adoption:
+            remoteJourney?.clue_adoption ||
+            localJourney.clue_adoption,
+          theory_components:
+            remoteJourney?.theory_components ||
+            localJourney.theory_components,
+          solution_coverage:
+            remoteJourney?.solution_coverage ||
+            localJourney.solution_coverage,
+        });
+      })
       .catch(() => {
         saveReasoningJourney(
           buildLocalReasoningJourney(progress),
@@ -1622,65 +1704,17 @@ function ThinkingJourney({
     );
   }
 
-  const revisionMade =
-    Boolean(
-      progress.hypothesisV2
-        ?.textChanged ||
-      progress.hypothesisV2
-        ?.confidenceChanged,
-    );
-
-  const finalHypothesis =
-    hasText(
-      progress.finalReasoning
-        ?.text,
-    )
-      ? progress.finalReasoning
-          .text
-      : progress.hypothesisV2
-          ?.text ||
-        progress.hypothesisV1
-          .text;
-
-  const finalConfidence =
-    progress.hypothesisV2
-      ?.confidence ||
-    progress.hypothesisV1
-      .confidence;
-
-  const confidenceLabel = {
-    low: "低",
-    medium: "中",
-    high: "高",
-  };
-
-  const categoryLabel = {
-    SPACE_PATH: "空间路径",
-    HUMAN_PASSAGE: "人员通行",
-    TOOL_SOURCE: "工具来源",
-    COMMUNICATION: "信息传递",
-    INSIDER_HELP: "内部协助",
-    UNCLEAR: "通用自检",
-  };
-
-  const rationaleEvidence =
-    progress.stressResult
-      ?.rationale_evidence_ids ||
-    [];
-
-  const decisionLabel =
-    revisionMade
-      ? "修正了原有判断"
-      : "看见风险后仍选择保留";
-
   const summary = progress.reasoningJourney;
-  const summarySourceLabel = summaryLoading
-    ? "正在整理"
-    : summary?.source === "model"
-      ? "AI 一次总结"
-      : summary
-        ? "本地安全复盘"
-        : "等待生成";
+  const worldModel = summary?.world_model;
+  const operationDescriptions = {
+    ASSUMPTION_EXPOSED: "原本隐藏的前提被证据照亮",
+    ROLE_REDEFINED: "同一线索在理论中承担了新的角色",
+    CLAIM_NARROWED: "主张被收窄到证据能够支持的范围",
+    MECHANISM_ADDED: "解释中加入了新的行动机制",
+    LINK_CREATED: "原本孤立的线索被连接成因果链",
+    IDEA_ABANDONED: "原有解释被后续证据排除",
+    CLAIM_REINFORCED: "主张承受审查后被保留",
+  };
 
 
   return (
@@ -1688,147 +1722,119 @@ function ThinkingJourney({
       <header className="caseClosureHeader">
         <div>
           <span>UNPROVEN · CASE FILE 013</span>
-          <h2>个人推理复盘</h2>
-          <p>不是正确率报告，而是你的判断如何被证据推动、修正并重新连接。</p>
+          <h2>你的世界模型，如何被证据改写</h2>
+          <p>这里不统计猜中了几步，只重建哪条证据改变了你相信的世界。</p>
         </div>
         <div className="caseClosureStamp">已封存</div>
       </header>
 
       <div className="caseClosureMeta">
         <div><span>案件</span><strong>第十三号牢房</strong></div>
-        <div><span>推理版本</span><strong>{progress.hypothesisV2 ? "V1 → V2" : "V1"}</strong></div>
-        <div><span>审查证据</span><strong>{rationaleEvidence.length ? rationaleEvidence.join(" · ") : "E01–E03"}</strong></div>
-        <div><span>生成方式</span><strong>{summarySourceLabel}</strong></div>
+        <div><span>世界模型</span><strong>{worldModel?.claims?.length || 0} 个状态</strong></div>
+        <div><span>证据撞击</span><strong>{worldModel?.impacts?.length || 0} 次</strong></div>
+        <div><span>记录状态</span><strong>{summaryLoading ? "正在重建" : "已封存"}</strong></div>
       </div>
 
-      <section className="caseClosureFinding journeyInitialTheory">
-        <span>01 · INITIAL THEORY</span>
-        <h3>最初，我认为……</h3>
-        <p>{progress.hypothesisV1.text}</p>
-        <small>初始确信程度：{confidenceLabel[progress.hypothesisV1.confidence] || "中"}</small>
+      <section className="caseClosureFinding journeyHeadline">
+        <span>THE RECONSTRUCTION</span>
+        <h3>最大的重建，不是换了答案，而是改变了世界如何运作</h3>
+        <p>{worldModel?.biggest_reconstruction || "正在辨认哪条证据真正改变了你的解释……"}</p>
       </section>
 
-      <section className="caseClosureSection">
+      <section className="caseClosureSection worldModelSection">
+        <div className="caseClosureSectionTitle">
+          <span>01</span>
+          <div><h3>Evidence Impact Map</h3><p>主张不是被答案替换，而是被证据逐次撞击、收窄和重组</p></div>
+        </div>
+        {summaryLoading && <div className="journeySummaryStatus">正在重建证据与你的判断之间的关系……</div>}
+        {summaryError && <div className="journeySummaryStatus journeySummaryError">{summaryError}</div>}
+        {worldModel?.claims?.length ? (
+          <div className="impactMap" role="list" aria-label="证据如何改变你的世界模型">
+            <article className="worldClaim worldClaimInitial" role="listitem">
+              <div className="worldClaimStage">{worldModel.claims[0].stage}</div>
+              <div><span>{worldModel.claims[0].label}</span><p>{worldModel.claims[0].claim}</p></div>
+            </article>
+            {worldModel.impacts.map((impact, index) => {
+              const isFinalImpact = index === worldModel.impacts.length - 1;
+              const nextClaim = worldModel.claims.find((claim) =>
+                claim.claim === impact.after_claim,
+              );
+              return (
+                <div className="impactTransition" key={`${impact.operation}-${index}`} role="listitem">
+                  <article className="evidenceImpact">
+                    <div className="impactEvidence">
+                      <span>{impact.evidence_ids?.length ? impact.evidence_ids.join(" · ") : "NEW EVIDENCE"}</span>
+                      <p>{impact.evidence_summary}</p>
+                    </div>
+                    <div className="impactCollision" aria-hidden="true"><span>×</span></div>
+                    <div className="impactAssumption">
+                      <span>被撞击的前提</span>
+                      <p>{impact.challenged_assumption}</p>
+                    </div>
+                    <div className="impactOperation">
+                      <strong>{impact.operation_label}</strong>
+                      <small>{operationDescriptions[impact.operation] || impact.operation}</small>
+                    </div>
+                    <details className="impactEvidenceTrace">
+                      <summary>为什么判定发生了这次变化</summary>
+                      <p><b>你的依据：</b>{impact.user_basis}</p>
+                      <p><b>如果没有这条证据：</b>{impact.counterfactual}</p>
+                    </details>
+                  </article>
+                  <article className={`worldClaim ${isFinalImpact ? "worldClaimFinal" : ""}`}>
+                    <div className="worldClaimStage">{nextClaim?.stage || (isFinalImpact ? "FINAL" : "V2")}</div>
+                    <div><span>{nextClaim?.label || (isFinalImpact ? "揭晓前的最终模型" : "证据撞击后的模型")}</span><p>{impact.after_claim}</p></div>
+                  </article>
+                </div>
+              );
+            })}
+          </div>
+        ) : <p>正在等待世界模型重建结果。</p>}
+      </section>
+
+      <section className="missingBridgeSection">
+        <span>THE MISSING BRIDGE</span>
+        <h3>让局部解释成为完整系统的最后一座桥</h3>
+        <p>{worldModel?.missing_bridge || "正在寻找你的理论最后补上的因果连接……"}</p>
+      </section>
+
+      <section className="caseClosureSection dossierAppendix">
         <div className="caseClosureSectionTitle">
           <span>02</span>
-          <div><h3>The Turning Point</h3><p>KEPT / CHANGED / ADDED：这一次审查究竟改变了什么</p></div>
+          <div><h3>档案依据</h3><p>世界模型重建所使用的原始记录与对照材料</p></div>
         </div>
-        {progress.stressResult?.pressure_question && (
-          <blockquote className="journeyShiftSummary">{progress.stressResult.pressure_question}</blockquote>
-        )}
-        <div className="caseClosureCompare">
-          <article>
-            <div className="caseClosureVersion"><span>HYPOTHESIS</span><strong>V1</strong></div>
-            <p>{progress.hypothesisV1.text}</p>
-            <small>确信程度：{confidenceLabel[progress.hypothesisV1.confidence] || "中"}</small>
-          </article>
-          <div className="caseClosureDecision">
-            <span>审查后</span>
-            <strong>{revisionMade ? "修正" : "保留"}</strong>
+        <details className="appendixRecord" open>
+          <summary>压力问题与我的回应</summary>
+          <div className="appendixBody">
+            <p><b>问题：</b>{progress.stressResult?.pressure_question || "本轮没有生成个性化压力问题。"}</p>
+            <p><b>回应：</b>{progress.stressAnswer || "没有留下独立回应。"}</p>
+            <p><b>认知操作：</b>{summary?.pressure_handling}</p>
           </div>
-          <article className="caseClosureFinalVersion">
-            <div className="caseClosureVersion"><span>AFTER REVIEW</span><strong>{progress.hypothesisV2 ? "V2" : "V1"}</strong></div>
-            <p>{progress.hypothesisV2?.text || progress.hypothesisV1.text}</p>
-            <small>确信程度：{confidenceLabel[finalConfidence] || "中"}</small>
-          </article>
-        </div>
-        <div className="journeyShiftGrid">
-          {[
-            ["KEPT", "保留", summary?.shift?.kept],
-            ["CHANGED", "改变", summary?.shift?.changed],
-            ["ADDED", "新增", summary?.shift?.added],
-          ].map(([key, label, detail]) => (
-            <article className={`journeyShiftCard journeyShift${key}`} key={key}>
-              <span>{key}</span><strong>{label}</strong>
-              <p>{detail || "正在比对你的各版推理……"}</p>
-            </article>
-          ))}
-        </div>
-        <p className="caseClosureDecisionNote">本轮决定：{decisionLabel}</p>
-        {progress.stressResult && (
-          <div className="caseClosureAudit">
-            <div className="caseClosureAuditTags">
-              <span>{categoryLabel[progress.stressResult.category] || "未证前提"}</span>
-              <span>{rationaleEvidence.length ? `依据 ${rationaleEvidence.join(" · ")}` : "通用自检"}</span>
-            </div>
-            <div className="caseClosureQuestion">
-              <span>PRESSURE QUESTION</span>
-              <p>{progress.stressResult.pressure_question}</p>
-            </div>
-            {hasText(progress.stressAnswer) && (
-              <div className="caseClosureResponse">
-                <span>你的回应</span>
-                <p>{progress.stressAnswer}</p>
-              </div>
-            )}
+        </details>
+        <details className="appendixRecord">
+          <summary>封存的 V1 / V2 / Final</summary>
+          <div className="appendixBody">
+            <p><b>V1：</b>{progress.hypothesisV1.text}</p>
+            <p><b>V2：</b>{progress.hypothesisV2?.text || "保留 V1"}</p>
+            <p><b>Final：</b>{progress.finalReasoning?.text}</p>
           </div>
-        )}
-      </section>
-
-      <section className="caseClosureSealed">
-        <div className="caseClosureSeal">FINAL</div>
-        <div>
-          <span>03 · FINAL RECONSTRUCTION</span>
-          <h3>最终重构</h3>
-          <p>{summary?.final_reconstruction || finalHypothesis}</p>
-        </div>
-      </section>
-
-      <section className="caseClosureSection journeyMissedClue">
-        <div className="caseClosureSectionTitle">
-          <span>04</span>
-          <div><h3>Late-arriving Clue</h3><p>只按你的记录判断：这条线索何时进入推理</p></div>
-        </div>
-        {summary?.late_arriving_clue ? (
-          <div className="lateClueRecord">
-            <strong>{summary.late_arriving_clue.clue}</strong>
-            <span>{summary.late_arriving_clue.arrived_at.replace("_", " ")}</span>
-            <p>{summary.late_arriving_clue.basis}</p>
-            {!!summary.late_arriving_clue.evidence_ids?.length && <small>{summary.late_arriving_clue.evidence_ids.join(" · ")}</small>}
+        </details>
+        <details className="appendixRecord">
+          <summary>线索采用记录</summary>
+          <div className="appendixBody compactClueList">
+            {summary?.clue_adoption?.length
+              ? summary.clue_adoption.map((record, index) => (
+                  <p key={`${record.clue}-${index}`}><b>{record.clue}</b> · {record.noticed_at} · {record.adopted_at === "NOT_USED" ? "仅注意，未进入理论" : `进入 ${record.adopted_at}`}</p>
+                ))
+              : <p>没有足够的批注记录。</p>}
           </div>
-        ) : <p>正在对照 V1、V2、最终推理与批注……</p>}
-      </section>
-
-      <section className="caseClosureSection reasoningMapSection">
-        <div className="caseClosureSectionTitle">
-          <span>05</span>
-          <div><h3>Two-track Reasoning Map</h3><p>Your Path 记录认知变化；His Path 展示案件机制，二者不再混为一谈</p></div>
-        </div>
-        {summaryLoading && <div className="journeySummaryStatus">正在整理你的推理档案……</div>}
-        {summaryError && (
-          <div className="journeySummaryStatus journeySummaryError">
-            <span>{summaryError}</span>
-            {!summary && (
-              <button type="button" className="secondaryButton" onClick={requestSummary}>重新生成</button>
-            )}
+        </details>
+        <details className="appendixRecord">
+          <summary>与教授完整行动机制对照</summary>
+          <div className="appendixBody solutionPath" role="list">
+            {summary?.solution_path?.map((step) => <article role="listitem" key={step.step_id}><b>{String(step.step_id).padStart(2, "0")}</b><p>{step.text}</p></article>)}
           </div>
-        )}
-        {summary?.reasoning_map && (
-          <div className="reasoningTracks">
-            <div className="reasoningTrack">
-              <h4><span>YOUR PATH</span> 你的认知变化链</h4>
-              <div className="reasoningMap" role="list" aria-label="你的认知变化链">
-                {summary.reasoning_map.map((node, index) => (
-                  <article className="reasoningMapNode" role="listitem" key={`${node.stage}-${index}`}>
-                    <div className="reasoningMapIndex">{node.stage}</div>
-                    <div><h4>{node.label}</h4><p>{node.detail}</p>{!!node.evidence_ids?.length && <small>{node.evidence_ids.join(" · ")}</small>}</div>
-                  </article>
-                ))}
-              </div>
-            </div>
-            <div className="reasoningTrack solutionTrack">
-              <h4><span>HIS PATH</span> 教授的行动机制</h4>
-              <div className="solutionPath" role="list" aria-label="教授的行动机制">
-                {summary.solution_path?.map((step) => (
-                  <article role="listitem" key={step.step_id}>
-                    <b>{String(step.step_id).padStart(2, "0")}</b><p>{step.text}</p>
-                    {!!step.evidence_ids?.length && <small>{step.evidence_ids.join(" · ")}</small>}
-                  </article>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        </details>
       </section>
 
       <footer className="caseClosureFooter">
@@ -1912,6 +1918,17 @@ function WorkspacePage() {
     menuOpen,
     setMenuOpen,
   ] = useState(false);
+
+  const [
+    showReaderToolsHint,
+    setShowReaderToolsHint,
+  ] = useState(() => {
+    try {
+      return window.localStorage.getItem(READER_TOOLS_HINT_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
 
 
   const [
@@ -2030,6 +2047,21 @@ function WorkspacePage() {
   openPanel !== "checkpoint" &&
   !checkpointNoticeDismissed;
 
+  const hasPendingCheckpoint = Boolean(
+    checkpoint &&
+    !checkpointDone(progress, checkpoint),
+  );
+
+  function dismissReaderToolsHint() {
+    setShowReaderToolsHint(false);
+
+    try {
+      window.localStorage.setItem(READER_TOOLS_HINT_KEY, "1");
+    } catch {
+      // 浏览器禁用存储时，仅在当前页面隐藏提示。
+    }
+  }
+
   // 每到一个新的 checkpoint，重新允许气泡出现
   useEffect(() => {
     // checkpoint 变化时生成一条新的、可关闭的提醒。
@@ -2117,7 +2149,7 @@ function WorkspacePage() {
         setLoading(false);
       })
 
-      .catch(() => {
+      .catch((requestError) => {
         if (cancelled) {
           return;
         }
@@ -2136,7 +2168,8 @@ function WorkspacePage() {
         }
 
         setError(
-          "暂时无法读取文本，请稍后重新加载。",
+          requestError?.message ||
+          "这一页暂时没有载入。你的进度仍保存在本机，可以重试或返回上一页。",
         );
 
         setLoading(false);
@@ -2352,6 +2385,18 @@ function WorkspacePage() {
       <FloatingMenu
         open={menuOpen}
 
+        annotationCount={progress.annotations.length}
+
+        hasPendingCheckpoint={hasPendingCheckpoint}
+
+        showHint={
+          showReaderToolsHint &&
+          progress.annotations.length === 0 &&
+          pageId <= STAGE_COUNT
+        }
+
+        onDismissHint={dismissReaderToolsHint}
+
         onToggle={() =>
           setMenuOpen(
             (prev) =>
@@ -2437,7 +2482,11 @@ function WorkspacePage() {
 
       <main
         ref={ebookSurfaceRef}
-        className="ebookSurface"
+        className={
+          pageId === TOTAL_PAGES
+            ? "ebookSurface archiveSurface"
+            : "ebookSurface"
+        }
       >
         <div
           className="ebookTopline"
@@ -2466,20 +2515,31 @@ function WorkspacePage() {
 
 
         {error && !stage && (
-          <div className="readerMessage readerError">
+          <div className="readerMessage readerError stageLoadError">
             <p>{error}</p>
             {!loading && (
-              <button
-                type="button"
-                className="secondaryButton"
-                onClick={() =>
-                  setStageRetryToken(
-                    (value) => value + 1,
-                  )
-                }
-              >
-                重新加载这一页
-              </button>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="primaryButton"
+                  onClick={() =>
+                    setStageRetryToken(
+                      (value) => value + 1,
+                    )
+                  }
+                >
+                  重新加载这一页
+                </button>
+                {pageId > 1 && (
+                  <button
+                    type="button"
+                    className="secondaryButton"
+                    onClick={() => goToPage(pageId - 1)}
+                  >
+                    返回上一页
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

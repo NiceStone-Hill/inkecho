@@ -125,9 +125,8 @@ app.add_middleware(
     ),
 
     allow_origin_regex=(
-        r"^http://"
-        r"(localhost|127\.0\.0\.1)"
-        r":\d+$"
+        r"^(http://(localhost|127\.0\.0\.1):\d+|"
+        r"https://([a-z0-9-]+\.)?unproven\.vercel\.app)$"
     ),
 
     allow_credentials=False,
