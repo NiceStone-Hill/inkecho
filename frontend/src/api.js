@@ -1,6 +1,13 @@
+const CONFIGURED_API_URL =
+  import.meta.env.VITE_API_URL?.trim();
+
 const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000";
+  CONFIGURED_API_URL ||
+  (import.meta.env.DEV
+    ? "http://127.0.0.1:8000"
+    : "");
+
+const REQUEST_TIMEOUT_MS = 12000;
 
 
 const PROGRESS_STORAGE_KEY =
@@ -17,8 +24,25 @@ async function request(
   path,
   options = {},
 ) {
-  const response =
-    await fetch(
+  if (!API_URL) {
+    throw new Error("生产环境尚未配置内容服务地址（VITE_API_URL）。");
+  }
+
+  const {
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    ...fetchOptions
+  } = options;
+
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    timeoutMs,
+  );
+
+  let response;
+
+  try {
+    response = await fetch(
       `${API_URL}${path}`,
       {
         headers: {
@@ -26,14 +50,23 @@ async function request(
             "application/json",
 
           ...(
-            options.headers ||
+            fetchOptions.headers ||
             {}
           ),
         },
 
-        ...options,
+        ...fetchOptions,
+        signal: fetchOptions.signal || controller.signal,
       },
     );
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("内容服务响应超时，请稍后重试。", { cause: error });
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 
 
   if (!response.ok) {
@@ -249,6 +282,8 @@ export function analyzeHypothesis({
             },
           },
       ),
+
+      timeoutMs: 25000,
     },
   );
 
@@ -277,6 +312,52 @@ export function getSolution() {
 
   return request(
     "/api/solution",
+  );
+}
+
+
+export function summarizeReasoningJourney({
+  hypothesisV1,
+  stressResult,
+  stressAnswer = "",
+  hypothesisV2,
+  finalReasoning,
+  annotations = [],
+}) {
+  return request(
+    "/api/reasoning-journey",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        hypothesis_v1: {
+          text: hypothesisV1.text,
+          confidence: hypothesisV1.confidence,
+        },
+        stress_result: stressResult
+          ? {
+              selected_assumption: stressResult.selected_assumption || null,
+              pressure_question: stressResult.pressure_question || "",
+              rationale_evidence_ids: stressResult.rationale_evidence_ids || [],
+            }
+          : null,
+        stress_answer: stressAnswer,
+        hypothesis_v2: hypothesisV2
+          ? {
+              text: hypothesisV2.text,
+              confidence: hypothesisV2.confidence,
+            }
+          : null,
+        final_reasoning: finalReasoning.text,
+        annotations: annotations.map((item) => ({
+          quote: item.quote || "",
+          note: item.note || "",
+          stage_id: item.stageId ?? null,
+          created_at: item.createdAt || null,
+        })),
+      }),
+
+      timeoutMs: 30000,
+    },
   );
 }
 

@@ -1,11 +1,33 @@
 :root {
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  color: #1d1b18;
-  background: #f4f0e8;
+  --font-ui: "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-reading: "Noto Serif SC Variable", "Songti SC", SimSun, serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  font-family: var(--font-ui);
+  color: #15191a;
+  background: #aeb4b2;
   font-synthesis: none;
+  font-optical-sizing: auto;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --ink: #171b1c;
+  --ink-raised: #252b2c;
+  --ink-soft: #566062;
+  --paper: #f3f2ed;
+  --paper-raised: #faf9f5;
+  --paper-deep: #e1e2dc;
+  --canvas: #aeb4b2;
+  --rule: #afb5b1;
+  --rule-strong: #7f8885;
+  --signal: #a83934;
+  --signal-dark: #762824;
+  --signal-pale: #ead7d3;
+  --scan: #39777a;
+  --scan-pale: #dce9e7;
+  --shadow: rgba(17, 24, 25, 0.2);
 }
 
 * {
@@ -21,9 +43,31 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: var(--canvas);
+  font-family: var(--font-ui);
 }
 
 button,
 textarea {
   font-family: inherit;
+}
+
+::selection {
+  color: #fff;
+  background: var(--scan);
+}
+
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -11,7 +11,7 @@ UNPROVEN 是一个面向推理阅读场景的 AI 前提审查系统。
 - Pressure Test Agent：OpenAI-compatible Chat Completions 接口
 - 手写识别：PaddleOCR `PP-OCRv5_mobile_rec` 本地推理
 - 本地状态：`localStorage`
-- 计划部署：GitHub Pages 部署前端，支持 Python / PaddleOCR 的后端服务部署 FastAPI
+- 当前实现：前端使用 Vite 构建，后端使用 FastAPI；生产环境通过 `VITE_API_URL` 指向已部署的后端服务。
 
 ---
 
@@ -81,7 +81,7 @@ Checkpoint
   ↓
 继续阅读
   ↓
-新 Evidence + Annotation
+新 Evidence
   ↓
 Pressure Test Agent
   ↓
@@ -105,14 +105,41 @@ Pressure Test
     ↓
 Hypothesis V2
 
-继续阅读 + 新 Evidence
+继续阅读
     ↓
-Pressure Test
+提交揭晓前的最终推理
     ↓
-用户确认 / 修正
-    ↓
-Hypothesis V3
+查看谜底与个人推理复盘
 ```
+
+终局复盘的核心产物不是正确率或版本摘要，而是 Evidence Impact Map：
+
+```text
+Claim（用户当时相信什么）
+    ↓
+Evidence Impact（哪条证据撞击了哪个未证前提）
+    ↓
+Cognitive Operation（收窄、重新定义、补充机制或建立连接）
+    ↓
+New Claim（新的世界模型）
+```
+
+系统同时保留一个反事实记录：如果没有这次证据撞击，用户的解释最可能停在哪个版本。V1、V2、Final、批注和标准答案仍保留，但在页面中降级为可展开的档案依据。
+
+Checkpoint 编号与职责保持稳定且唯一：
+
+| Checkpoint | 阶段 | 职责 | 产物 |
+| --- | --- | --- | --- |
+| CP0 | 事实/前提训练 | 帮助用户理解阅读规则，不调用 AI | 训练完成状态 |
+| CP1 | 第一次判断 | 保存用户在 E01—E02 条件下的解释 | Hypothesis V1 |
+| CP2 | 压力测试 | Agent 只用 E01—E03 审查 V1 的一个未证前提 | Hypothesis V2 |
+| CP4 | 揭晓前封存 | 保存用户阅读谜底前的完整逃脱路径，不调用 Agent | `finalReasoning` |
+
+其中只有 CP2 调用 Pressure Test Agent。CP4 是最终推理封存，不是第二轮压力测试，也不会生成 Hypothesis V3。
+
+前端行为由 `checkpoint.kind` 驱动，`checkpoint_id` 只承担稳定身份、日志和接口追踪职责。章节位置由 `stage_id` 决定，三者不可混用。
+
+`Hypothesis V2` 与 `finalReasoning` 是两个不同产物：V2 记录用户回应压力问题后的“保留或修正”，`finalReasoning` 记录谜底揭晓前的完整逃脱路径。最终推理不再借用 `completion.feedback`；后者仅保留给真正的体验反馈。
 
 需要注意：
 
@@ -128,20 +155,16 @@ Pressure Test Agent 的职责不是解谜，也不是判断用户对错。
 
 它只负责：
 
-> 根据用户当前的 Hypothesis、已经解锁的 Evidence 和用户自己的 Annotation，找到当前解释中最值得检验的一个前提，并生成一个中性的压力问题。
+> 根据用户当前的 Hypothesis 和服务端固定装入的 Evidence，找到当前解释中最值得检验的一个前提，并生成一个中性的压力问题。
 
 ## Agent 输入
 
 ```text
-Current Hypothesis
+Hypothesis V1
         +
-Unlocked Evidence
+服务端固定 Evidence E01—E03
         +
-New Evidence
-        +
-Reader Annotations
-        +
-Current Checkpoint
+当前 Checkpoint（CP2）
         ↓
 Deterministic Context Builder
         ↓
@@ -158,12 +181,6 @@ Agent 必须区分三类信息。
 
 只有 Evidence 可以作为事实使用。
 
-### Annotation
-
-用户自己的注意、划线、批注、手写和猜测。
-
-Annotation 不是事实。
-
 ### Hypothesis
 
 用户当前对故事的解释。
@@ -176,12 +193,18 @@ Hypothesis 同样不是事实。
 
 Pressure Test 只在 CP2 运行一次。后端固定装入 E01—E03，不接受客户端上传或扩大 Evidence 白名单。
 
-模型只会收到：
+模型实际只会收到：
 
 - Hypothesis V1 文本与确信度
 - E01、E02、E03
 
-小说全文、Solution 和 Annotation 都不会进入 Pressure Test 上下文。
+不会收到：
+
+- 小说全文
+- Solution
+- 用户 Annotation
+
+用户批注目前只用于阅读界面和用户自己的认知记录，不会进入 Pressure Test 上下文。
 
 ---
 
@@ -362,7 +385,7 @@ Text Recognition
 # 项目结构
 
 ```text
-inkecho/
+unproven/
 ├── frontend/
 │   ├── public/
 │   ├── src/
@@ -434,8 +457,8 @@ py --version
 # 获取项目
 
 ```bash
-git clone https://github.com/NiceStone-Hill/inkecho.git
-cd inkecho
+git clone https://github.com/NiceStone-Hill/unproven.git
+cd unproven
 ```
 
 在 VS Code 中打开：
@@ -550,7 +573,7 @@ python -c "import sys; print(sys.executable)"
 输出应指向：
 
 ```text
-...\inkecho\backend\.venv\Scripts\python.exe
+...\unproven\backend\.venv\Scripts\python.exe
 ```
 
 而不是：
@@ -687,7 +710,7 @@ http://127.0.0.1:8000/api/ai/status
 ## 终端一：后端
 
 ```powershell
-cd D:\Desktop\2026Hackthon\inkecho\backend
+cd D:\Desktop\2026Hackthon\unproven\backend
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn main:app --reload
 ```
@@ -695,7 +718,7 @@ python -m uvicorn main:app --reload
 ## 终端二：前端
 
 ```powershell
-cd D:\Desktop\2026Hackthon\inkecho\frontend
+cd D:\Desktop\2026Hackthon\unproven\frontend
 npm run dev
 ```
 
@@ -909,7 +932,7 @@ frontend/src/api.js
 - Annotation
 - 手写 Canvas
 - OCR 结果确认
-- V1 / V2 / V3 展示
+- V1 / V2 与最终推理展示
 - 请求状态与错误提示
 
 后端主要负责：
@@ -1230,13 +1253,13 @@ GitHub Pages
 例如：
 
 ```text
-https://NiceStone-Hill.github.io/inkecho/
+https://NiceStone-Hill.github.io/unproven/
 ```
 
 GitHub Pages 使用子路径：
 
 ```text
-/inkecho/
+/unproven/
 ```
 
 因此需要保持：
@@ -1267,7 +1290,7 @@ GitHub Pages 使用子路径：
 - 分阶段 Reading / Evidence 解锁
 - Checkpoint 阅读提醒
 - Checkpoint 30 秒自动消失通知
-- Hypothesis V1 / V2 / V3
+- Hypothesis V1 / V2 与揭晓前最终推理
 - Pressure Test Agent
 - Deterministic Context Builder
 - Evidence 边界控制
